@@ -1,0 +1,46 @@
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Fees</h1>
+
+<div class="bg-white shadow sm:rounded-lg p-6">
+  <%= form_with model: therapist, url: dashboard_fees_path, method: :patch, class: "space-y-6" do |f| %>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div>
+        <%= f.label :therapy_fee, "Individual therapy fee ($)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.number_field :therapy_fee, min: 0, step: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+
+      <div>
+        <%= f.label :evaluation_fee, "Evaluation fee ($)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.number_field :evaluation_fee, min: 0, step: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+
+      <div>
+        <%= f.label :group_therapy_fee, "Group therapy fee ($)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.number_field :group_therapy_fee, min: 0, step: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+
+      <div>
+        <%= f.label :consultation_fee, "Consultation fee ($)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.number_field :consultation_fee, min: 0, step: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+
+      <div>
+        <%= f.label :late_cancellation_fee, "Late cancellation fee ($)", class: "block text-sm font-medium text-gray-700" %>
+        <%= f.number_field :late_cancellation_fee, min: 0, step: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+    </div>
+
+    <div>
+      <%= f.label :fee_notes, "Fee notes", class: "block text-sm font-medium text-gray-700" %>
+      <%= f.text_area :fee_notes, rows: 3, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <%= f.check_box :accepts_insurance, class: "rounded border-gray-300 text-teal-600 focus:ring-teal-500" %>
+      <%= f.label :accepts_insurance, "Accept insurance", class: "text-sm text-gray-700" %>
+    </div>
+
+    <div>
+      <%= f.submit "Save", class: "rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

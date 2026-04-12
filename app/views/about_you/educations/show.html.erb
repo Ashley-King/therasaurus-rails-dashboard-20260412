@@ -1,0 +1,41 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Education</h1>
+<% end %>
+
+<%= render layout: "about_you/shared/layout" do %>
+  <%# ── Colleges & universities ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Colleges and universities</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <% if therapist&.therapist_education&.any? %>
+        <% therapist.therapist_education.includes(:college, :degree_type).each do |edu| %>
+          <div class="mb-3 last:mb-0">
+            <p class="text-sm font-medium text-text-primary"><%= edu.college&.name %></p>
+            <p class="text-xs text-text-muted">
+              <%= edu.degree_type&.name %><%= ", #{edu.graduation_year}" if edu.graduation_year.present? %>
+            </p>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-text-muted">No education added yet.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <%# ── Years of experience ── %>
+  <section class="ts-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Years of experience</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">In practice since</dt>
+        <dd class="text-text-primary"><%= therapist&.year_began_practice.present? ? therapist.year_began_practice : "Not specified" %></dd>
+      </dl>
+    </div>
+  </section>
+<% end %>

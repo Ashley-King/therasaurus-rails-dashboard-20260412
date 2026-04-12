@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-surface-secondary">
+<head>
+  <title><%= content_for(:title) || "Dashboard - TheraSaurus" %></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="h-full font-body text-text-body">
+  <div class="min-h-screen flex flex-col">
+
+    <%# ── Notification banner (above nav, like Paperbell) ── %>
+    <% if current_user&.membership_status == "trial" %>
+      <div class="container max-w-6xl px-5 md:px-7 mx-auto">
+        <div class="my-5 rounded-xl bg-gray-200 px-6 py-4">
+          <div class="sm:flex items-center">
+            <div class="-mt-0.5 w-7 text-amber-600">&#9888;</div>
+            <div>
+              <p class="text-sm font-semibold text-amber-600">Your trial is active</p>
+              <p class="mt-0.5 text-xs font-medium text-text-muted max-w-2xl">Explore your dashboard and set up your profile before going live.</p>
+            </div>
+            <div class="flex-grow"></div>
+            <a href="#" class="text-amber-600 text-xs font-semibold block mt-4 lg:mt-0">Choose a plan &#8599;</a>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── Top navigation ── %>
+    <div id="top-nav" class="bg-white shadow select-none" data-turbo-permanent>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative bg-white">
+          <div class="flex justify-between items-center py-3 lg:space-x-10">
+            <%# Logo %>
+            <div class="flex-shrink-0">
+              <%= link_to dashboard_path do %>
+                <%= image_tag "logo.svg", alt: "TheraSaurus", class: "h-12 w-auto" %>
+              <% end %>
+            </div>
+
+            <%# Desktop nav links %>
+            <nav class="hidden lg:flex space-x-6 lg:space-x-10" aria-label="Main navigation">
+              <%= dashboard_topnav_link "Dashboard", dashboard_path %>
+              <%= dashboard_topnav_link "About You", about_you_path %>
+              <%= dashboard_topnav_link "Your Practice", dashboard_practice_details_path %>
+              <%= dashboard_topnav_link "Your Experience", "#" %>
+            </nav>
+
+            <%# Right side: avatar dropdown (desktop) + hamburger (mobile) %>
+            <div class="flex grow justify-end lg:grow-0">
+              <%# Desktop avatar dropdown %>
+              <div class="hidden lg:flex">
+                <div class="ml-4 relative" data-controller="dropdown">
+                  <button type="button"
+                          data-action="click->dropdown#toggle"
+                          class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out"
+                          aria-haspopup="true">
+                    <span class="sr-only">Open account menu</span>
+                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-plum-bg text-plum font-semibold text-sm">
+                      <%= current_user&.email&.first&.upcase || "?" %>
+                    </span>
+                  </button>
+                  <div data-dropdown-target="menu"
+                       class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-20"
+                       role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
+                    <div class="py-1 rounded-md bg-white ring-1 ring-black/5">
+                      <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Account Settings</a>
+                      <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Integrations</a>
+                      <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Support</a>
+                      <%= button_to "Sign out", signout_path, method: :delete,
+                            class: "block w-full text-left px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out",
+                            role: "menuitem" %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <%# Mobile hamburger menu %>
+              <div class="lg:hidden ml-4" data-controller="dropdown">
+                <div class="-mr-2 -my-2">
+                  <button type="button"
+                          data-action="click->dropdown#toggle"
+                          class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
+                          aria-label="Toggle navigation menu">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+                <div data-dropdown-target="menu"
+                     class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-10 lg:hidden"
+                     role="menu" aria-orientation="vertical">
+                  <div class="py-1 rounded-md bg-white ring-1 ring-black/5">
+                    <%= link_to "Dashboard", dashboard_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <%= link_to "About You", about_you_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <%= link_to "Your Practice", dashboard_practice_details_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <%= link_to "Your Experience", "#", class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <div class="border-b border-1 my-2 border-gray-200"></div>
+                    <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Account Settings</a>
+                    <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Integrations</a>
+                    <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Support</a>
+                    <div class="border-b border-1 my-2 border-gray-200"></div>
+                    <%= button_to "Sign out", signout_path, method: :delete,
+                          class: "block w-full text-left px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out",
+                          role: "menuitem" %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Page header with title ── %>
+    <% if content_for?(:page_header) %>
+      <div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+          <%= yield :page_header %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── Flash messages ── %>
+    <% if flash[:notice] || flash[:alert] %>
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <% if flash[:notice] %>
+          <div class="ts-banner-info mb-3">
+            <p class="text-sm text-teal-dark"><%= flash[:notice] %></p>
+          </div>
+        <% end %>
+        <% if flash[:alert] %>
+          <div class="mb-3 rounded-lg bg-status-attention-bg border border-red-200 p-4">
+            <p class="text-sm text-status-attention"><%= flash[:alert] %></p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Main content ── %>
+    <main class="bg-gray-50 pt-4 lg:pt-8 lg:pb-8 flex-grow">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <%= yield %>
+      </div>
+    </main>
+
+    <%# ── Footer (matches Paperbell) ── %>
+    <footer class="bg-gray-200">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-center text-gray-500 text-sm">
+        <a href="#" class="hover:text-gray-700">Support</a>
+        <a href="#" class="ml-6 hover:text-gray-700">Terms and conditions</a>
+        <a href="#" class="ml-6 hover:text-gray-700">Privacy policy</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

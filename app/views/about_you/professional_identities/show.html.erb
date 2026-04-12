@@ -1,0 +1,35 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Professional Identity</h1>
+<% end %>
+
+<%= render layout: "about_you/shared/layout" do %>
+  <%# ── Personal info card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Personal info</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <% if therapist.present? && therapist.first_name.present? %>
+        <p class="font-semibold text-text-primary mb-3">
+          <%= therapist.full_name %><%= ", #{therapist.credentials}" if therapist.credentials.present? %>
+        </p>
+        <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
+          <dt class="text-text-muted">Profession</dt>
+          <dd class="text-text-primary"><%= therapist.profession&.name || "Not specified" %></dd>
+
+          <dt class="text-text-muted">Gender identity</dt>
+          <dd class="text-text-primary"><%= therapist.genders.any? ? therapist.genders.map(&:name).join(", ") : "Not specified" %></dd>
+
+          <dt class="text-text-muted">Race/ethnicity</dt>
+          <dd class="text-text-primary"><%= therapist.race_ethnicities.any? ? therapist.race_ethnicities.map(&:name).join(", ") : "Not specified" %></dd>
+
+          <dt class="text-text-muted">Pronouns</dt>
+          <dd class="text-text-primary"><%= therapist.pronouns.present? ? therapist.pronouns : "Not specified" %></dd>
+        </dl>
+      <% else %>
+        <p class="text-sm text-text-muted">No personal info added yet.</p>
+      <% end %>
+    </div>
+  </section>
+<% end %>

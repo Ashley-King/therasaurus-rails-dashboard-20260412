@@ -1,0 +1,2 @@
+class SessionFormat < ApplicationRecord
+end

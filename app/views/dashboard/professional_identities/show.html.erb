@@ -1,0 +1,41 @@
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Professional Identity</h1>
+
+<div class="bg-white shadow sm:rounded-lg p-6">
+  <%= form_with model: therapist, url: dashboard_professional_identity_path, method: :patch, class: "space-y-6" do |f| %>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div>
+        <%= f.label :first_name, class: "block text-sm font-medium text-gray-700" %>
+        <%= f.text_field :first_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+
+      <div>
+        <%= f.label :last_name, class: "block text-sm font-medium text-gray-700" %>
+        <%= f.text_field :last_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+      </div>
+    </div>
+
+    <div>
+      <%= f.label :credentials, "Credentials (e.g., LCSW, Ph.D.)", class: "block text-sm font-medium text-gray-700" %>
+      <%= f.text_field :credentials, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+    </div>
+
+    <div>
+      <%= f.label :pronouns, class: "block text-sm font-medium text-gray-700" %>
+      <%= f.text_field :pronouns, placeholder: "e.g., she/her, he/him, they/them", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+    </div>
+
+    <div>
+      <%= f.label :profession_id, "Profession", class: "block text-sm font-medium text-gray-700" %>
+      <%= f.collection_select :profession_id, Profession.order(:name), :id, :name, { prompt: "Select profession" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+    </div>
+
+    <div>
+      <%= f.label :year_began_practice, "Year began practice", class: "block text-sm font-medium text-gray-700" %>
+      <%= f.number_field :year_began_practice, min: 1950, max: Date.current.year, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm px-3 py-2 border" %>
+    </div>
+
+    <div>
+      <%= f.submit "Save", class: "rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

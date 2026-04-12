@@ -1,0 +1,2 @@
+class AdminEmail < ApplicationRecord
+end

@@ -1,0 +1,16 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV.fetch("DATABASE_URL", "") %>
+  prepared_statements: false # Required for Supabase transaction pooler (pgBouncer)
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  database: therasaurus_rails_test
+
+production:
+  <<: *default

@@ -1,0 +1,87 @@
+<% content_for :page_header do %>
+  <div class="md:flex md:items-center md:justify-between">
+    <div class="flex-1 min-w-0">
+      <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Dashboard</h1>
+      <div class="flex flex-row flex-wrap mt-2 gap-4">
+        <a href="#" class="text-sm font-semibold text-text-primary">OVERVIEW</a>
+        <a href="#" class="text-sm font-medium text-text-muted hover:text-text-secondary">ACTIVITY</a>
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-3 md:mt-0 md:ml-4">
+      <a href="#" class="ts-btn-outline px-4 py-2 inline-flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+        Edit profile
+      </a>
+      <a href="#" class="ts-btn-primary px-4 py-2 inline-flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+        View public profile
+      </a>
+    </div>
+  </div>
+<% end %>
+
+<%# ── Profile card ── %>
+<div class="ts-card">
+  <div class="md:grid md:grid-cols-2 md:gap-12 md:items-center">
+    <%# Photo placeholder %>
+    <div class="flex justify-center">
+      <div class="relative">
+        <div class="h-48 w-48 rounded-full bg-plum-bg flex items-center justify-center overflow-hidden">
+          <% if current_therapist&.practice_image_url.present? %>
+            <img src="<%= current_therapist.practice_image_url %>" alt="Profile photo" class="h-full w-full object-cover">
+          <% else %>
+            <svg class="h-full w-full text-plum/30" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          <% end %>
+        </div>
+        <%# Camera edit button — centered bottom %>
+        <a href="#" class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/4 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-plum shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-2" aria-label="Change profile photo">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+          </svg>
+          Edit
+        </a>
+      </div>
+    </div>
+
+    <%# Profile info %>
+    <div class="mt-8 md:mt-0">
+      <h2 class="text-xl font-heading font-semibold text-text-primary">
+        <% if current_therapist&.first_name.present? %>
+          <%= current_therapist.display_name %>
+        <% else %>
+          Welcome!
+        <% end %>
+      </h2>
+
+      <p class="mt-1 text-sm text-text-muted"><%= current_user.email %></p>
+
+      <%# Membership badge %>
+      <div class="mt-4 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-text-secondary">Membership</span>
+          <span class="ts-badge-active"><%= current_user.membership_status.capitalize %></span>
+        </div>
+
+        <%# Verification status %>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-text-secondary">Verification</span>
+          <span class="ts-badge-attention">Unverified</span>
+        </div>
+
+        <%# Profile completeness hint %>
+        <% if current_therapist.nil? || current_therapist.first_name.blank? %>
+          <div class="mt-4 rounded-lg bg-plum-bg p-4">
+            <p class="text-sm text-plum font-medium">Complete your profile to get listed</p>
+            <p class="mt-1 text-xs text-text-muted">Start by adding your professional identity and practice details.</p>
+            <a href="<%= dashboard_professional_identity_path %>" class="mt-3 inline-block text-sm font-semibold text-plum hover:text-plum-dark">
+              Get started &#8594;
+            </a>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
