@@ -11,8 +11,7 @@
     <label for="about-you-mobile-nav" class="sr-only">Navigate to section</label>
     <select id="about-you-mobile-nav" onchange="window.location.href = this.value"
       class="block w-full rounded-lg border-gray-300 py-2.5 pl-3 pr-10 text-sm font-medium text-text-primary focus:border-teal-500 focus:ring-teal-500">
-      <option value="<%= professional_identity_path %>" <%= "selected" if current_page?(professional_identity_path) || current_page?(about_you_path) %>>Professional Identity</option>
-      <option value="<%= update_email_path %>" <%= "selected" if current_page?(update_email_path) %>>Update Email</option>
+      <option value="<%= professional_identity_path %>" <%= "selected" if current_page?(professional_identity_path) || current_page?(about_you_path) %>>Identity</option>
       <option value="<%= primary_credential_path %>" <%= "selected" if current_page?(primary_credential_path) %>>Primary Credential</option>
       <option value="<%= education_path %>" <%= "selected" if current_page?(education_path) %>>Education</option>
       <option value="<%= professional_development_path %>" <%= "selected" if current_page?(professional_development_path) %>>Professional Development</option>

@@ -15,7 +15,6 @@ Rails.application.routes.draw do
   scope "about-you", module: :about_you do
     get "/", to: "professional_identities#show", as: :about_you
     resource :professional_identity, only: [ :show, :update ], path: "professional-identity"
-    resource :update_email, only: [ :show ], path: "update-email"
     resource :primary_credential, only: [ :show ], path: "primary-credential"
     resource :education, only: [ :show ]
     resource :professional_development, only: [ :show ], path: "professional-development"
@@ -31,6 +30,15 @@ Rails.application.routes.draw do
     resource :fees_payment, only: [ :show ], path: "fees-payment"
     resource :services_specialties, only: [ :show ], path: "services-specialties"
     resource :faq, only: [ :show ], path: "faqs"
+  end
+
+  # Account Settings
+  scope "account-settings", module: :account_settings do
+    get "/", to: "accounts#show", as: :account_settings
+    resource :account, only: [ :show ]
+    resource :update_email, only: [ :show ], path: "update-email"
+    resource :notification, only: [ :show ], path: "notifications"
+    resource :membership, only: [ :show ]
   end
 
   # Health check

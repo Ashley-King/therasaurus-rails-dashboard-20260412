@@ -1,0 +1,25 @@
+<div class="lg:grid lg:grid-cols-[256px_1fr] lg:gap-8">
+  <%# Sidebar %>
+  <aside class="hidden lg:block">
+    <div class="sticky top-24">
+      <%= render "account_settings/shared/sidebar" %>
+    </div>
+  </aside>
+
+  <%# Mobile section select %>
+  <div class="lg:hidden mb-6">
+    <label for="account-settings-mobile-nav" class="sr-only">Navigate to section</label>
+    <select id="account-settings-mobile-nav" onchange="window.location.href = this.value"
+      class="block w-full rounded-lg border-gray-300 py-2.5 pl-3 pr-10 text-sm font-medium text-text-primary focus:border-teal-500 focus:ring-teal-500">
+      <option value="<%= account_path %>" <%= "selected" if current_page?(account_path) || current_page?(account_settings_path) %>>Account</option>
+      <option value="<%= update_email_path %>" <%= "selected" if current_page?(update_email_path) %>>Update Email</option>
+      <option value="<%= notification_path %>" <%= "selected" if current_page?(notification_path) %>>Notifications</option>
+      <option value="<%= membership_path %>" <%= "selected" if current_page?(membership_path) %>>Membership</option>
+    </select>
+  </div>
+
+  <%# Content %>
+  <main>
+    <%= yield %>
+  </main>
+</div>

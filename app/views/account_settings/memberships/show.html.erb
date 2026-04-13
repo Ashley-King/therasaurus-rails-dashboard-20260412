@@ -1,0 +1,20 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Membership</h1>
+<% end %>
+
+<%= render layout: "account_settings/shared/layout" do %>
+  <section class="ts-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Your membership</h2>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">Status</dt>
+        <dd class="text-text-primary">
+          <span class="ts-badge-active"><%= current_user.membership_status&.capitalize || "Unknown" %></span>
+        </dd>
+      </dl>
+      <p class="mt-4 text-sm text-text-muted">Subscription management coming soon.</p>
+    </div>
+  </section>
+<% end %>

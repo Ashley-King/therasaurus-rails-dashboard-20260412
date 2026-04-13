@@ -1,0 +1,44 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Account Settings</h1>
+<% end %>
+
+<%= render layout: "account_settings/shared/layout" do %>
+  <section class="ts-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Your account</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <%# ── Profile pic ── %>
+      <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
+        <div class="h-16 w-16 rounded-full bg-plum-bg flex items-center justify-center overflow-hidden flex-shrink-0">
+          <% if therapist&.practice_image_url.present? %>
+            <img src="<%= therapist.practice_image_url %>" alt="Profile photo" class="h-full w-full object-cover">
+          <% else %>
+            <span class="text-lg font-semibold text-plum">
+              <%= therapist&.first_name&.first&.upcase %><%= therapist&.last_name&.first&.upcase %>
+            </span>
+          <% end %>
+        </div>
+        <a href="#" class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-text-primary shadow-sm hover:bg-gray-50">
+          Change
+        </a>
+      </div>
+
+      <%# ── Account details ── %>
+      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">First name</dt>
+        <dd class="text-text-primary"><%= therapist&.first_name.presence || "Not provided" %></dd>
+
+        <dt class="text-text-muted">Last name</dt>
+        <dd class="text-text-primary"><%= therapist&.last_name.presence || "Not provided" %></dd>
+
+        <dt class="text-text-muted">Profession</dt>
+        <dd class="text-text-primary"><%= therapist&.profession&.name || "Not specified" %></dd>
+
+        <dt class="text-text-muted">Credentials</dt>
+        <dd class="text-text-primary"><%= therapist&.credentials.presence || "Not provided" %></dd>
+      </dl>
+    </div>
+  </section>
+<% end %>
