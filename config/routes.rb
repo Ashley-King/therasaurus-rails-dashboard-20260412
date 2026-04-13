@@ -9,13 +9,6 @@ Rails.application.routes.draw do
   # Dashboard
   resource :dashboard, only: [ :show ], controller: "dashboard" do
     post :test_submit
-    scope module: :dashboard do
-      resource :professional_identity, only: [ :show, :update ]
-      resource :practice_details, only: [ :show, :update ]
-      resource :clients_availability, only: [ :show, :update ]
-      resource :fees, only: [ :show, :update ]
-      resource :services_specialties, only: [ :show, :update ]
-    end
   end
 
   # About You
@@ -26,6 +19,18 @@ Rails.application.routes.draw do
     resource :primary_credential, only: [ :show ], path: "primary-credential"
     resource :education, only: [ :show ]
     resource :professional_development, only: [ :show ], path: "professional-development"
+  end
+
+  # Your Practice
+  scope "your-practice", module: :your_practice do
+    get "/", to: "practice_details#show", as: :your_practice
+    resource :practice_details, only: [ :show ], path: "practice-details"
+    resource :introduction, only: [ :show ]
+    resource :clients_availability, only: [ :show ], path: "clients-availability"
+    resource :location, only: [ :show ], path: "locations"
+    resource :fees_payment, only: [ :show ], path: "fees-payment"
+    resource :services_specialties, only: [ :show ], path: "services-specialties"
+    resource :faq, only: [ :show ], path: "faqs"
   end
 
   # Health check

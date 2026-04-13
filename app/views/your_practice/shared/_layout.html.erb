@@ -1,0 +1,28 @@
+<div class="lg:grid lg:grid-cols-[256px_1fr] lg:gap-8">
+  <%# Sidebar %>
+  <aside class="hidden lg:block">
+    <div class="sticky top-24">
+      <%= render "your_practice/shared/sidebar" %>
+    </div>
+  </aside>
+
+  <%# Mobile section select %>
+  <div class="lg:hidden mb-6">
+    <label for="your-practice-mobile-nav" class="sr-only">Navigate to section</label>
+    <select id="your-practice-mobile-nav" onchange="window.location.href = this.value"
+      class="block w-full rounded-lg border-gray-300 py-2.5 pl-3 pr-10 text-sm font-medium text-text-primary focus:border-teal-500 focus:ring-teal-500">
+      <option value="<%= practice_details_path %>" <%= "selected" if current_page?(practice_details_path) || current_page?(your_practice_path) %>>Practice Details</option>
+      <option value="<%= introduction_path %>" <%= "selected" if current_page?(introduction_path) %>>Introduction</option>
+      <option value="<%= clients_availability_path %>" <%= "selected" if current_page?(clients_availability_path) %>>Clients & Availability</option>
+      <option value="<%= location_path %>" <%= "selected" if current_page?(location_path) %>>Locations</option>
+      <option value="<%= fees_payment_path %>" <%= "selected" if current_page?(fees_payment_path) %>>Fees & Payment</option>
+      <option value="<%= services_specialties_path %>" <%= "selected" if current_page?(services_specialties_path) %>>Services & Specialties</option>
+      <option value="<%= faq_path %>" <%= "selected" if current_page?(faq_path) %>>FAQs</option>
+    </select>
+  </div>
+
+  <%# Content %>
+  <main>
+    <%= yield %>
+  </main>
+</div>

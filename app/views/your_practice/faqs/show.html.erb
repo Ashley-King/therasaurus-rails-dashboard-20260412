@@ -1,0 +1,15 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">FAQs</h1>
+<% end %>
+
+<%= render layout: "your_practice/shared/layout" do %>
+  <section class="ts-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Frequently asked questions</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Add</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <p class="text-sm text-text-muted">Add up to 5 frequently asked questions about your practice.</p>
+    </div>
+  </section>
+<% end %>

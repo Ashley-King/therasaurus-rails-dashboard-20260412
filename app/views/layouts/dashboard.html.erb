@@ -44,7 +44,7 @@
             <nav class="hidden lg:flex space-x-6 lg:space-x-10" aria-label="Main navigation">
               <%= dashboard_topnav_link "Dashboard", dashboard_path %>
               <%= dashboard_topnav_link "About You", about_you_path %>
-              <%= dashboard_topnav_link "Your Practice", dashboard_practice_details_path %>
+              <%= dashboard_topnav_link "Your Practice", your_practice_path %>
               <%= dashboard_topnav_link "Your Experience", "#" %>
             </nav>
 
@@ -82,7 +82,7 @@
                 <div class="-mr-2 -my-2">
                   <button type="button"
                           data-action="click->dropdown#toggle"
-                          class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
+                          class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
                           aria-label="Toggle navigation menu">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -95,7 +95,7 @@
                   <div class="py-1 rounded-md bg-white ring-1 ring-black/5">
                     <%= link_to "Dashboard", dashboard_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <%= link_to "About You", about_you_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
-                    <%= link_to "Your Practice", dashboard_practice_details_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <%= link_to "Your Practice", your_practice_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <%= link_to "Your Experience", "#", class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <div class="border-b border-1 my-2 border-gray-200"></div>
                     <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Account Settings</a>

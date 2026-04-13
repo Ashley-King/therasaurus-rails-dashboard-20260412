@@ -1,0 +1,111 @@
+<% content_for :page_header do %>
+  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Clients & Availability</h1>
+<% end %>
+
+<%= render layout: "your_practice/shared/layout" do %>
+  <%# ── New clients card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">New clients</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">Free introductory phone call</dt>
+        <dd class="text-text-primary"><%= therapist&.free_phone_call? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Accepting new clients</dt>
+        <dd class="text-text-primary"><%= therapist&.accepting_new_clients? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Waitlist for new clients</dt>
+        <dd class="text-text-primary"><%= therapist&.has_waitlist? ? "Yes" : "No" %></dd>
+      </dl>
+    </div>
+  </section>
+
+  <%# ── Client demographics card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Client demographics</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">Age groups</dt>
+        <dd class="text-text-primary"><%= therapist&.age_groups&.any? ? therapist.age_groups.order(:name).pluck(:name).join(", ") : "Not provided" %></dd>
+
+        <dt class="text-text-muted">Languages</dt>
+        <dd class="text-text-primary"><%= therapist&.languages&.any? ? therapist.languages.order(:name).pluck(:name).join(", ") : "Not provided" %></dd>
+
+        <dt class="text-text-muted">Faiths and belief systems</dt>
+        <dd class="text-text-primary"><%= therapist&.faiths&.any? ? therapist.faiths.order(:name).pluck(:name).join(", ") : "Not provided" %></dd>
+      </dl>
+    </div>
+  </section>
+
+  <%# ── Extended availability card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Extended availability</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">Early morning appointments (before 8 A.M.)</dt>
+        <dd class="text-text-primary"><%= therapist&.early_morning? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Evening appointments (6 P.M. or later)</dt>
+        <dd class="text-text-primary"><%= therapist&.evening? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Weekend appointments</dt>
+        <dd class="text-text-primary"><%= therapist&.weekend? ? "Yes" : "No" %></dd>
+      </dl>
+    </div>
+  </section>
+
+  <%# ── Treatment options card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Treatment options</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
+        <dt class="text-text-muted">In-person therapy</dt>
+        <dd class="text-text-primary"><%= therapist&.in_person? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Virtual therapy</dt>
+        <dd class="text-text-primary"><%= therapist&.virtual? ? "Yes" : "No" %></dd>
+
+        <dt class="text-text-muted">Session formats</dt>
+        <dd class="text-text-primary"><%= therapist&.session_formats&.any? ? therapist.session_formats.order(:name).pluck(:name).join(", ") : "Not provided" %></dd>
+      </dl>
+    </div>
+  </section>
+
+  <%# ── Telehealth platforms card ── %>
+  <section class="ts-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Telehealth platforms</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <p class="text-sm text-text-muted">No telehealth platforms added yet.</p>
+    </div>
+  </section>
+
+  <%# ── Availability notes card ── %>
+  <section class="ts-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary">Notes about your availability</h2>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= therapist&.availability_notes.present? ? "Edit" : "Add" %></a>
+    </div>
+    <div class="border border-gray-200 rounded-lg p-5">
+      <% if therapist&.availability_notes.present? %>
+        <p class="text-sm text-text-primary whitespace-pre-line"><%= therapist.availability_notes %></p>
+      <% else %>
+        <p class="text-sm text-text-muted">Add a note about your availability.</p>
+      <% end %>
+    </div>
+  </section>
+<% end %>
