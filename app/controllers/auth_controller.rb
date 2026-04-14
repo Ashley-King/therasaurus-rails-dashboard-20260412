@@ -3,7 +3,7 @@ class AuthController < ApplicationController
 
   layout "auth"
 
-  before_action :redirect_if_signed_in, only: [:new, :create, :verify, :confirm]
+  before_action :redirect_if_signed_in, only: [ :new, :create, :verify, :confirm ]
 
   # GET /signin
   def new
@@ -56,7 +56,11 @@ class AuthController < ApplicationController
 
       find_or_create_user!(id: result.dig("user", "id"), email: email)
 
-      redirect_to dashboard_path, notice: "Welcome back!"
+      if profile_complete?
+        redirect_to dashboard_path, notice: "Welcome back!"
+      else
+        redirect_to create_account_path
+      end
     rescue SupabaseAuth::AuthError => e
       flash.now[:alert] = e.message
       @email = email
@@ -73,7 +77,10 @@ class AuthController < ApplicationController
   private
 
   def redirect_if_signed_in
-    redirect_to dashboard_path if signed_in?
+    return unless signed_in?
+    return if current_user.is_admin?
+
+    redirect_to dashboard_path if profile_complete?
   end
 
   def find_or_create_user!(id:, email:)

@@ -27,6 +27,16 @@ module Authentication
     end
   end
 
+  def require_profile
+    return unless signed_in?
+
+    redirect_to create_account_path unless profile_complete?
+  end
+
+  def profile_complete?
+    current_therapist.present?
+  end
+
   def load_current_user
     access_token = session[:access_token]
     return nil unless access_token

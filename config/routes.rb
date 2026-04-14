@@ -6,6 +6,10 @@ Rails.application.routes.draw do
   post "verify", to: "auth#confirm"
   delete "signout", to: "auth#destroy"
 
+  # Create Account
+  get "create-account", to: "create_account#new", as: :create_account
+  post "create-account", to: "create_account#create"
+
   # Dashboard
   resource :dashboard, only: [ :show ], controller: "dashboard" do
     post :test_submit
