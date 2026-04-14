@@ -7,7 +7,8 @@
   - Rails 8 `rate_limit` in `AuthController` — 5 signin attempts per IP per 15 min, 5 per email per hour, 10 verify attempts per IP per 15 min. Redirects back to the form with a readable flash on throttle.
   - `rack-attack` middleware with a global 300 req/5 min per IP safety net plus looser auth-specific throttles as a fallback. Returns plain `429` with `Retry-After` and logs `event=rack_attack.throttled`.
   - Counters stored in `Rails.cache` (Solid Cache in production, memory_store in development). Assets and `/up` safelisted; localhost safelisted in development.
-  - [`_docs/_processes/rate-limiting.md`](_docs/_processes/rate-limiting.md) documents the policy and what is intentionally not limited.
+  - Structured throttle logging: `auth.rate_limit.signin_ip`, `auth.rate_limit.signin_email`, and `auth.rate_limit.verify_ip` events from the Rails layer (via `auth_log`, with a 12-char SHA256 email fingerprint for the email-scoped throttle — raw emails never hit the logs). `rack_attack.throttled` event from the middleware layer.
+  - [`_docs/_processes/rate-limiting.md`](_docs/_processes/rate-limiting.md) documents the policy, logging events, and what is intentionally not limited.
 - Structured JSON request logging via `lograge`. One line per request with `request_id`, `user_id`, `duration`, `view`, `db`, `status`, `host`, and filtered `params`. Multi-line Rails default preserved in development for readability.
 - Better Stack log shipping via `logtail-rails`. Enabled in every environment except `test` whenever `BETTER_STACK_SOURCE_TOKEN` and `BETTER_STACK_INGESTING_HOST` credentials are present; broadcasts alongside STDOUT so local tailing still works. Credentials stubbed in `credentials.example`.
 - `append_info_to_payload` in `ApplicationController` surfaces `current_user.id` (never email) to lograge.

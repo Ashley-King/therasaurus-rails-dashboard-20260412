@@ -9,18 +9,18 @@ class AuthController < ApplicationController
   rate_limit to: 5, within: 15.minutes,
              only: :create,
              name: "signin_ip",
-             with: -> { redirect_to signin_path, alert: "Too many sign-in attempts. Please try again in a few minutes." }
+             with: -> { rate_limited_signin!("signin_ip") }
 
   rate_limit to: 5, within: 1.hour,
              only: :create,
              name: "signin_email",
              by: -> { params[:email].to_s.strip.downcase.presence || request.remote_ip },
-             with: -> { redirect_to signin_path, alert: "Too many sign-in attempts for this email. Please try again in an hour." }
+             with: -> { rate_limited_signin!("signin_email") }
 
   rate_limit to: 10, within: 15.minutes,
              only: :confirm,
              name: "verify_ip",
-             with: -> { redirect_to verify_path, alert: "Too many verification attempts. Please try again in a few minutes." }
+             with: -> { rate_limited_verify!("verify_ip") }
 
   before_action :redirect_if_signed_in, only: [ :new, :create, :verify, :confirm ]
 
@@ -106,6 +106,41 @@ class AuthController < ApplicationController
   end
 
   private
+
+  # Called when one of the signin rate limits trips. Logs the event with a
+  # hashed email (never the raw address) so repeated targeting of the same
+  # email is correlatable in Better Stack without leaking PII.
+  def rate_limited_signin!(limit_name)
+    auth_log(
+      :warn,
+      "auth.rate_limit.#{limit_name}",
+      email_hash: email_fingerprint(params[:email])
+    )
+    redirect_to signin_path, alert: signin_rate_limit_message(limit_name)
+  end
+
+  def rate_limited_verify!(limit_name)
+    auth_log(:warn, "auth.rate_limit.#{limit_name}")
+    redirect_to verify_path, alert: "Too many verification attempts. Please try again in a few minutes."
+  end
+
+  def signin_rate_limit_message(limit_name)
+    if limit_name == "signin_email"
+      "Too many sign-in attempts for this email. Please try again in an hour."
+    else
+      "Too many sign-in attempts. Please try again in a few minutes."
+    end
+  end
+
+  # SHA256 fingerprint of the submitted email, truncated. Same input always
+  # yields the same fingerprint, so repeated abuse against one email is
+  # correlatable — but the raw email never hits the logs.
+  def email_fingerprint(email)
+    normalized = email.to_s.strip.downcase
+    return nil if normalized.blank?
+
+    Digest::SHA256.hexdigest(normalized)[0, 12]
+  end
 
   def redirect_if_signed_in
     return unless signed_in?

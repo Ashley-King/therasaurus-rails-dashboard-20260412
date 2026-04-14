@@ -38,7 +38,26 @@ development.
 
 - **Rails layer** — redirect back with a flash alert.
 - **Rack::Attack layer** — plain `429 Too Many Requests` with `Retry-After`
-  header. Logged as `event=rack_attack.throttled`.
+  header.
+
+## Logging
+
+Every throttle event is logged so abuse patterns are visible in Better
+Stack. Filter by event prefix to investigate.
+
+| Event                              | Layer        | Fields |
+|------------------------------------|--------------|--------|
+| `auth.rate_limit.signin_ip`        | Rails controller | `ip`, `ua`, `email_hash` |
+| `auth.rate_limit.signin_email`     | Rails controller | `ip`, `ua`, `email_hash` |
+| `auth.rate_limit.verify_ip`        | Rails controller | `ip`, `ua` |
+| `rack_attack.throttled`            | Rack middleware  | `name`, `ip`, `path` |
+
+`email_hash` is the first 12 hex characters of the SHA256 of the
+normalized (stripped, lowercased) submitted email. Same email always
+yields the same fingerprint, so repeated targeting of one user is
+correlatable without the raw address ever hitting the logs. This
+complies with the project no-PII logging rule in
+[`_docs/_processes/logging.md`](logging.md).
 
 ## What is NOT rate limited, and why
 
