@@ -1,2 +1,137 @@
-<h1>Create Account</h1>
-<p>Phase 2: form coming soon.</p>
+<% content_for(:auth_max_width) { "sm:max-w-3xl" } %>
+<% content_for(:auth_card_class) { "ts-auth-card-wide" } %>
+
+<h2 class="ts-auth-title mb-6">Create your account</h2>
+
+<%= form_with url: create_account_path, method: :post, class: "space-y-8", data: { turbo: false } do |f| %>
+  <%# Read-only email %>
+  <div>
+    <label class="ts-label block mb-1">Email</label>
+    <p class="ts-input w-full bg-surface-secondary text-text-muted cursor-not-allowed"><%= current_user.email %></p>
+  </div>
+
+  <%# Personal Information %>
+  <fieldset>
+    <legend class="ts-subsection-heading mb-4">Personal Information</legend>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <%= f.label :first_name, "First Name", class: "ts-label block mb-1" %>
+        <%= f.text_field :first_name,
+          value: params[:first_name],
+          required: true,
+          maxlength: 50,
+          autocomplete: "given-name",
+          placeholder: "Lucy",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :last_name, "Last Name", class: "ts-label block mb-1" %>
+        <%= f.text_field :last_name,
+          value: params[:last_name],
+          required: true,
+          maxlength: 50,
+          autocomplete: "family-name",
+          placeholder: "Miller",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :credentials, "Credentials", class: "ts-label block mb-1" %>
+        <%= f.text_field :credentials,
+          value: params[:credentials],
+          maxlength: 50,
+          placeholder: "PhD, OTR/L",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :profession_id, "Profession", class: "ts-label block mb-1" %>
+        <%= f.select :profession_id,
+          options_from_collection_for_select(@professions, :id, :name, params[:profession_id]),
+          { include_blank: "Select a profession" },
+          { required: true, class: "ts-select w-full" } %>
+        <p class="text-xs text-text-muted mt-1">Don't see your profession? Email support@therasaurus.org</p>
+      </div>
+    </div>
+  </fieldset>
+
+  <%# Primary Business Location %>
+  <fieldset>
+    <legend class="ts-subsection-heading mb-4">Primary Business Location</legend>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-2">
+        <%= f.label :street_address, "Street Address", class: "ts-label block mb-1" %>
+        <%= f.text_field :street_address,
+          value: params[:street_address],
+          required: true,
+          maxlength: 120,
+          autocomplete: "street-address",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div class="sm:col-span-2">
+        <%= f.label :street_address2, "Suite / Unit / Floor", class: "ts-label block mb-1" %>
+        <%= f.text_field :street_address2,
+          value: params[:street_address2],
+          maxlength: 120,
+          autocomplete: "address-line2",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :city, "City", class: "ts-label block mb-1" %>
+        <%= f.text_field :city,
+          value: params[:city],
+          required: true,
+          maxlength: 50,
+          autocomplete: "address-level2",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :state, "State", class: "ts-label block mb-1" %>
+        <%= f.select :state,
+          options_from_collection_for_select(@states, :code, :code, params[:state]),
+          { include_blank: "Select a state" },
+          { required: true, class: "ts-select w-full" } %>
+      </div>
+
+      <div>
+        <%= f.label :zip, "ZIP Code", class: "ts-label block mb-1" %>
+        <%= f.text_field :zip,
+          value: params[:zip],
+          required: true,
+          maxlength: 5,
+          pattern: "\\d{5}",
+          inputmode: "numeric",
+          autocomplete: "postal-code",
+          class: "ts-input w-full" %>
+      </div>
+
+      <div>
+        <%= f.label :country_id, "Country", class: "ts-label block mb-1" %>
+        <%= f.select :country_id,
+          options_from_collection_for_select(@countries, :id, :name, params[:country_id] || @countries.find_by(code: "US")&.id),
+          { include_blank: "Select a country" },
+          { required: true, class: "ts-select w-full" } %>
+        <p class="text-xs text-text-muted mt-1">TheraSaurus currently supports US-based providers only.</p>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <%= f.check_box :show_street_address,
+            { checked: params[:show_street_address] != "0" },
+            "1", "0" %>
+          <span class="ts-label">Show street address on my profile</span>
+        </label>
+      </div>
+    </div>
+  </fieldset>
+
+  <div>
+    <%= f.submit "Create Account", class: "ts-btn-primary w-full py-2.5 text-base" %>
+  </div>
+<% end %>

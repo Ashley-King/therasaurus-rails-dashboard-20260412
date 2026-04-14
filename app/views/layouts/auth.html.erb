@@ -15,8 +15,8 @@
       <%= image_tag "logo.svg", alt: "TheraSaurus", class: "mx-auto", style: "max-width: 220px; height: auto;" %>
     </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="ts-auth-card mx-auto">
+    <div class="mt-8 sm:mx-auto sm:w-full <%= content_for?(:auth_max_width) ? yield(:auth_max_width) : 'sm:max-w-md' %>">
+      <div class="<%= content_for?(:auth_card_class) ? yield(:auth_card_class) : 'ts-auth-card' %> mx-auto">
         <% if flash[:alert] %>
           <div class="mb-4 rounded-md bg-status-attention-bg p-4">
             <p class="text-sm text-status-attention"><%= flash[:alert] %></p>
