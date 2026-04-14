@@ -81,6 +81,7 @@ class CreateAccountController < ApplicationController
     end
 
     if @therapist&.persisted? && @location&.persisted?
+      GeocodeLocationJob.perform_later(@location.id)
       redirect_to dashboard_path, notice: "Your account has been created."
     else
       render :new, status: :unprocessable_entity
