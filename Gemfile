@@ -50,6 +50,9 @@ gem "lograge"
 # Ship logs to Better Stack (Logtail) [https://github.com/logtail/logtail-ruby-rails]
 gem "logtail-rails"
 
+# Rate limiting / request throttling at the Rack layer [https://github.com/rack/rack-attack]
+gem "rack-attack"
+
 # Environment variables
 gem "dotenv-rails", groups: [:development, :test]
 

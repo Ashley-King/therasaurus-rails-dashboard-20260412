@@ -3,6 +3,25 @@ class AuthController < ApplicationController
 
   layout "auth"
 
+  # Rate limiting — first line of defense for auth abuse. Rack::Attack
+  # (config/initializers/rack_attack.rb) runs looser limits at the Rack layer
+  # as a fallback. See _docs/_processes/rate-limiting.md.
+  rate_limit to: 5, within: 15.minutes,
+             only: :create,
+             name: "signin_ip",
+             with: -> { redirect_to signin_path, alert: "Too many sign-in attempts. Please try again in a few minutes." }
+
+  rate_limit to: 5, within: 1.hour,
+             only: :create,
+             name: "signin_email",
+             by: -> { params[:email].to_s.strip.downcase.presence || request.remote_ip },
+             with: -> { redirect_to signin_path, alert: "Too many sign-in attempts for this email. Please try again in an hour." }
+
+  rate_limit to: 10, within: 15.minutes,
+             only: :confirm,
+             name: "verify_ip",
+             with: -> { redirect_to verify_path, alert: "Too many verification attempts. Please try again in a few minutes." }
+
   before_action :redirect_if_signed_in, only: [ :new, :create, :verify, :confirm ]
 
   # GET /signin
