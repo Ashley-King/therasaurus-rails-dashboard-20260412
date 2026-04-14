@@ -1,6 +1,6 @@
 class SupabaseAuth
-  BASE_URL = ENV.fetch("SUPABASE_URL")
-  API_KEY = ENV.fetch("SUPABASE_PUBLISHABLE_KEY")
+  BASE_URL = Rails.application.credentials.fetch(:SUPABASE_URL)
+  API_KEY = Rails.application.credentials.fetch(:SUPABASE_PUBLISHABLE_KEY)
 
   class AuthError < StandardError; end
 

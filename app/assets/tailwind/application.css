@@ -77,6 +77,18 @@
    These use the Tailwind theme tokens above.
    ============================================ */
 
+/* ---- Global base styles ---- */
+a, button, [role="button"], input[type="submit"], input[type="button"] {
+  cursor: pointer;
+}
+
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
+  outline: 2px solid var(--color-plum);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
+}
+
 @layer components {
   /* -- Navigation Bar -- */
   .ts-navbar {
@@ -290,6 +302,33 @@
     font-weight: 600;
     color: var(--color-status-attention);
     background: var(--color-status-attention-bg);
+    border-radius: var(--radius-full);
+    padding: 0.25rem 0.75rem;
+  }
+
+  .ts-badge-membership-pro {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-plum-dark);
+    background: var(--color-plum-bg);
+    border-radius: var(--radius-full);
+    padding: 0.25rem 0.75rem;
+  }
+
+  .ts-badge-membership-trial {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: var(--radius-full);
+    padding: 0.25rem 0.75rem;
+  }
+
+  .ts-badge-membership-free {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4b5563;
+    background: #e5e7eb;
     border-radius: var(--radius-full);
     padding: 0.25rem 0.75rem;
   }

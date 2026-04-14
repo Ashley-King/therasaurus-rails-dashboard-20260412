@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_11_185831) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -55,6 +55,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
 
     t.unique_constraint ["name"], name: "age_groups_name_key"
+  end
+
+  create_table "public.business_hours", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.time "close_time", null: false
+    t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.integer "day_of_week", limit: 2, null: false
+    t.time "open_time", null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["therapist_id", "day_of_week", "open_time"], name: "index_business_hours_unique_block", unique: true
+    t.index ["therapist_id"], name: "index_business_hours_on_therapist_id"
+    t.check_constraint "close_time > open_time", name: "business_hours_time_order"
+    t.check_constraint "day_of_week >= 0 AND day_of_week <= 6", name: "business_hours_day_of_week_check"
   end
 
   create_table "public.colleges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -237,6 +250,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.index ["therapist_id"], name: "index_practice_services_on_therapist_id"
   end
 
+  create_table "public.practice_session_formats", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "session_format_id", null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["therapist_id", "session_format_id"], name: "idx_practice_session_formats_unique", unique: true
+  end
+
   create_table "public.practice_specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.boolean "is_focus", default: false, null: false
@@ -299,6 +320,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.unique_constraint ["name"], name: "services_name_key"
   end
 
+  create_table "public.session_formats", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
+    t.text "name", null: false
+    t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
+
+    t.unique_constraint ["name"], name: "session_formats_name_key"
+  end
+
   create_table "public.specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.string "name", null: false
@@ -356,6 +385,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.boolean "accepting_new_clients", default: true, null: false
     t.boolean "accepts_insurance", default: false, null: false
     t.boolean "allow_messages", default: true, null: false
+    t.text "appointment_cancellation_policy"
     t.string "availability_notes"
     t.decimal "consultation_fee"
     t.uuid "country_id", null: false
@@ -372,6 +402,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.boolean "in_person", default: true, null: false
     t.string "last_name", null: false
     t.decimal "late_cancellation_fee"
+    t.text "parking_transit_notes"
+    t.text "personal_statement"
     t.string "phone_ext"
     t.string "phone_number"
     t.string "practice_description"
@@ -384,10 +416,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.string "pronouns"
     t.boolean "show_phone_number", default: true
     t.jsonb "social_media", default: {}
+    t.string "telehealth_platform"
     t.decimal "therapy_fee"
     t.string "unique_id"
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.boolean "use_practice_name", default: false, null: false
+    t.uuid "user_id", null: false
     t.boolean "virtual", default: false, null: false
     t.boolean "weekend", default: false, null: false
     t.integer "year_began_practice"
@@ -395,6 +429,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.index ["profession_id"], name: "index_therapists_on_profession_id"
     t.index ["profile_slug"], name: "index_therapists_on_profile_slug", unique: true
     t.index ["unique_id"], name: "index_therapists_on_unique_id", unique: true
+    t.index ["user_id"], name: "index_therapists_on_user_id", unique: true
   end
 
   create_table "public.user_credentials", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -451,6 +486,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.index ["therapist_id"], name: "index_user_race_ethnicities_on_therapist_id"
   end
 
+  create_table "public.users", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "email", null: false
+    t.boolean "is_admin", default: false, null: false
+    t.boolean "is_banned", default: false, null: false
+    t.string "membership_status", default: "member", null: false
+    t.string "stripe_customer_id"
+    t.datetime "trial_ends_at", precision: nil
+    t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+  end
+
   create_table "public.zip_lookups", id: :serial, force: :cascade do |t|
     t.text "city", null: false
     t.text "city_alt"
@@ -468,6 +514,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
     t.index ["zip"], name: "idx_zip_lookups_zip"
   end
 
+  add_foreign_key "public.business_hours", "public.therapists", name: "business_hours_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.locations", "public.therapists"
   add_foreign_key "public.practice_accessibility_options", "public.accessibility_options"
   add_foreign_key "public.practice_accessibility_options", "public.therapists"
@@ -483,6 +530,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
   add_foreign_key "public.practice_payment_methods", "public.therapists"
   add_foreign_key "public.practice_services", "public.services"
   add_foreign_key "public.practice_services", "public.therapists"
+  add_foreign_key "public.practice_session_formats", "public.session_formats", name: "practice_session_formats_session_format_id_fkey"
+  add_foreign_key "public.practice_session_formats", "public.therapists", name: "practice_session_formats_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.practice_specialties", "public.specialties"
   add_foreign_key "public.practice_specialties", "public.therapists"
   add_foreign_key "public.professions", "public.profession_types", name: "professions_profession_type_id_fkey"
@@ -496,6 +545,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
   add_foreign_key "public.therapist_education", "public.therapists"
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"
+  add_foreign_key "public.therapists", "public.users", name: "therapists_user_id_fkey", on_delete: :cascade
   add_foreign_key "public.user_credentials", "public.credential_organizations"
   add_foreign_key "public.user_credentials", "public.states", column: "license_state_id"
   add_foreign_key "public.user_credentials", "public.therapists"
@@ -503,6 +553,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185827) do
   add_foreign_key "public.user_genders", "public.therapists"
   add_foreign_key "public.user_race_ethnicities", "public.race_ethnicities"
   add_foreign_key "public.user_race_ethnicities", "public.therapists"
+  add_foreign_key "public.users", "auth.users", column: "id", name: "users_id_fkey", on_delete: :cascade
 
   create_table "extensions.spatial_ref_sys", primary_key: "srid", id: :integer, default: nil, force: :cascade do |t|
     t.string "auth_name", limit: 256

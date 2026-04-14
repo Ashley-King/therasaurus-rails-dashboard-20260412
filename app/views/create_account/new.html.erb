@@ -14,7 +14,7 @@
   <fieldset>
     <legend class="ts-subsection-heading mb-4">Personal Information</legend>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4">
       <div>
         <%= f.label :first_name, "First Name", class: "ts-label block mb-1" %>
         <%= f.text_field :first_name,
@@ -61,8 +61,8 @@
   <fieldset>
     <legend class="ts-subsection-heading mb-4">Primary Business Location</legend>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="sm:col-span-2">
+    <div class="grid grid-cols-1 gap-4">
+      <div>
         <%= f.label :street_address, "Street Address", class: "ts-label block mb-1" %>
         <%= f.text_field :street_address,
           value: params[:street_address],
@@ -72,7 +72,7 @@
           class: "ts-input w-full" %>
       </div>
 
-      <div class="sm:col-span-2">
+      <div>
         <%= f.label :street_address2, "Suite / Unit / Floor", class: "ts-label block mb-1" %>
         <%= f.text_field :street_address2,
           value: params[:street_address2],
@@ -120,7 +120,7 @@
         <p class="text-xs text-text-muted mt-1">TheraSaurus currently supports US-based providers only.</p>
       </div>
 
-      <div class="sm:col-span-2">
+      <div>
         <label class="flex items-center gap-2 cursor-pointer">
           <%= f.check_box :show_street_address,
             { checked: params[:show_street_address] != "0" },
@@ -131,7 +131,7 @@
     </div>
   </fieldset>
 
-  <div>
-    <%= f.submit "Create Account", class: "ts-btn-primary w-full py-2.5 text-base" %>
+  <div class="flex justify-end">
+    <%= f.submit "Create Account", class: "ts-btn-primary px-8 py-2.5 text-base" %>
   </div>
 <% end %>

@@ -45,7 +45,6 @@
               <%= dashboard_topnav_link "Dashboard", dashboard_path %>
               <%= dashboard_topnav_link "About You", about_you_path %>
               <%= dashboard_topnav_link "Your Practice", your_practice_path %>
-              <%= dashboard_topnav_link "Your Experience", "#" %>
             </nav>
 
             <%# Right side: avatar dropdown (desktop) + hamburger (mobile) %>
@@ -58,9 +57,15 @@
                           class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out"
                           aria-haspopup="true">
                     <span class="sr-only">Open account menu</span>
-                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-plum-bg text-plum font-semibold text-sm cursor-pointer">
-                      <%= initials_for(current_therapist, current_user) %>
-                    </span>
+                    <% if current_therapist&.practice_image_url.present? %>
+                      <img src="<%= current_therapist.practice_image_url %>"
+                           alt="Profile photo"
+                           class="h-8 w-8 rounded-full object-cover cursor-pointer">
+                    <% else %>
+                      <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-plum-bg text-plum font-semibold text-sm cursor-pointer">
+                        <%= initials_for(current_therapist, current_user) %>
+                      </span>
+                    <% end %>
                   </button>
                   <div data-dropdown-target="menu"
                        class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-20"
@@ -96,7 +101,6 @@
                     <%= link_to "Dashboard", dashboard_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <%= link_to "About You", about_you_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <%= link_to "Your Practice", your_practice_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
-                    <%= link_to "Your Experience", "#", class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <div class="border-b border-1 my-2 border-gray-200"></div>
                     <%= link_to "Account Settings", account_settings_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Integrations</a>

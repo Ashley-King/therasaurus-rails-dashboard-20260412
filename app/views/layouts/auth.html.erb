@@ -12,7 +12,7 @@
 <body class="h-full font-body text-text-body">
   <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <%= image_tag "logo.svg", alt: "TheraSaurus", class: "mx-auto", style: "max-width: 220px; height: auto;" %>
+      <%= image_tag "logo.svg", alt: "TheraSaurus", class: "mx-auto w-[100px] lg:w-[150px] h-auto" %>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full <%= content_for?(:auth_max_width) ? yield(:auth_max_width) : 'sm:max-w-md' %>">

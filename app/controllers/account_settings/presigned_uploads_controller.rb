@@ -20,15 +20,18 @@ module AccountSettings
 
       presigned_url = Aws::S3::Presigner.new(client: r2_client).presigned_url(
         :put_object,
-        bucket: Rails.application.credentials.R2_HEADSHOTS_BUCKET_NAME,
+        bucket: fetch_credential!(:R2_HEADSHOTS_BUCKET_NAME),
         key: key,
         content_type: content_type,
         expires_in: 300
       )
 
-      public_url = "#{Rails.application.credentials.R2_PUBLIC_URL}/#{key}"
+      public_url = "#{fetch_credential!(:R2_PUBLIC_URL)}/#{key}"
 
       render json: { presigned_url: presigned_url, public_url: public_url }
+    rescue KeyError => e
+      Rails.logger.error("R2 upload configuration error: #{e.message}")
+      render json: { error: "Profile photo uploads are not configured yet." }, status: :service_unavailable
     end
 
     private
@@ -36,12 +39,20 @@ module AccountSettings
     def r2_client
       @r2_client ||= Aws::S3::Client.new(
         region: "auto",
-        endpoint: Rails.application.credentials.R2_ENDPOINT,
+        endpoint: fetch_credential!(:R2_ENDPOINT),
         credentials: Aws::Credentials.new(
-          Rails.application.credentials.R2_ACCESS_KEY_ID,
-          Rails.application.credentials.R2_SECRET_ACCESS_KEY
-        )
+          fetch_credential!(:R2_ACCESS_KEY_ID),
+          fetch_credential!(:R2_SECRET_ACCESS_KEY)
+        ),
+        token_provider: nil
       )
+    end
+
+    def fetch_credential!(key)
+      value = Rails.application.credentials.fetch(key)
+      raise KeyError, "#{key} is blank" if value.blank?
+
+      value
     end
   end
 end

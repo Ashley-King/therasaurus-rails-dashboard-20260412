@@ -44,8 +44,11 @@ Your local shell will not have this ruby/bundler version so you will need to use
 - Prefer normal Rails patterns over custom frameworks.
 - Keep files small and names obvious.
 - Avoid clever code.
+- All buttons and links should have a cursor pointer and focus styles. All buttons and links should be keyboard navigable. All modals should trap focus and be keyboard navigable. 
 - Add a new layer only when the simpler option is clearly failing.
 - Write code that is easy to trace in one pass.
+- All pages should be accessible.
+- Do not use Rails.application.credentials.MY_KEY for important secrets. It can return nil. That can hide config mistakes. Prefer Rails.application.credentials.fetch(:KEY_NAME)
 
 ## Database and Supabase rules
 

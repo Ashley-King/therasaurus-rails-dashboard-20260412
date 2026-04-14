@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-14
+
+### Fixed
+- Profile photo uploads now read R2 settings with `fetch`, use explicit static credentials, and return a clear app error when R2 config is missing or blank.
+- Prevented profile photo uploads from falling back to a developer's local AWS SSO credentials.
+- Prevented the AWS SDK token provider from reading the developer's `AWS_PROFILE` SSO token during R2 client setup.
+- Profile photo upload errors now point to R2 CORS when the browser blocks the direct upload step.
+- The profile photo `Change` button now keeps its natural width instead of stretching across the upload status area.
+- The top-right dashboard account avatar now shows the saved profile photo instead of staying on initials.
+
 ## 2026-04-13
 
 ### Added

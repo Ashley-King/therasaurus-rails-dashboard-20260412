@@ -71,7 +71,8 @@ export default class extends Controller {
       this.showStatus("Photo updated!", false)
       setTimeout(() => this.clearStatus(), 3000)
     } catch (e) {
-      this.showStatus("Something went wrong. Please try again.", true)
+      console.error("Profile photo upload failed", e)
+      this.showStatus("Upload blocked by storage. Check the R2 CORS policy for this site.", true)
     }
   }
 

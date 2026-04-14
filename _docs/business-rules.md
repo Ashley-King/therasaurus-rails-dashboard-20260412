@@ -431,6 +431,11 @@ Therapists cannot directly edit protected system fields like:
 ## Media rules
 
 - The profile photo is part of phase one.
+- Profile photo uploads should use the app's R2 credentials from Rails credentials.
+- If R2 upload config is missing, the app should return a clear app error and should not fall back to a developer's local AWS credentials.
+- Profile photo uploads should also ignore any local AWS SSO profile token in the developer shell.
+- Browser uploads to R2 should have a bucket CORS policy that allows the app origin and the `Content-Type` header for `PUT` requests.
+- When a therapist has a profile photo, dashboard account avatars should show that photo instead of initials.
 - A practice logo can be added later or earlier if the dashboard layout needs it.
 - A short intro video should start as a link field, not a hosted upload.
 - A photo gallery should wait until after phase one.
