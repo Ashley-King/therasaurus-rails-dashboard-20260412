@@ -35,7 +35,8 @@ Rails.application.routes.draw do
   # Account Settings
   scope "account-settings", module: :account_settings do
     get "/", to: "accounts#show", as: :account_settings
-    resource :account, only: [ :show ]
+    resource :account, only: [ :show, :update ]
+    resource :presigned_upload, only: [ :create ], path: "presigned-upload"
     resource :update_email, only: [ :show ], path: "update-email"
     resource :notification, only: [ :show ], path: "notifications"
     resource :membership, only: [ :show ]

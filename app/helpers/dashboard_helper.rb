@@ -68,6 +68,14 @@ module DashboardHelper
     end
   end
 
+  def initials_for(therapist, user)
+    first = therapist&.first_name&.first&.upcase
+    last = therapist&.last_name&.first&.upcase
+    return "#{first}#{last}" if first.present? && last.present?
+
+    user&.email&.first&.upcase || "?"
+  end
+
   def dashboard_topnav_link(label, path)
     active = current_page?(path) || request.path.start_with?(path.chomp("/"))
     base_classes = "text-base leading-6 font-medium hover:text-gray-700 focus:outline-none focus:text-gray-700 transition ease-in-out duration-150"

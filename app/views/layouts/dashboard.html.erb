@@ -58,8 +58,8 @@
                           class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out"
                           aria-haspopup="true">
                     <span class="sr-only">Open account menu</span>
-                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-plum-bg text-plum font-semibold text-sm">
-                      <%= current_user&.email&.first&.upcase || "?" %>
+                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-plum-bg text-plum font-semibold text-sm cursor-pointer">
+                      <%= initials_for(current_therapist, current_user) %>
                     </span>
                   </button>
                   <div data-dropdown-target="menu"

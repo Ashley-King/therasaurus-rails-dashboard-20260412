@@ -1,7 +1,6 @@
 module AboutYou
   class ProfessionalIdentitiesController < BaseController
     def show
-      @professions = Profession.order(:name)
       @genders = Gender.order(:name)
       @race_ethnicities = RaceEthnicity.order(:name)
     end
@@ -12,7 +11,6 @@ module AboutYou
         update_race_ethnicities
         redirect_to professional_identity_path, notice: "Professional identity updated."
       else
-        @professions = Profession.order(:name)
         @genders = Gender.order(:name)
         @race_ethnicities = RaceEthnicity.order(:name)
         flash.now[:alert] = "Please fix the errors below."
@@ -23,7 +21,7 @@ module AboutYou
     private
 
     def professional_identity_params
-      params.require(:therapist).permit(:first_name, :last_name, :credentials, :pronouns, :profession_id)
+      params.require(:therapist).permit(:pronouns)
     end
 
     def update_genders
