@@ -1,5 +1,22 @@
 # Project Docs Index
 
+## Processes
+
+- [Auth](./_processes/auth.md) — sign-in, OTP verification, session/token handling, sign-out, profile gate
+- [Turnstile](./turnstile.md) — captcha setup
+- [Business Rules](./business-rules.md) — account + membership rules
+- [Background Jobs](./background-jobs.md) — queue list and job responsibilities
+- [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
+
+## Folders
+
+- [`_processes/`](./_processes/) — how features work end to end (update as behavior changes)
+- [`_plans/`](./_plans/) — active implementation plans
+- [`_completed/`](./_completed/) — archived/finished plans
+- [`_issues/`](./_issues/) — GitHub issue plans
+- [`_background-jobs/`](./_background-jobs/) — per-job notes
+- [`_cron-jobs/`](./_cron-jobs/) — scheduled task notes
+
 ## Design Reference
 
 - **Design tokens and component styles:** [`_frontend/therasaurus-design/`](./../_frontend/therasaurus-design/)

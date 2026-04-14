@@ -18,11 +18,15 @@ class AuthController < ApplicationController
       return render :new, status: :unprocessable_entity
     end
 
+    auth_log(:info, "auth.otp.send_requested")
+
     begin
       SupabaseAuth.new.send_otp(email)
       session[:pending_email] = email
+      auth_log(:info, "auth.otp.send_result", result: "ok")
       redirect_to verify_path
     rescue SupabaseAuth::AuthError => e
+      auth_log(:warn, "auth.otp.send_result", result: "error", error_class: e.class.name)
       flash.now[:alert] = e.message
       render :new, status: :unprocessable_entity
     end
@@ -49,19 +53,25 @@ class AuthController < ApplicationController
       return render :verify, status: :unprocessable_entity
     end
 
+    auth_log(:info, "auth.otp.verify_attempted")
+
     begin
       result = SupabaseAuth.new.verify_otp(email: email, token: token)
       store_auth_session(result)
       session.delete(:pending_email)
 
-      find_or_create_user!(id: result.dig("user", "id"), email: email)
+      user = find_or_create_user!(id: result.dig("user", "id"), email: email)
+      auth_log(:info, "auth.otp.verify_result", result: "ok", user_id: user.id)
+      auth_log(:info, "auth.session.created", user_id: user.id, provider: "supabase")
 
       if profile_complete?
         redirect_to dashboard_path, notice: "Welcome back!"
       else
+        auth_log(:info, "auth.profile_gate.redirect", user_id: user.id, to: "create_account")
         redirect_to create_account_path
       end
     rescue SupabaseAuth::AuthError => e
+      auth_log(:warn, "auth.otp.verify_result", result: "error", error_class: e.class.name)
       flash.now[:alert] = e.message
       @email = email
       render :verify, status: :unprocessable_entity
@@ -70,6 +80,8 @@ class AuthController < ApplicationController
 
   # DELETE /signout
   def destroy
+    user_id = current_user&.id
+    auth_log(:info, "auth.sign_out", user_id: user_id)
     reset_session
     redirect_to signin_path, notice: "You have been signed out."
   end
@@ -88,11 +100,13 @@ class AuthController < ApplicationController
     return user if user
 
     is_admin = AdminEmail.exists?(admin_email: email)
-    User.create!(
+    user = User.create!(
       id: id,
       email: email,
       is_admin: is_admin,
       membership_status: is_admin ? "pro" : "member"
     )
+    auth_log(:info, "auth.user.created", user_id: user.id, is_admin: is_admin, membership_status: user.membership_status)
+    user
   end
 end

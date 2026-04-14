@@ -23,6 +23,7 @@ module Authentication
 
   def require_auth
     unless signed_in?
+      auth_log(:info, "authz.denied", reason: "not_signed_in", path: request.path)
       redirect_to signin_path, alert: "Please sign in to continue."
     end
   end
@@ -30,7 +31,24 @@ module Authentication
   def require_profile
     return unless signed_in?
 
-    redirect_to create_account_path unless profile_complete?
+    unless profile_complete?
+      auth_log(:info, "authz.denied", user_id: current_user&.id, reason: "profile_incomplete", path: request.path)
+      redirect_to create_account_path
+    end
+  end
+
+  # Emit a structured auth/authz log line. Always PII-free: no email, no OTP,
+  # no JWTs. IP and user agent are always included so we can investigate
+  # suspicious activity without needing the full request log.
+  def auth_log(level, event, **fields)
+    payload = {
+      event: event,
+      ip: request&.remote_ip,
+      ua: request&.user_agent&.to_s&.truncate(200)
+    }.merge(fields).compact
+
+    message = payload.map { |k, v| "#{k}=#{v}" }.join(" ")
+    Rails.logger.public_send(level, message)
   end
 
   def profile_complete?
@@ -51,19 +69,25 @@ module Authentication
   def decode_jwt(token)
     JWT.decode(token, nil, false).first # Skip verification for now — Supabase issued
   rescue JWT::DecodeError
+    auth_log(:warn, "auth.session.invalid", reason: "jwt_invalid")
     nil
   end
 
   def handle_expired_token
     refresh_token = session[:refresh_token]
-    return clear_session_and_return_nil unless refresh_token
+    unless refresh_token
+      auth_log(:info, "auth.session.invalid", reason: "jwt_expired_no_refresh")
+      return clear_session_and_return_nil
+    end
 
     begin
       result = SupabaseAuth.new.refresh_session(refresh_token)
       store_auth_session(result)
       user_id = decode_jwt(result["access_token"])&.dig("sub")
+      auth_log(:info, "auth.session.refreshed", user_id: user_id)
       User.find_by(id: user_id)
-    rescue SupabaseAuth::AuthError
+    rescue SupabaseAuth::AuthError => e
+      auth_log(:warn, "auth.session.invalid", reason: "refresh_failed", error_class: e.class.name)
       clear_session_and_return_nil
     end
   end

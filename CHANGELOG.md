@@ -2,6 +2,18 @@
 
 ## 2026-04-14
 
+### Added
+- Structured JSON request logging via `lograge`. One line per request with `request_id`, `user_id`, `duration`, `view`, `db`, `status`, `host`, and filtered `params`. Multi-line Rails default preserved in development for readability.
+- Better Stack log shipping via `logtail-rails`. Enabled in every environment except `test` whenever `BETTER_STACK_SOURCE_TOKEN` and `BETTER_STACK_INGESTING_HOST` credentials are present; broadcasts alongside STDOUT so local tailing still works. Credentials stubbed in `credentials.example`.
+- `append_info_to_payload` in `ApplicationController` surfaces `current_user.id` (never email) to lograge.
+- Explicit dev log level (`debug`) and `:request_id` tag in `config/environments/development.rb`.
+- [`_docs/_processes/logging.md`](_docs/_processes/logging.md) documenting log shape, filtering rules, and Better Stack setup.
+- Structured `event=auth.*` log lines across the sign-in flow: OTP send/verify attempts and outcomes, session created/refreshed/invalid, profile gate redirect, and sign out. All PII-free — `user_id` only, never email or tokens.
+- `auth_log` helper in `Authentication` concern: single entry point for auth/authz log lines, always stamps `ip` and `ua` automatically. Added `auth.user.created` event and `authz.denied` events from `require_auth` / `require_profile`.
+
+### Changed
+- `config/initializers/filter_parameter_logging.rb` — expanded filter list to cover `jwt`, `authorization`, `session`, `api_key`, `access_token`, `refresh_token`, `turnstile`, `cf-turnstile-response`, `phone`, `dob`, `address`, `zip`, `card`, `account_number`, `routing_number`.
+
 ### Fixed
 - Profile photo uploads now read R2 settings with `fetch`, use explicit static credentials, and return a clear app error when R2 config is missing or blank.
 - Prevented profile photo uploads from falling back to a developer's local AWS SSO credentials.
