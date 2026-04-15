@@ -50,6 +50,11 @@ gem "lograge"
 # Ship logs to Better Stack (Logtail) [https://github.com/logtail/logtail-ruby-rails]
 gem "logtail-rails"
 
+# Error tracking via Better Stack, which uses the Sentry SDK with a
+# Better Stack DSN. See _docs/_processes/notifications.md.
+gem "sentry-ruby"
+gem "sentry-rails"
+
 # Rate limiting / request throttling at the Rack layer [https://github.com/rack/rack-attack]
 gem "rack-attack"
 

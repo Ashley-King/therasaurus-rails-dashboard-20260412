@@ -8,6 +8,7 @@
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
 - [Rate Limiting](./_processes/rate-limiting.md) — Rails `rate_limit` + Rack::Attack policy
+- [Notifications](./_processes/notifications.md) — internal Discord pings + Better Stack error tracking
 
 ## Folders
 

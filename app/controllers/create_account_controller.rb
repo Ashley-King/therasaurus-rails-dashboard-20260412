@@ -82,6 +82,12 @@ class CreateAccountController < ApplicationController
 
     if @therapist&.persisted? && @location&.persisted?
       GeocodeLocationJob.perform_later(@location.id)
+      Notifier.notify(
+        :admin,
+        "New signup: #{@therapist.first_name} #{@therapist.last_name} " \
+        "(therapist ##{@therapist.id}, #{profession.name}, " \
+        "#{@location.city}, #{state_code})"
+      )
       redirect_to dashboard_path, notice: "Your account has been created."
     else
       render :new, status: :unprocessable_entity

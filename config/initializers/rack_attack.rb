@@ -71,13 +71,33 @@ class Rack::Attack
   self.throttled_responder = lambda do |request|
     match_data = request.env["rack.attack.match_data"] || {}
     period = (match_data[:period] || 60).to_i
+    name = request.env["rack.attack.matched"]
+    ip = request.ip
 
     Rails.logger.warn(
       "event=rack_attack.throttled " \
-      "name=#{request.env['rack.attack.matched']} " \
-      "ip=#{request.ip} " \
+      "name=#{name} " \
+      "ip=#{ip} " \
       "path=#{request.path}"
     )
+
+    # One Discord ping per IP per hour when they trip any throttle.
+    # The cache key doubles as the cooldown. Swallow any errors so
+    # the middleware is never blocked by notification plumbing.
+    begin
+      cooldown_key = "notifier:rack_attack:#{ip}"
+      already_notified = Rails.cache.read(cooldown_key)
+      unless already_notified
+        Rails.cache.write(cooldown_key, true, expires_in: 1.hour)
+        Notifier.notify(
+          :admin,
+          "Rate limit tripped: `#{name}` by `#{ip}` on `#{request.path}` " \
+          "(further hits from this IP silenced for 1h)"
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("event=rack_attack.notify_failed error=#{e.class}")
+    end
 
     [
       429,

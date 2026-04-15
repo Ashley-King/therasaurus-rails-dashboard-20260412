@@ -3,6 +3,37 @@
 ## 2026-04-14
 
 ### Added
+- Internal Discord notifications via `Notifier` service
+  ([`app/services/notifier.rb`](app/services/notifier.rb)) and
+  `NotifierJob` ([`app/jobs/notifier_job.rb`](app/jobs/notifier_job.rb)).
+  Channel symbol → credentials webhook map is the single source of
+  truth. Delivery is always async through SolidQueue; failed
+  deliveries are logged (`event=notifier.delivery_failed`) and
+  discarded with no retries. Unknown channel symbols raise
+  `Notifier::UnknownChannel` at call time so typos are caught early.
+  Wired initially for new signup (`:admin`) in
+  `CreateAccountController#create` and for `Rack::Attack` throttle
+  trips (`:admin`) with a 1-hour per-IP cooldown stored in
+  `Rails.cache` so one scraper can't flood the channel.
+- Better Stack Error tracking via the Sentry SDK (`sentry-ruby` +
+  `sentry-rails`). Better Stack's setup page explicitly uses the
+  Sentry SDK with a Better Stack DSN — no Better-Stack-specific gem
+  exists. New [`config/initializers/sentry.rb`](config/initializers/sentry.rb)
+  is production-only, reads `BETTER_STACK_ERRORS_DSN` from
+  credentials, `traces_sample_rate: 0.0`, `send_default_pii: false`,
+  `report_rescued_exceptions: false`. Captures uncaught exceptions
+  from controllers, background jobs (SolidQueue via ActiveJob), and
+  anywhere in app code.
+- Uncaught exceptions are intentionally *not* routed to Discord.
+  Better Stack's native alerting (email + mobile app) covers error
+  triage for a solo dev, and Discord would just duplicate the signal
+  in a worse format. The `#errors` channel and `ERRORS_WEBHOOK`
+  credential stay in place, reserved for future manual use.
+- [`_docs/_processes/notifications.md`](_docs/_processes/notifications.md)
+  documenting the channel map, public API, what is currently wired,
+  and the Better Stack error tracking setup checklist. Linked from
+  the docs index.
+
 - Rate limiting on auth endpoints via two layers:
   - Rails 8 `rate_limit` in `AuthController` — 5 signin attempts per IP per 15 min, 5 per email per hour, 10 verify attempts per IP per 15 min. Redirects back to the form with a readable flash on throttle.
   - `rack-attack` middleware with a global 300 req/5 min per IP safety net plus looser auth-specific throttles as a fallback. Returns plain `429` with `Retry-After` and logs `event=rack_attack.throttled`.
