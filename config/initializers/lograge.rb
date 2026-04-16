@@ -15,7 +15,7 @@ Rails.application.configure do
   config.lograge.base_controller_class = "ActionController::Base"
 
   # Silence the healthcheck and asset requests.
-  config.lograge.ignore_actions = [ "Rails::HealthController#show" ]
+  config.lograge.ignore_actions = [ "Rails::HealthController#show", "HealthController#show" ]
   config.lograge.ignore_custom = lambda do |event|
     event.payload[:path].to_s.start_with?("/assets", "/rails/active_storage")
   end

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-04-15
+
+### Added
+- Deep health check endpoint at `/health`
+  ([`app/controllers/health_controller.rb`](app/controllers/health_controller.rb)).
+  Validates DB connectivity and Solid Queue process readiness. Returns
+  JSON `{"db":"ok","queue":"ok"}` with 200 when healthy, 503 when
+  degraded. Safelisted from Rack::Attack throttling and silenced from
+  Lograge request logs. Point a Better Stack uptime monitor at this
+  endpoint.
+
+### Changed
+- Upgraded Sentry DSN missing-credential log from `info` to `warn` so
+  it surfaces in Better Stack when error tracking is silently disabled
+  in production.
+
 ## 2026-04-14
 
 ### Added

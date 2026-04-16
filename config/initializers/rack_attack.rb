@@ -15,7 +15,7 @@ class Rack::Attack
 
   # Never throttle asset requests or the health check endpoint.
   safelist("allow assets and health check") do |req|
-    req.path.start_with?("/assets") || req.path == "/up"
+    req.path.start_with?("/assets") || req.path == "/up" || req.path == "/health"
   end
 
   # Always allow loopback traffic in development so local work is frictionless.

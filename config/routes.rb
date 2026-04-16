@@ -46,7 +46,8 @@ Rails.application.routes.draw do
     resource :membership, only: [ :show ]
   end
 
-  # Health check
+  # Health checks
+  get "health", to: "health#show"
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "auth#new"
