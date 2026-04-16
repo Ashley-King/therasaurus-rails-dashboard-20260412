@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount Avo::Engine, at: Avo.configuration.root_path
+
   # Auth
   get "signin", to: "auth#new"
   post "signin", to: "auth#create"
