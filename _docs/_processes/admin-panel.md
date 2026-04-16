@@ -23,10 +23,10 @@ The admin panel uses [Avo](https://avohq.io) (free/community edition) mounted at
 User, Therapist, Location, UserCredential, TherapistEducation, TherapistContinuingEducation, BusinessHour, ZipLookup
 
 ### Reference tables
-Specialty, Service, Language, AgeGroup, Gender, RaceEthnicity, Faith, AccessibilityOption, PaymentMethod, InsuranceCompany, SessionFormat, Country, State, Profession, ProfessionType, College, DegreeType, CredentialOrganization, AdminEmail
+Specialty, Service, Language, AgeGroup, Gender, RaceEthnicity, Faith, AccessibilityOption, PaymentMethod, InsuranceCompany, SessionFormat, Country, State, Profession, ProfessionType, College, DegreeType, CredentialOrganization, AdminEmail, SpecialtyCategory, ServiceCategory
 
 ### Join tables
-Not surfaced as standalone resources. Managed through therapist associations.
+Not surfaced as standalone resources. Managed through parent associations (e.g. therapist -> specialties, specialty -> specialty_categories).
 
 ## Adding a new resource
 

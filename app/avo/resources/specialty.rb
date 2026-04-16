@@ -7,6 +7,7 @@ class Avo::Resources::Specialty < Avo::BaseResource
   def fields
     field :id, as: :id
     field :name, as: :text
+    field :specialty_categories, as: :has_many, through: :specialty_to_categories
     field :created_at, as: :date_time, sortable: true, only_on: :index
   end
 end

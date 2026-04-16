@@ -10,6 +10,10 @@
   reference tables (Specialty, Service, Language, State, Profession,
   College, etc.). Access restricted to admin users via Supabase auth
   session + `is_admin` flag. Search enabled on all resources.
+- Specialty and service category models, migrations, and Avo
+  resources. SpecialtyCategory and ServiceCategory tables with
+  join tables to associate specialties/services with their
+  categories. Manageable through the admin panel.
 
 ## 2026-04-15
 

@@ -1,4 +1,4 @@
-class Avo::Resources::Service < Avo::BaseResource
+class Avo::Resources::ServiceCategory < Avo::BaseResource
   self.title = :name
   self.search = {
     query: -> { query.ransack(name_cont: params[:q]).result(distinct: false) }
@@ -7,7 +7,7 @@ class Avo::Resources::Service < Avo::BaseResource
   def fields
     field :id, as: :id
     field :name, as: :text
-    field :service_categories, as: :has_many, through: :service_to_categories
+    field :services, as: :has_many, through: :service_to_categories
     field :created_at, as: :date_time, sortable: true, only_on: :index
   end
 end
