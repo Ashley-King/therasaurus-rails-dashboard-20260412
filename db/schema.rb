@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_11_185831) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_000000) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -301,8 +301,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185831) do
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.string "name", null: false
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
-
+    t.index ["name"], name: "index_service_categories_on_name", unique: true
     t.unique_constraint ["name"], name: "service_categories_name_key"
+  end
+
+  create_table "public.service_to_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "service_category_id", null: false
+    t.uuid "service_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["service_category_id"], name: "index_service_to_categories_on_service_category_id"
+    t.index ["service_id", "service_category_id"], name: "idx_service_to_categories_unique", unique: true
+    t.index ["service_id"], name: "index_service_to_categories_on_service_id"
   end
 
   create_table "public.service_to_category", primary_key: ["service_id", "category_id"], force: :cascade do |t|
@@ -340,8 +350,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185831) do
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.string "name", null: false
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
-
+    t.index ["name"], name: "index_specialty_categories_on_name", unique: true
     t.unique_constraint ["name"], name: "specialty_categories_name_key"
+  end
+
+  create_table "public.specialty_to_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "specialty_category_id", null: false
+    t.uuid "specialty_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["specialty_category_id"], name: "index_specialty_to_categories_on_specialty_category_id"
+    t.index ["specialty_id", "specialty_category_id"], name: "idx_specialty_to_categories_unique", unique: true
+    t.index ["specialty_id"], name: "index_specialty_to_categories_on_specialty_id"
   end
 
   create_table "public.specialty_to_category", primary_key: ["specialty_id", "category_id"], force: :cascade do |t|
@@ -535,8 +555,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_185831) do
   add_foreign_key "public.practice_specialties", "public.specialties"
   add_foreign_key "public.practice_specialties", "public.therapists"
   add_foreign_key "public.professions", "public.profession_types", name: "professions_profession_type_id_fkey"
+  add_foreign_key "public.service_to_categories", "public.service_categories"
+  add_foreign_key "public.service_to_categories", "public.services"
   add_foreign_key "public.service_to_category", "public.service_categories", column: "category_id", name: "service_to_category_category_id_fkey"
   add_foreign_key "public.service_to_category", "public.services", name: "service_to_category_service_id_fkey"
+  add_foreign_key "public.specialty_to_categories", "public.specialties"
+  add_foreign_key "public.specialty_to_categories", "public.specialty_categories"
   add_foreign_key "public.specialty_to_category", "public.specialties", name: "specialty_to_category_specialty_id_fkey"
   add_foreign_key "public.specialty_to_category", "public.specialty_categories", column: "category_id", name: "specialty_to_category_category_id_fkey"
   add_foreign_key "public.therapist_continuing_education", "public.therapists"
