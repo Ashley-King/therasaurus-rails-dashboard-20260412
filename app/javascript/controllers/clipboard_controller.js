@@ -3,8 +3,11 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["source", "button"]
 
+  static values = { copy: String }
+
   copy() {
-    navigator.clipboard.writeText(this.sourceTarget.value).then(() => {
+    const text = this.hasCopyValue ? this.copyValue : this.sourceTarget.value
+    navigator.clipboard.writeText(text).then(() => {
       const btn = this.buttonTarget
       const originalHTML = btn.innerHTML
 

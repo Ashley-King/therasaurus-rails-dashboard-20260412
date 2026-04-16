@@ -6,6 +6,11 @@ class DashboardController < ApplicationController
   layout "dashboard"
 
   def show
+    if current_therapist.present?
+      @therapist = Therapist
+        .includes(:profession, :locations, :specialties, :services, :age_groups, :session_formats)
+        .find(current_therapist.id)
+    end
   end
 
   # POST /dashboard/test — fake slow endpoint for busy state testing

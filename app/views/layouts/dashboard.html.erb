@@ -6,6 +6,7 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "cropperjs", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="h-full font-body text-text-body">
@@ -74,6 +75,10 @@
                       <%= link_to "Account Settings", account_settings_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                       <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Integrations</a>
                       <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Support</a>
+                      <% if current_user&.is_admin? %>
+                        <div class="border-b border-1 my-2 border-gray-200"></div>
+                        <%= link_to "Admin", "/admin", class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                      <% end %>
                       <%= button_to "Sign out", signout_path, method: :delete,
                             class: "block w-full text-left px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out",
                             role: "menuitem" %>
@@ -105,6 +110,10 @@
                     <%= link_to "Account Settings", account_settings_path, class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
                     <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Integrations</a>
                     <a href="#" class="block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out" role="menuitem">Support</a>
+                    <% if current_user&.is_admin? %>
+                      <div class="border-b border-1 my-2 border-gray-200"></div>
+                      <%= link_to "Admin", "/admin", class: "block px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out", role: "menuitem" %>
+                    <% end %>
                     <div class="border-b border-1 my-2 border-gray-200"></div>
                     <%= button_to "Sign out", signout_path, method: :delete,
                           class: "block w-full text-left px-4 py-2 mb-0 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out",

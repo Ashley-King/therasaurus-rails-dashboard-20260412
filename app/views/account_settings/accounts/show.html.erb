@@ -11,30 +11,71 @@
     <div class="border border-gray-200 rounded-lg p-5">
       <%# ── Profile pic ── %>
       <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100" data-controller="profile-photo-upload">
-        <div class="h-16 w-16 rounded-full bg-plum-bg flex items-center justify-center overflow-hidden flex-shrink-0">
-          <img src="<%= therapist&.practice_image_url %>"
-               alt="Profile photo"
-               class="h-full w-full object-cover <%= 'hidden' unless therapist&.practice_image_url.present? %>"
-               data-profile-photo-upload-target="image">
-          <span class="text-lg font-semibold text-plum <%= 'hidden' if therapist&.practice_image_url.present? %>"
-                data-profile-photo-upload-target="initials">
-            <%= initials_for(therapist, current_user) %>
-          </span>
+        <div class="flex flex-col items-center gap-1.5 flex-shrink-0">
+          <div class="h-16 w-16 rounded-full bg-plum-bg flex items-center justify-center overflow-hidden">
+            <img src="<%= therapist&.practice_image_url %>"
+                 alt="Profile photo"
+                 class="h-full w-full object-cover <%= 'hidden' unless therapist&.practice_image_url.present? %>"
+                 data-profile-photo-upload-target="image">
+            <span class="text-lg font-semibold text-plum <%= 'hidden' if therapist&.practice_image_url.present? %>"
+                  data-profile-photo-upload-target="initials">
+              <%= initials_for(therapist, current_user) %>
+            </span>
+          </div>
+          <p class="text-xs text-text-muted">JPEG or PNG. 5 MB max.</p>
         </div>
-        <div class="flex flex-col items-start gap-1">
+        <div class="flex flex-col items-start gap-1.5">
           <button type="button"
                   class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-text-primary shadow-sm hover:bg-gray-50 cursor-pointer"
                   data-action="profile-photo-upload#pick">
             Change
           </button>
-          <p class="text-xs text-text-muted hidden" data-profile-photo-upload-target="status"></p>
+          <p class="text-xs hidden" data-profile-photo-upload-target="status" aria-live="polite"></p>
         </div>
         <input type="file"
-               accept="image/jpeg,image/png,image/webp"
+               accept="image/jpeg,image/png"
                class="hidden"
                data-profile-photo-upload-target="input"
-               data-action="change->profile-photo-upload#upload"
+               data-action="change->profile-photo-upload#openCropper"
                aria-label="Upload profile photo">
+
+        <%# ── Crop dialog ── %>
+        <dialog data-profile-photo-upload-target="dialog"
+                class="m-auto p-0 bg-transparent max-w-[600px] w-full max-h-dvh backdrop:bg-gray-950/80 backdrop:backdrop-blur-sm rounded-2xl">
+          <div class="bg-white rounded-2xl shadow-lg flex flex-col max-h-dvh overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <h3 class="text-lg font-heading font-semibold text-text-primary">Crop photo</h3>
+                <p class="text-sm text-text-muted mt-0.5">Drag to reposition. Your photo will be cropped to a square.</p>
+              </div>
+              <button type="button"
+                      data-action="profile-photo-upload#cancelCrop"
+                      class="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-text-muted hover:bg-gray-200 cursor-pointer"
+                      aria-label="Cancel cropping">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div class="p-4 min-h-0 flex-1 overflow-hidden">
+              <img data-profile-photo-upload-target="cropImage"
+                   alt="Image to crop"
+                   class="block max-w-full max-h-[60vh]">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100">
+              <button type="button"
+                      data-action="profile-photo-upload#cancelCrop"
+                      class="ts-btn-outline px-4 py-2">
+                Cancel
+              </button>
+              <button type="button"
+                      data-action="profile-photo-upload#confirmCrop"
+                      class="ts-btn-primary px-4 py-2">
+                Crop & Upload
+              </button>
+            </div>
+          </div>
+        </dialog>
       </div>
 
       <%# ── Account details ── %>

@@ -21,7 +21,8 @@ Rails.application.routes.draw do
   scope "about-you", module: :about_you do
     get "/", to: "professional_identities#show", as: :about_you
     resource :professional_identity, only: [ :show, :update ], path: "professional-identity"
-    resource :primary_credential, only: [ :show ], path: "primary-credential"
+    resource :primary_credential, only: [ :show, :update ], path: "primary-credential"
+    resource :credential_upload, only: [ :create ], path: "credential-upload"
     resource :education, only: [ :show ]
     resource :professional_development, only: [ :show ], path: "professional-development"
   end

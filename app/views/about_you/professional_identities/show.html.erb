@@ -3,23 +3,61 @@
 <% end %>
 
 <%= render layout: "about_you/shared/layout" do %>
-  <%# ── Identity card ── %>
-  <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Identity</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
-        <dt class="text-text-muted">Gender identity</dt>
-        <dd class="text-text-primary"><%= therapist&.genders&.any? ? therapist.genders.map(&:name).join(", ") : "Not specified" %></dd>
+  <%= form_with model: therapist, url: professional_identity_path, method: :patch,
+        data: { controller: "form-guard" }, class: "space-y-8" do |f| %>
 
-        <dt class="text-text-muted">Race/ethnicity</dt>
-        <dd class="text-text-primary"><%= therapist&.race_ethnicities&.any? ? therapist.race_ethnicities.map(&:name).join(", ") : "Not specified" %></dd>
-
-        <dt class="text-text-muted">Pronouns</dt>
-        <dd class="text-text-primary"><%= therapist&.pronouns.present? ? therapist.pronouns : "Not specified" %></dd>
-      </dl>
+    <%# ── Pronouns ── %>
+    <div>
+      <%= f.label :pronouns, class: "ts-label block mb-1.5" %>
+      <%= f.text_field :pronouns,
+            class: "ts-input block w-full sm:w-1/2",
+            placeholder: "e.g. she/her, he/him, they/them",
+            autocomplete: "off" %>
     </div>
-  </section>
+
+    <%# ── Gender Identity ── %>
+    <fieldset>
+      <legend class="ts-label mb-2">Gender identity</legend>
+      <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <% @genders.each do |gender| %>
+          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-sm text-text-primary cursor-pointer hover:border-plum hover:bg-plum-bg/50 has-[:checked]:border-plum has-[:checked]:bg-plum-bg transition">
+            <input type="checkbox"
+                   name="therapist[gender_ids][]"
+                   value="<%= gender.id %>"
+                   <%= "checked" if therapist&.gender_ids&.include?(gender.id) %>
+                   class="h-4 w-4 rounded border-border-input text-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+            <%= gender.name %>
+          </label>
+        <% end %>
+      </div>
+      <%# Hidden field so unchecking all still submits an empty array %>
+      <input type="hidden" name="therapist[gender_ids][]" value="">
+    </fieldset>
+
+    <%# ── Race / Ethnicity ── %>
+    <fieldset>
+      <legend class="ts-label mb-2">Race / ethnicity</legend>
+      <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <% @race_ethnicities.each do |re| %>
+          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-sm text-text-primary cursor-pointer hover:border-plum hover:bg-plum-bg/50 has-[:checked]:border-plum has-[:checked]:bg-plum-bg transition">
+            <input type="checkbox"
+                   name="therapist[race_ethnicity_ids][]"
+                   value="<%= re.id %>"
+                   <%= "checked" if therapist&.race_ethnicity_ids&.include?(re.id) %>
+                   class="h-4 w-4 rounded border-border-input text-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+            <%= re.name %>
+          </label>
+        <% end %>
+      </div>
+      <input type="hidden" name="therapist[race_ethnicity_ids][]" value="">
+    </fieldset>
+
+    <%# ── Cancel / Save ── %>
+    <div class="flex justify-end gap-3 pt-2">
+      <a href="<%= dashboard_path %>" class="ts-btn-outline px-6 py-2.5">Cancel</a>
+      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+    </div>
+  <% end %>
 <% end %>

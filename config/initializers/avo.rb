@@ -1,6 +1,6 @@
 Avo.configure do |config|
-  config.root_path = "/avo"
-  config.app_name = "Therasaurus Admin"
+  config.root_path = "/admin"
+  config.app_name = "Admin"
   config.current_user_method = :current_user
   config.click_row_to_view_record = true
 

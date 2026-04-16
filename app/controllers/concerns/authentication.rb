@@ -5,8 +5,6 @@ module Authentication
     helper_method :current_user, :current_therapist, :signed_in?
   end
 
-  private
-
   def current_user
     return @current_user if defined?(@current_user)
 
@@ -20,6 +18,8 @@ module Authentication
   def signed_in?
     current_user.present?
   end
+
+  private
 
   def require_auth
     unless signed_in?

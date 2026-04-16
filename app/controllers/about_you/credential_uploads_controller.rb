@@ -1,22 +1,29 @@
-module AccountSettings
-  class PresignedUploadsController < BaseController
-    ALLOWED_TYPES = %w[image/jpeg image/png].freeze
-    MAX_SIZE = 5.megabytes
+module AboutYou
+  class CredentialUploadsController < BaseController
+    ALLOWED_TYPES = %w[
+      application/pdf
+      image/jpeg
+      image/png
+      image/webp
+      image/heic
+      image/heif
+    ].freeze
+    MAX_SIZE = 10.megabytes
 
     def create
       content_type = params[:content_type]
       file_size = params[:file_size].to_i
 
       unless ALLOWED_TYPES.include?(content_type)
-        return render json: { error: "File type not allowed. Use JPEG or PNG." }, status: :unprocessable_entity
+        return render json: { error: "File type not allowed. Use PDF, JPEG, PNG, WebP, or HEIC." }, status: :unprocessable_entity
       end
 
       if file_size > MAX_SIZE
-        return render json: { error: "File too large. Maximum size is 5 MB." }, status: :unprocessable_entity
+        return render json: { error: "File too large. Maximum size is 10 MB." }, status: :unprocessable_entity
       end
 
-      extension = Rack::Mime::MIME_TYPES.invert[content_type]
-      key = "profiles/#{therapist.id}/#{Time.current.to_i}-#{SecureRandom.hex(3)}#{extension}"
+      extension = Rack::Mime::MIME_TYPES.invert[content_type] || ".bin"
+      key = "credentials/#{therapist.id}/#{Time.current.to_i}-#{SecureRandom.hex(3)}#{extension}"
 
       presigned_url = Aws::S3::Presigner.new(client: r2_client).presigned_url(
         :put_object,
@@ -30,8 +37,8 @@ module AccountSettings
 
       render json: { presigned_url: presigned_url, public_url: public_url }
     rescue KeyError => e
-      Rails.logger.error("R2 upload configuration error: #{e.message}")
-      render json: { error: "Profile photo uploads are not configured yet." }, status: :service_unavailable
+      Rails.logger.error("R2 credential upload configuration error: #{e.message}")
+      render json: { error: "Document uploads are not configured yet." }, status: :service_unavailable
     end
 
     private
