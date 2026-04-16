@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-04-16
+
+### Added
+- Admin panel using Avo (free/community edition) at `/avo`.
+  Includes Avo resources for all core models (User, Therapist,
+  Location, UserCredential, TherapistEducation,
+  TherapistContinuingEducation, BusinessHour, ZipLookup) and all
+  reference tables (Specialty, Service, Language, State, Profession,
+  College, etc.). Access restricted to admin users via Supabase auth
+  session + `is_admin` flag. Search enabled on all resources.
+
 ## 2026-04-15
 
 ### Added

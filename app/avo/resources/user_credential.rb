@@ -1,0 +1,37 @@
+class Avo::Resources::UserCredential < Avo::BaseResource
+  self.title = :credential_type
+
+  def fields
+    field :id, as: :id
+    field :therapist, as: :belongs_to
+    field :credential_type, as: :text
+    field :credential_status, as: :select, enum: ::UserCredential.credential_statuses
+
+    field :license_id, as: :text
+    field :license_state, as: :belongs_to, foreign_key: :license_state_id
+    field :license_expiration_date, as: :date
+
+    field :certificate_id, as: :text
+    field :certificate_institution, as: :text
+    field :certificate_expiration_date, as: :date
+
+    field :credential_organization, as: :belongs_to
+    field :organization_credential_id, as: :text
+    field :organization_name, as: :text
+    field :organization_expiration_date, as: :date
+    field :organization_credential_level, as: :text
+
+    field :credential_document, as: :text
+    field :credential_document_original_name, as: :text
+    field :credential_note, as: :textarea
+
+    field :verified_at, as: :date_time
+    field :pending_since, as: :date_time
+    field :revoked_at, as: :date_time
+    field :revoked_reason, as: :textarea
+    field :first_submitted_at, as: :date_time
+    field :grace_expires_at, as: :date_time
+
+    field :created_at, as: :date_time, sortable: true, only_on: :index
+  end
+end

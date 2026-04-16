@@ -58,6 +58,9 @@ gem "sentry-rails"
 # Rate limiting / request throttling at the Rack layer [https://github.com/rack/rack-attack]
 gem "rack-attack"
 
+# Admin panel [https://avohq.io]
+gem "avo"
+
 # Environment variables
 gem "dotenv-rails", groups: [:development, :test]
 
