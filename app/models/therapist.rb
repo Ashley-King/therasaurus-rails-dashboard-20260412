@@ -44,6 +44,9 @@ class Therapist < ApplicationRecord
   has_many :practice_session_formats, dependent: :destroy
   has_many :session_formats, through: :practice_session_formats
 
+  has_many :practice_telehealth_platforms, dependent: :destroy
+  has_many :telehealth_platforms, through: :practice_telehealth_platforms
+
   PRACTICE_YEAR_RANGE = 1940..Date.current.year
   PRACTICE_DESCRIPTION_MAX = 1500
 

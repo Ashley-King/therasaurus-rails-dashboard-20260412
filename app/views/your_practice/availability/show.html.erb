@@ -1,0 +1,127 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <%= form_with model: therapist, url: availability_path, method: :patch,
+        data: { controller: "form-guard toggle-visibility" }, class: "space-y-6" do |f| %>
+
+    <%# ── Treatment options ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Treatment options</h2>
+      <p class="text-sm text-text-muted mb-5">How do you see clients, and what session formats do you offer?</p>
+
+      <div class="space-y-6">
+        <fieldset>
+          <legend class="ts-label block mb-2">Session setting</legend>
+          <div class="space-y-4">
+            <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+              <%= f.check_box :in_person,
+                    class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+              <span>In-person therapy</span>
+            </label>
+
+            <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+              <%= f.check_box :virtual,
+                    class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer",
+                    data: { toggle_visibility_target: "trigger", action: "change->toggle-visibility#toggle" } %>
+              <span>Virtual therapy (telehealth)</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="ts-label block mb-2">Session formats</legend>
+          <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+            <% @session_formats.each do |format| %>
+              <li class="break-inside-avoid">
+                <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                  <input type="checkbox"
+                         name="therapist[session_format_ids][]"
+                         value="<%= format.id %>"
+                         <%= "checked" if therapist.session_format_ids.include?(format.id) %>
+                         class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                  <span><%= format.name %></span>
+                </label>
+              </li>
+            <% end %>
+          </ul>
+          <input type="hidden" name="therapist[session_format_ids][]" value="">
+        </fieldset>
+      </div>
+    </section>
+
+    <%# ── Telehealth platforms (visible when Virtual is checked) ── %>
+    <section class="ts-card" data-toggle-visibility-target="panel">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Telehealth platforms</h2>
+      <p class="text-sm text-text-muted mb-5">Which platforms do you use for virtual sessions? Select all that apply.</p>
+
+      <fieldset class="mb-5">
+        <legend class="sr-only">Telehealth platforms</legend>
+        <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+          <% @telehealth_platforms.each do |platform| %>
+            <li class="break-inside-avoid">
+              <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                <input type="checkbox"
+                       name="therapist[telehealth_platform_ids][]"
+                       value="<%= platform.id %>"
+                       <%= "checked" if therapist.telehealth_platform_ids.include?(platform.id) %>
+                       class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                <span><%= platform.name %></span>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+        <input type="hidden" name="therapist[telehealth_platform_ids][]" value="">
+      </fieldset>
+
+      <div>
+        <%= f.label :telehealth_platform_other, "Other platforms", class: "ts-label block mb-1.5" %>
+        <%= f.text_field :telehealth_platform_other,
+              placeholder: "Other platforms, separated by commas",
+              class: "ts-input block w-full sm:w-2/3",
+              autocomplete: "off" %>
+      </div>
+    </section>
+
+    <%# ── Extended availability ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Extended availability</h2>
+      <p class="text-sm text-text-muted mb-5">Do you offer appointments outside of standard weekday hours?</p>
+
+      <fieldset class="space-y-4">
+        <legend class="sr-only">Extended availability options</legend>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :early_morning,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+          <span>Early morning appointments (before 8 A.M.)</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :evening,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+          <span>Evening appointments (6 P.M. or later)</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :weekend,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+          <span>Weekend appointments</span>
+        </label>
+      </fieldset>
+    </section>
+
+    <%# ── Availability notes ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Notes about your availability</h2>
+      <p class="text-sm text-text-muted mb-5">Share anything else families should know — scheduling quirks, seasonal changes, etc.</p>
+
+      <%= f.label :availability_notes, "Availability notes", class: "sr-only" %>
+      <%= f.text_area :availability_notes,
+            rows: 4,
+            class: "ts-input block w-full",
+            placeholder: "E.g. I run summer groups in July and August only." %>
+    </section>
+
+    <div class="flex justify-end">
+      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,2 @@
+class TelehealthPlatform < ApplicationRecord
+end

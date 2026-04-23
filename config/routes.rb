@@ -33,7 +33,8 @@ Rails.application.routes.draw do
     resource :location, only: [ :show, :update ], path: "locations"
     resources :targeted_zips, only: [ :index, :create, :destroy ], path: "targeted-zips"
     resource :introduction, only: [ :show, :update ]
-    resource :clients_availability, only: [ :show ], path: "clients-availability"
+    resource :clients, only: [ :show, :update ]
+    resource :availability, only: [ :show, :update ], controller: "availability"
     resource :accessibility, only: [ :show, :update ], controller: "accessibility"
     resource :fees_payment, only: [ :show ], path: "fees-payment"
     resource :services_specialties, only: [ :show ], path: "services-specialties"

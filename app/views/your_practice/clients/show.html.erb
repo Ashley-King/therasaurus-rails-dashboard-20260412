@@ -1,0 +1,110 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <%= form_with model: therapist, url: clients_path, method: :patch,
+        data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
+
+    <%# ── New clients ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">New clients</h2>
+      <p class="text-sm text-text-muted mb-5">Let families know whether you're taking new clients and how to reach you.</p>
+
+      <fieldset data-controller="mutual-exclusion" class="space-y-4">
+        <legend class="sr-only">New client status</legend>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :accepting_new_clients,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer",
+                data: { mutual_exclusion_target: "first", action: "change->mutual-exclusion#uncheckSecond" } %>
+          <span>Accepting new clients</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :has_waitlist,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer",
+                data: { mutual_exclusion_target: "second", action: "change->mutual-exclusion#uncheckFirst" } %>
+          <span>Maintain a waitlist for new clients</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :free_phone_call,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+          <span>Offer a free introductory phone call</span>
+        </label>
+
+        <% if therapist.errors[:has_waitlist].any? %>
+          <p class="text-sm text-status-attention"><%= therapist.errors[:has_waitlist].first %></p>
+        <% end %>
+      </fieldset>
+    </section>
+
+    <%# ── Client demographics ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Client demographics</h2>
+      <p class="text-sm text-text-muted mb-5">Help families find a therapist who fits their needs. Select all that apply.</p>
+
+      <div class="space-y-6">
+        <fieldset>
+          <legend class="ts-label block mb-2">Age groups</legend>
+          <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+            <% @age_groups.each do |age_group| %>
+              <li class="break-inside-avoid">
+                <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                  <input type="checkbox"
+                         name="therapist[age_group_ids][]"
+                         value="<%= age_group.id %>"
+                         <%= "checked" if therapist.age_group_ids.include?(age_group.id) %>
+                         class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                  <span><%= age_group.name %></span>
+                </label>
+              </li>
+            <% end %>
+          </ul>
+          <input type="hidden" name="therapist[age_group_ids][]" value="">
+        </fieldset>
+
+        <fieldset>
+          <legend class="ts-label block mb-1">Languages</legend>
+          <p class="text-sm text-text-muted mb-3">In addition to English, I am fluent in:</p>
+          <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+            <% @languages.each do |language| %>
+              <li class="break-inside-avoid">
+                <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                  <input type="checkbox"
+                         name="therapist[language_ids][]"
+                         value="<%= language.id %>"
+                         <%= "checked" if therapist.language_ids.include?(language.id) %>
+                         class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                  <span><%= language.name %></span>
+                </label>
+              </li>
+            <% end %>
+          </ul>
+          <input type="hidden" name="therapist[language_ids][]" value="">
+        </fieldset>
+
+        <fieldset>
+          <legend class="ts-label block mb-1">Faiths and belief systems</legend>
+          <p class="text-sm text-text-muted mb-3">Traditions you have experience supporting. All families are welcome, whether or not their tradition is listed.</p>
+          <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+            <% @faiths.each do |faith| %>
+              <li class="break-inside-avoid">
+                <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                  <input type="checkbox"
+                         name="therapist[faith_ids][]"
+                         value="<%= faith.id %>"
+                         <%= "checked" if therapist.faith_ids.include?(faith.id) %>
+                         class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                  <span><%= faith.name %></span>
+                </label>
+              </li>
+            <% end %>
+          </ul>
+          <input type="hidden" name="therapist[faith_ids][]" value="">
+        </fieldset>
+      </div>
+    </section>
+
+    <div class="flex justify-end">
+      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+    </div>
+  <% end %>
+<% end %>

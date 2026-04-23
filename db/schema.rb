@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -52,7 +52,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
   create_table "public.age_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.text "name", null: false
+    t.integer "sort_order"
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
+    t.index ["sort_order"], name: "index_age_groups_on_sort_order"
 
     t.unique_constraint ["name"], name: "age_groups_name_key"
   end
@@ -258,6 +260,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
     t.index ["therapist_id", "session_format_id"], name: "idx_practice_session_formats_unique", unique: true
   end
 
+  create_table "public.practice_telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "telehealth_platform_id", null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["telehealth_platform_id"], name: "index_practice_telehealth_platforms_on_telehealth_platform_id"
+    t.index ["therapist_id", "telehealth_platform_id"], name: "idx_practice_telehealth_platforms_unique", unique: true
+    t.index ["therapist_id"], name: "index_practice_telehealth_platforms_on_therapist_id"
+  end
+
   create_table "public.practice_specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.boolean "is_focus", default: false, null: false
@@ -329,6 +341,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
 
     t.unique_constraint ["name"], name: "session_formats_name_key"
+  end
+
+  create_table "public.telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.timestamptz "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.text "name", null: false
+    t.timestamptz "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+
+    t.index ["name"], name: "index_telehealth_platforms_on_name", unique: true
   end
 
   create_table "public.specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -439,7 +459,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
     t.string "pronouns"
     t.boolean "show_phone_number", default: true
     t.jsonb "social_media", default: {}
-    t.string "telehealth_platform"
+    t.string "telehealth_platform_other"
     t.decimal "therapy_fee"
     t.string "unique_id"
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -557,6 +577,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
   add_foreign_key "public.practice_session_formats", "public.therapists", name: "practice_session_formats_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.practice_specialties", "public.specialties"
   add_foreign_key "public.practice_specialties", "public.therapists"
+  add_foreign_key "public.practice_telehealth_platforms", "public.telehealth_platforms"
+  add_foreign_key "public.practice_telehealth_platforms", "public.therapists", on_delete: :cascade
   add_foreign_key "public.professions", "public.profession_types", name: "professions_profession_type_id_fkey"
   add_foreign_key "public.service_to_categories", "public.service_categories"
   add_foreign_key "public.service_to_categories", "public.services"

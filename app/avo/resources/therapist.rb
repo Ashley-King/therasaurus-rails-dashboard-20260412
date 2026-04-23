@@ -73,6 +73,7 @@ class Avo::Resources::Therapist < Avo::BaseResource
     field :payment_methods, as: :has_many, through: :practice_payment_methods
     field :accessibility_options, as: :has_many, through: :practice_accessibility_options
     field :session_formats, as: :has_many, through: :practice_session_formats
+    field :telehealth_platforms, as: :has_many, through: :practice_telehealth_platforms
 
     field :created_at, as: :date_time, sortable: true, only_on: :index
   end

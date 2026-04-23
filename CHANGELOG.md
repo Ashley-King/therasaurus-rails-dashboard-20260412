@@ -3,6 +3,35 @@
 ## 2026-04-23
 
 ### Changed
+- **Clients & Availability split into two sections.** The single
+  `/your-practice/clients-availability` show page (display-only with
+  dead "Edit" links) is replaced by two edit pages with forms, matching
+  the one-page-one-form pattern used elsewhere in `Your Practice`.
+  - `/your-practice/clients` — `accepting_new_clients`, `has_waitlist`
+    (mutually exclusive, preserved from the existing model validation),
+    `free_phone_call`, plus age-group / language / faith checkbox
+    multi-selects.
+  - `/your-practice/availability` — in-person / virtual toggles,
+    session-format checkboxes, extended availability (early morning,
+    evening, weekend), availability notes, and telehealth platforms.
+    The telehealth section only reveals when "Virtual therapy" is
+    checked (via the new `toggle-visibility` Stimulus controller).
+  Sidebar and mobile nav now show "Clients" and "Availability" as
+  separate entries.
+
+- **Telehealth platforms are now a many-to-many.** Replaces the unused
+  `therapists.telehealth_platform` string column with a
+  `telehealth_platforms` table + `practice_telehealth_platforms` join,
+  seeded with the six common pediatric-therapy platforms (Zoom for
+  Healthcare, Doxy.me, SimplePractice, TheraPlatform, Google Meet,
+  Presence). A new `telehealth_platform_other` string on `therapists`
+  captures freeform additions (comma-separated). Admin-curated via a
+  new Avo resource. Migration: `20260423221610_create_telehealth_platforms`.
+
+- **Session format: added "Parent-child".** Pediatric-relevant fourth
+  option alongside Individual / Group / Family, seeded directly into
+  `session_formats`.
+
 - **Introduction: 1,500-character cap.** `Therapist` now validates
   `practice_description` against `PRACTICE_DESCRIPTION_MAX = 1500`,
   measuring visible text length (HTML tags stripped via
