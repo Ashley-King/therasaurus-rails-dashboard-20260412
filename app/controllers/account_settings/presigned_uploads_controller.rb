@@ -26,9 +26,10 @@ module AccountSettings
         expires_in: 300
       )
 
-      public_url = "#{fetch_credential!(:R2_PUBLIC_URL)}/#{key}"
-
-      render json: { presigned_url: presigned_url, public_url: public_url }
+      # Return only the R2 object key. The public URL is built on demand
+      # in Therapist#practice_image_url so we can change bucket / CDN /
+      # env without a data migration.
+      render json: { presigned_url: presigned_url, key: key }
     rescue KeyError => e
       Rails.logger.error("R2 upload configuration error: #{e.message}")
       render json: { error: "Profile photo uploads are not configured yet." }, status: :service_unavailable

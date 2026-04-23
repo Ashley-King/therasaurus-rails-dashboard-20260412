@@ -27,7 +27,8 @@ class Avo::Resources::Therapist < Avo::BaseResource
     field :use_practice_name, as: :boolean
     field :practice_website_url, as: :text, only_on: :forms
     field :practice_video_url, as: :text, only_on: :forms
-    field :practice_image_url, as: :text, only_on: :forms
+    field :practice_image_key, as: :text, only_on: :forms,
+      help: "R2 object key (not a full URL). The public URL is built on demand."
     field :practice_description, as: :textarea, only_on: :forms
     field :personal_statement, as: :textarea, only_on: :forms
 
@@ -59,7 +60,7 @@ class Avo::Resources::Therapist < Avo::BaseResource
     field :allow_messages, as: :boolean
 
     field :locations, as: :has_many
-    field :user_credentials, as: :has_many
+    field :user_credential, as: :has_one
     field :therapist_education, as: :has_many
     field :therapist_continuing_education, as: :has_many
     field :business_hours, as: :has_many

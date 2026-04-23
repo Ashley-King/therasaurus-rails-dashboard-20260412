@@ -6,7 +6,7 @@
 
 <%= form_with url: verify_path, method: :post, class: "space-y-6", data: { controller: "otp-input", turbo: false } do |f| %>
   <div>
-    <%= f.label :token, "Verification code", class: "block text-sm font-medium text-gray-700" %>
+    <%= f.label :token, "Verification code", class: "block text-base font-medium text-gray-700" %>
     <div class="mt-2">
       <%= f.text_field :token, required: true, autofocus: true, autocomplete: "one-time-code", inputmode: "numeric", maxlength: 8, minlength: 8,
         class: "block w-full rounded-md border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 tracking-[0.3em] text-center text-2xl font-mono px-3",
@@ -17,11 +17,11 @@
 
   <div>
     <%= f.submit "Verify", disabled: true,
-      class: "flex w-full justify-center rounded-md bg-teal-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+      class: "ts-btn-primary w-full px-6 py-2.5",
       data: { otp_input_target: "submit" } %>
   </div>
 <% end %>
 
 <p class="mt-6 text-center text-sm text-gray-500">
-  <%= link_to "Use a different email", signin_path, class: "text-teal-600 hover:text-teal-500" %>
+  <%= link_to "Use a different email", signin_path, class: "text-teal-600 hover:text-teal-500 hover:underline" %>
 </p>

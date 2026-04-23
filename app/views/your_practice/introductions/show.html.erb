@@ -1,19 +1,44 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Introduction</h1>
-<% end %>
-
 <%= render layout: "your_practice/shared/layout" do %>
   <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Introduce your practice</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= therapist&.practice_description.present? ? "Edit" : "Add" %></a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if therapist&.practice_description.present? %>
-        <p class="text-sm text-text-primary whitespace-pre-line"><%= therapist.practice_description %></p>
-      <% else %>
-        <p class="text-sm text-text-muted">Add an introduction to your practice.</p>
-      <% end %>
-    </div>
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-4">Introduce your practice</h2>
+
+    <%= form_with model: therapist, url: introduction_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-4" do |f| %>
+
+      <div data-controller="rich-text-editor"
+           data-rich-text-editor-max-value="<%= Therapist::PRACTICE_DESCRIPTION_MAX %>">
+        <trix-toolbar id="introduction-toolbar">
+          <div class="trix-button-row" style="justify-content: flex-start;">
+            <span class="trix-button-group trix-button-group--text-tools" data-trix-button-group="text-tools">
+              <button type="button" class="trix-button trix-button--icon trix-button--icon-bold" data-trix-attribute="bold" data-trix-key="b" title="Bold" tabindex="-1">Bold</button>
+              <button type="button" class="trix-button trix-button--icon trix-button--icon-italic" data-trix-attribute="italic" data-trix-key="i" title="Italic" tabindex="-1">Italic</button>
+            </span>
+            <span class="trix-button-group trix-button-group--block-tools" data-trix-button-group="block-tools">
+              <button type="button" class="trix-button trix-button--icon trix-button--icon-bullet-list" data-trix-attribute="bullet" title="Bulleted list" tabindex="-1">Bulleted list</button>
+              <button type="button" class="trix-button trix-button--icon trix-button--icon-number-list" data-trix-attribute="number" title="Numbered list" tabindex="-1">Numbered list</button>
+            </span>
+          </div>
+        </trix-toolbar>
+
+        <%= f.hidden_field :practice_description %>
+        <trix-editor input="therapist_practice_description"
+                     toolbar="introduction-toolbar"
+                     aria-label="Introduction"
+                     class="ts-trix-editor block w-full"></trix-editor>
+
+        <div class="mt-1 flex justify-between items-start gap-4">
+          <% if therapist.errors[:practice_description].any? %>
+            <p class="text-sm text-status-attention"><%= therapist.errors[:practice_description].first %></p>
+          <% else %>
+            <span></span>
+          <% end %>
+          <span class="text-xs text-text-muted" data-rich-text-editor-target="counter"></span>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
   </section>
 <% end %>

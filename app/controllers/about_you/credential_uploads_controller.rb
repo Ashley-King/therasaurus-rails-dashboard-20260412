@@ -27,15 +27,17 @@ module AboutYou
 
       presigned_url = Aws::S3::Presigner.new(client: r2_client).presigned_url(
         :put_object,
-        bucket: fetch_credential!(:R2_HEADSHOTS_BUCKET_NAME),
+        bucket: fetch_credential!(:R2_CREDENTIALS_BUCKET_NAME),
         key: key,
         content_type: content_type,
         expires_in: 300
       )
 
-      public_url = "#{fetch_credential!(:R2_PUBLIC_URL)}/#{key}"
-
-      render json: { presigned_url: presigned_url, public_url: public_url }
+      # The ptd-credentials bucket is private — we store only the object
+      # key. Presigned GET URLs are minted on demand in the admin download
+      # flow (CredentialDocumentsController). No public URL is ever stored
+      # in the database.
+      render json: { presigned_url: presigned_url, key: key }
     rescue KeyError => e
       Rails.logger.error("R2 credential upload configuration error: #{e.message}")
       render json: { error: "Document uploads are not configured yet." }, status: :service_unavailable

@@ -81,35 +81,15 @@
           class: "ts-input w-full" %>
       </div>
 
-      <div>
-        <%= f.label :city, "City", class: "ts-label block mb-1" %>
-        <%= f.text_field :city,
-          value: params[:city],
-          required: true,
-          maxlength: 50,
-          autocomplete: "address-level2",
-          class: "ts-input w-full" %>
-      </div>
-
-      <div>
-        <%= f.label :state, "State", class: "ts-label block mb-1" %>
-        <%= f.select :state,
-          options_from_collection_for_select(@states, :code, :code, params[:state]),
-          { include_blank: "Select a state" },
-          { required: true, class: "ts-select w-full" } %>
-      </div>
-
-      <div>
-        <%= f.label :zip, "ZIP Code", class: "ts-label block mb-1" %>
-        <%= f.text_field :zip,
-          value: params[:zip],
-          required: true,
-          maxlength: 5,
-          pattern: "\\d{5}",
-          inputmode: "numeric",
-          autocomplete: "postal-code",
-          class: "ts-input w-full" %>
-      </div>
+      <%= render "shared/zip_combobox",
+            name_prefix: "location",
+            index: 0,
+            zip: params.dig(:location, :zip),
+            city: params.dig(:location, :city),
+            state: params.dig(:location, :state),
+            latitude: params.dig(:location, :latitude),
+            longitude: params.dig(:location, :longitude),
+            city_match: params.dig(:location, :city_match_successful) == "1" %>
 
       <div>
         <%= f.label :country_id, "Country", class: "ts-label block mb-1" %>

@@ -66,6 +66,12 @@ class Rack::Attack
     req.ip if req.path == "/verify" && req.post?
   end
 
+  # GET /zip-search — by IP. A debounced autocomplete should stay well under
+  # this ceiling; anything higher is a scraper enumerating the ZIP dataset.
+  throttle("zip-search/ip", limit: 30, period: 1.minute) do |req|
+    req.ip if req.path == "/zip-search" && req.get?
+  end
+
   ### Throttled response ###
 
   self.throttled_responder = lambda do |request|

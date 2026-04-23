@@ -1,0 +1,62 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <section class="ts-card">
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-4">Practice information</h2>
+
+    <%= form_with model: therapist, url: practice_information_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
+
+      <p class="text-xs text-text-muted"><span class="text-status-attention">*</span> Required</p>
+
+      <div>
+        <%= f.label :practice_name, class: "ts-label block mb-1.5" %>
+        <%= f.text_field :practice_name,
+              class: "ts-input block w-full sm:w-2/3",
+              autocomplete: "off" %>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <%= f.check_box :use_practice_name,
+              class: "h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+        <%= f.label :use_practice_name, "Display practice name instead of my real name on my profile",
+              class: "text-base text-text-primary cursor-pointer" %>
+      </div>
+
+      <div>
+        <%= f.label :practice_website_url, "Website", class: "ts-label block mb-1.5" %>
+        <%= f.url_field :practice_website_url,
+              placeholder: "https://",
+              class: "ts-input block w-full sm:w-2/3",
+              autocomplete: "off" %>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-4 sm:w-2/3">
+        <div>
+          <%= f.label :phone_number, class: "ts-label block mb-1.5" do %>
+            Phone number <span class="text-status-attention">*</span>
+          <% end %>
+          <%= f.telephone_field :phone_number,
+                required: true,
+                class: "ts-input block w-full",
+                autocomplete: "off" %>
+        </div>
+        <div>
+          <%= f.label :phone_ext, "Extension", class: "ts-label block mb-1.5" %>
+          <%= f.text_field :phone_ext,
+                class: "ts-input block w-full",
+                autocomplete: "off" %>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <%= f.check_box :show_phone_number,
+              class: "h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+        <%= f.label :show_phone_number, "Show my phone number on my public profile",
+              class: "text-base text-text-primary cursor-pointer" %>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

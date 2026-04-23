@@ -67,10 +67,21 @@ module Authentication
   end
 
   def decode_jwt(token)
-    JWT.decode(token, nil, false).first # Skip verification for now — Supabase issued
+    payload = JWT.decode(token, nil, false).first # Skip signature verification — Supabase issued.
+    return nil if jwt_expired?(payload)
+    payload
   rescue JWT::DecodeError
     auth_log(:warn, "auth.session.invalid", reason: "jwt_invalid")
     nil
+  end
+
+  # A 30s skew guards against calls that decode the token, then hand it to
+  # Supabase a moment later and find it expired in flight.
+  def jwt_expired?(payload)
+    exp = payload&.dig("exp")
+    return true unless exp
+
+    Time.at(exp) <= Time.current + 30.seconds
   end
 
   def handle_expired_token

@@ -1,41 +1,171 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Education</h1>
-<% end %>
-
 <%= render layout: "about_you/shared/layout" do %>
-  <%# ── Colleges & universities ── %>
-  <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Colleges and universities</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if therapist&.therapist_education&.any? %>
-        <% therapist.therapist_education.includes(:college, :degree_type).each do |edu| %>
-          <div class="mb-3 last:mb-0">
-            <p class="text-sm font-medium text-text-primary"><%= edu.college&.name %></p>
-            <p class="text-xs text-text-muted">
-              <%= edu.degree_type&.name %><%= ", #{edu.graduation_year}" if edu.graduation_year.present? %>
-            </p>
-          </div>
-        <% end %>
-      <% else %>
-        <p class="text-sm text-text-muted">No education added yet.</p>
-      <% end %>
-    </div>
-  </section>
+  <div class="ts-card">
+    <%= form_with url: education_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-8" do %>
 
-  <%# ── Years of experience ── %>
-  <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Years of experience</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
-        <dt class="text-text-muted">In practice since</dt>
-        <dd class="text-text-primary"><%= therapist&.year_began_practice.present? ? therapist.year_began_practice : "Not specified" %></dd>
-      </dl>
-    </div>
-  </section>
+      <%# ── Years of experience ── %>
+      <section>
+        <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Years of experience</h2>
+        <p class="text-sm text-text-muted mb-4">The year you began practicing. Used to display your total years of experience on your profile.</p>
+
+        <div>
+          <label for="therapist_year_began_practice" class="ts-label block mb-1.5">In practice since</label>
+          <input type="text"
+                 id="therapist_year_began_practice"
+                 name="therapist[year_began_practice]"
+                 value="<%= therapist&.year_began_practice %>"
+                 inputmode="numeric"
+                 pattern="\d{4}"
+                 maxlength="4"
+                 autocomplete="off"
+                 placeholder="YYYY"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input block w-full sm:w-32">
+          <% if therapist&.errors&.[](:year_began_practice)&.any? %>
+            <p class="mt-1.5 text-xs text-red-600"><%= therapist.errors[:year_began_practice].to_sentence.capitalize %></p>
+          <% end %>
+        </div>
+      </section>
+
+      <%# ── Colleges and universities ── %>
+      <section data-controller="education-slots">
+        <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Colleges and universities</h2>
+        <p class="text-sm text-text-muted mb-4">Add up to two. If we don't have your school on file, you can add it — new entries are reviewed by our team before they appear on your public profile.</p>
+
+        <div class="space-y-4">
+          <% 2.times do |idx| %>
+            <% row = @education_rows[idx] || {} %>
+            <% is_hidden = idx == 1 && row[:college_id].blank? && row[:college_name].blank? %>
+
+            <div data-education-slots-target="slot"
+                 class="rounded-lg border border-gray-200 p-4"
+                 <%= "hidden" if is_hidden %>>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-text-primary">College #<%= idx + 1 %></h3>
+                <% if idx == 1 %>
+                  <button type="button"
+                          data-action="click->education-slots#remove"
+                          class="text-sm text-text-muted hover:text-text-primary hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1 rounded">
+                    Remove
+                  </button>
+                <% end %>
+              </div>
+
+              <%# College combobox %>
+              <div class="mb-4">
+                <label for="education_<%= idx %>_college_input" class="ts-label block mb-1.5">School</label>
+                <div data-controller="college-combobox"
+                     data-college-combobox-search-url-value="<%= college_search_path %>"
+                     data-college-combobox-index-value="<%= idx %>"
+                     class="relative">
+                  <input type="hidden"
+                         name="education[<%= idx %>][college_id]"
+                         value="<%= row[:college_id] %>"
+                         data-college-combobox-target="collegeId">
+                  <input type="hidden"
+                         name="education[<%= idx %>][college_name]"
+                         value=""
+                         data-college-combobox-target="collegeName">
+
+                  <%# Selected chip %>
+                  <div data-college-combobox-target="selected"
+                       <%= "hidden" unless row[:college_name].present? %>
+                       class="flex items-center gap-2 rounded-lg border border-border-default bg-gray-50 px-3 py-2">
+                    <span data-college-combobox-target="selectedName" class="text-sm text-text-primary"><%= row[:college_name] %></span>
+                    <span data-college-combobox-target="selectedBadge"
+                          <%= "hidden" unless row[:college_status] == "pending" %>
+                          class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-medium">
+                      Pending review
+                    </span>
+                    <button type="button"
+                            data-action="click->college-combobox#clear"
+                            class="ml-auto text-text-muted hover:text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1 rounded"
+                            aria-label="Remove selected college">
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <%# Text input %>
+                  <input type="text"
+                         id="education_<%= idx %>_college_input"
+                         <%= "hidden" if row[:college_name].present? %>
+                         data-college-combobox-target="input"
+                         data-action="input->college-combobox#onInput keydown->college-combobox#navigate focus->college-combobox#onFocus blur->college-combobox#onBlur"
+                         role="combobox"
+                         aria-expanded="false"
+                         aria-autocomplete="list"
+                         aria-haspopup="listbox"
+                         autocomplete="off"
+                         placeholder="Start typing your college…"
+                         class="ts-input block w-full">
+
+                  <%# Listbox %>
+                  <ul data-college-combobox-target="listbox"
+                      role="listbox"
+                      hidden
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border-default bg-white shadow-lg"></ul>
+                </div>
+              </div>
+
+              <%# Degree %>
+              <div class="mb-4">
+                <label for="education_<%= idx %>_degree_type_id" class="ts-label block mb-1.5">Degree</label>
+                <select id="education_<%= idx %>_degree_type_id"
+                        name="education[<%= idx %>][degree_type_id]"
+                        class="ts-select block w-full">
+                  <option value="">Select a degree (optional)</option>
+                  <% @degree_types.each do |dt| %>
+                    <option value="<%= dt.id %>" <%= "selected" if row[:degree_type_id] == dt.id %>>
+                      <%= dt.abbreviation %> — <%= dt.name %>
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+
+              <%# Graduation year %>
+              <div>
+                <label for="education_<%= idx %>_graduation_year" class="ts-label block mb-1.5">Graduation year</label>
+                <input type="text"
+                       id="education_<%= idx %>_graduation_year"
+                       name="education[<%= idx %>][graduation_year]"
+                       value="<%= row[:graduation_year] %>"
+                       inputmode="numeric"
+                       pattern="\d{4}"
+                       maxlength="4"
+                       autocomplete="off"
+                       placeholder="YYYY"
+                       data-controller="digits-only"
+                       data-action="input->digits-only#filter"
+                       class="ts-input block w-full sm:w-32">
+              </div>
+            </div>
+          <% end %>
+
+          <%# Add another button %>
+          <%
+            second_row = @education_rows[1] || {}
+            show_add = second_row[:college_id].blank? && second_row[:college_name].blank?
+          %>
+          <button type="button"
+                  data-education-slots-target="addButton"
+                  data-action="click->education-slots#add"
+                  <%= "hidden" unless show_add %>
+                  class="group inline-flex items-center gap-1.5 text-sm font-medium text-teal hover:text-teal-dark cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-1 rounded px-1 py-1">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span class="group-hover:underline">Add another college</span>
+          </button>
+        </div>
+      </section>
+
+      <%# ── Save ── %>
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= submit_tag "Save", class: "ts-btn-primary px-6 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
 <% end %>

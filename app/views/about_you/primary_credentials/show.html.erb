@@ -1,36 +1,28 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Primary Credential</h1>
-<% end %>
-
 <%= render layout: "about_you/shared/layout" do %>
-  <%= form_with model: @credential, url: primary_credential_path, method: :patch,
-        data: { controller: "credential-type form-guard" }, class: "space-y-8" do |f| %>
+  <div class="ts-card">
+    <%= form_with model: @credential, url: primary_credential_path, method: :patch,
+          data: { controller: "credential-type form-guard" }, class: "space-y-8" do |f| %>
 
     <p class="text-xs text-text-muted"><span class="text-status-attention">*</span> Required</p>
 
-    <%# ── Credential type radios ── %>
-    <fieldset>
-      <legend class="ts-label mb-3">Credential type <span class="text-status-attention">*</span></legend>
-      <div class="space-y-2">
+    <%# ── Credential type select ── %>
+    <div class="sm:w-1/2">
+      <label for="credential_type" class="ts-label block mb-1.5">Credential type <span class="text-status-attention">*</span></label>
+      <select id="credential_type"
+              name="user_credential[credential_type]"
+              required
+              data-action="change->credential-type#switch"
+              class="ts-select block w-full">
+        <option value="">Select a credential type</option>
         <% [
           ["state_license", "State License"],
           ["organization", "Organization Credential"],
           ["supervised", "Supervised Practice"]
         ].each do |value, label| %>
-          <label class="flex items-center gap-3 rounded-lg border border-border-default px-4 py-3 text-sm text-text-primary cursor-pointer hover:border-plum hover:bg-plum-bg/50 has-[:checked]:border-plum has-[:checked]:bg-plum-bg transition">
-            <input type="radio"
-                   name="user_credential[credential_type]"
-                   value="<%= value %>"
-                   required
-                   <%= "checked" if @credential.credential_type == value %>
-                   data-action="change->credential-type#switch"
-                   data-credential-type-key-param="<%= value %>"
-                   class="h-4 w-4 border-border-input text-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
-            <%= label %>
-          </label>
+          <option value="<%= value %>" <%= "selected" if @credential.credential_type == value %>><%= label %></option>
         <% end %>
-      </div>
-    </fieldset>
+      </select>
+    </div>
 
     <%# ══════════════════════════════════════════
         State License fields
@@ -39,41 +31,64 @@
          data-key="state_license"
          class="<%= "hidden" unless @credential.credential_type == "state_license" %> space-y-5">
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label for="state_license_state" class="ts-label block mb-1.5">State <span class="text-status-attention">*</span></label>
-          <select id="state_license_state"
-                  name="user_credential[license_state_id]"
-                  required
-                  class="ts-select block w-full">
-            <option value="">Select a state</option>
-            <% @states.each do |state| %>
-              <option value="<%= state.id %>" <%= "selected" if @credential.license_state_id == state.id %>><%= state.name %></option>
-            <% end %>
-          </select>
-        </div>
-
-        <div>
-          <label for="state_license_id" class="ts-label block mb-1.5">License number <span class="text-status-attention">*</span></label>
-          <input type="text"
-                 id="state_license_id"
-                 name="user_credential[license_id]"
-                 value="<%= @credential.license_id %>"
-                 required
-                 class="ts-input block w-full"
-                 autocomplete="off">
-        </div>
+      <div>
+        <label for="state_license_state" class="ts-label block mb-1.5">State <span class="text-status-attention">*</span></label>
+        <select id="state_license_state"
+                name="user_credential[license_state_id]"
+                required
+                class="ts-select block w-full sm:w-1/2">
+          <option value="">Select a state</option>
+          <% @states.each do |state| %>
+            <option value="<%= state.id %>" <%= "selected" if @credential.license_state_id == state.id %>><%= state.name %></option>
+          <% end %>
+        </select>
       </div>
 
-      <div class="sm:w-1/2">
-        <label for="state_license_expiration" class="ts-label block mb-1.5">Expiration date <span class="text-status-attention">*</span></label>
-        <input type="date"
-               id="state_license_expiration"
-               name="user_credential[license_expiration_date]"
-               value="<%= @credential.license_expiration_date %>"
+      <div>
+        <label for="state_license_id" class="ts-label block mb-1.5">License number <span class="text-status-attention">*</span></label>
+        <input type="text"
+               id="state_license_id"
+               name="user_credential[license_id]"
+               value="<%= @credential.license_id %>"
                required
-               class="ts-input block w-full">
+               class="ts-input block w-full sm:w-1/2"
+               autocomplete="off">
       </div>
+
+      <fieldset class="sm:w-1/2">
+        <legend class="ts-label mb-1.5">Expiration <span class="text-status-attention">*</span></legend>
+        <div class="flex items-center gap-2">
+          <label for="state_license_expiration_month" class="sr-only">Month (01–12)</label>
+          <input type="text"
+                 id="state_license_expiration_month"
+                 name="user_credential[license_expiration_month]"
+                 value="<%= @credential.license_expiration_date&.strftime("%m") %>"
+                 inputmode="numeric"
+                 pattern="\d{1,2}"
+                 maxlength="2"
+                 required
+                 placeholder="MM"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-16 text-center">
+          <span class="text-text-muted" aria-hidden="true">/</span>
+          <label for="state_license_expiration_year" class="sr-only">Year (YYYY)</label>
+          <input type="text"
+                 id="state_license_expiration_year"
+                 name="user_credential[license_expiration_year]"
+                 value="<%= @credential.license_expiration_date&.strftime("%Y") %>"
+                 inputmode="numeric"
+                 pattern="\d{4}"
+                 maxlength="4"
+                 required
+                 placeholder="YYYY"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-24 text-center">
+        </div>
+      </fieldset>
     </div>
 
     <%# ══════════════════════════════════════════
@@ -83,53 +98,74 @@
          data-key="organization"
          class="<%= "hidden" unless @credential.credential_type == "organization" %> space-y-5">
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label for="org_name" class="ts-label block mb-1.5">Organization name <span class="text-status-attention">*</span></label>
-          <input type="text"
-                 id="org_name"
-                 name="user_credential[organization_name]"
-                 value="<%= @credential.organization_name %>"
-                 required
-                 class="ts-input block w-full"
-                 placeholder="e.g. CBMT, AETA, AMTA"
-                 autocomplete="off">
-        </div>
-
-        <div>
-          <label for="org_credential_id" class="ts-label block mb-1.5">Member / certificate ID <span class="text-status-attention">*</span></label>
-          <input type="text"
-                 id="org_credential_id"
-                 name="user_credential[organization_credential_id]"
-                 value="<%= @credential.organization_credential_id %>"
-                 required
-                 class="ts-input block w-full"
-                 autocomplete="off">
-        </div>
+      <div>
+        <label for="org_name" class="ts-label block mb-1.5">Organization name <span class="text-status-attention">*</span></label>
+        <input type="text"
+               id="org_name"
+               name="user_credential[organization_name]"
+               value="<%= @credential.organization_name %>"
+               required
+               class="ts-input block w-full sm:w-1/2"
+               placeholder="e.g. CBMT, AETA, AMTA"
+               autocomplete="off">
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label for="org_expiration" class="ts-label block mb-1.5">Expiration date <span class="text-status-attention">*</span></label>
-          <input type="date"
-                 id="org_expiration"
-                 name="user_credential[organization_expiration_date]"
-                 value="<%= @credential.organization_expiration_date %>"
-                 required
-                 class="ts-input block w-full">
-        </div>
+      <div>
+        <label for="org_credential_id" class="ts-label block mb-1.5">Member / certificate ID <span class="text-status-attention">*</span></label>
+        <input type="text"
+               id="org_credential_id"
+               name="user_credential[organization_credential_id]"
+               value="<%= @credential.organization_credential_id %>"
+               required
+               class="ts-input block w-full sm:w-1/2"
+               autocomplete="off">
+      </div>
 
-        <div>
-          <label for="org_credential_level" class="ts-label block mb-1.5">Credential type <span class="text-status-attention">*</span></label>
+      <fieldset>
+        <legend class="ts-label mb-1.5">Expiration <span class="text-status-attention">*</span></legend>
+        <div class="flex items-center gap-2">
+          <label for="org_expiration_month" class="sr-only">Month (01–12)</label>
           <input type="text"
-                 id="org_credential_level"
-                 name="user_credential[organization_credential_level]"
-                 value="<%= @credential.organization_credential_level %>"
+                 id="org_expiration_month"
+                 name="user_credential[organization_expiration_month]"
+                 value="<%= @credential.organization_expiration_date&.strftime("%m") %>"
+                 inputmode="numeric"
+                 pattern="\d{1,2}"
+                 maxlength="2"
                  required
-                 class="ts-input block w-full"
-                 placeholder="e.g. Board Certification, MT-BC"
-                 autocomplete="off">
+                 placeholder="MM"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-16 text-center">
+          <span class="text-text-muted" aria-hidden="true">/</span>
+          <label for="org_expiration_year" class="sr-only">Year (YYYY)</label>
+          <input type="text"
+                 id="org_expiration_year"
+                 name="user_credential[organization_expiration_year]"
+                 value="<%= @credential.organization_expiration_date&.strftime("%Y") %>"
+                 inputmode="numeric"
+                 pattern="\d{4}"
+                 maxlength="4"
+                 required
+                 placeholder="YYYY"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-24 text-center">
         </div>
+      </fieldset>
+
+      <div>
+        <label for="org_credential_level" class="ts-label block mb-1.5">Credential type <span class="text-status-attention">*</span></label>
+        <input type="text"
+               id="org_credential_level"
+               name="user_credential[organization_credential_level]"
+               value="<%= @credential.organization_credential_level %>"
+               required
+               class="ts-input block w-full sm:w-1/2"
+               placeholder="e.g. Board Certification, MT-BC"
+               autocomplete="off">
       </div>
     </div>
 
@@ -151,41 +187,64 @@
                autocomplete="off">
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label for="supervised_state" class="ts-label block mb-1.5">State <span class="text-status-attention">*</span></label>
-          <select id="supervised_state"
-                  name="user_credential[license_state_id]"
-                  required
-                  class="ts-select block w-full">
-            <option value="">Select a state</option>
-            <% @states.each do |state| %>
-              <option value="<%= state.id %>" <%= "selected" if @credential.license_state_id == state.id %>><%= state.name %></option>
-            <% end %>
-          </select>
-        </div>
-
-        <div>
-          <label for="supervised_license_id" class="ts-label block mb-1.5">License number <span class="text-status-attention">*</span></label>
-          <input type="text"
-                 id="supervised_license_id"
-                 name="user_credential[license_id]"
-                 value="<%= @credential.license_id %>"
-                 required
-                 class="ts-input block w-full"
-                 autocomplete="off">
-        </div>
+      <div>
+        <label for="supervised_state" class="ts-label block mb-1.5">State <span class="text-status-attention">*</span></label>
+        <select id="supervised_state"
+                name="user_credential[license_state_id]"
+                required
+                class="ts-select block w-full sm:w-1/2">
+          <option value="">Select a state</option>
+          <% @states.each do |state| %>
+            <option value="<%= state.id %>" <%= "selected" if @credential.license_state_id == state.id %>><%= state.name %></option>
+          <% end %>
+        </select>
       </div>
 
-      <div class="sm:w-1/2">
-        <label for="supervised_expiration" class="ts-label block mb-1.5">Expiration date <span class="text-status-attention">*</span></label>
-        <input type="date"
-               id="supervised_expiration"
-               name="user_credential[license_expiration_date]"
-               value="<%= @credential.license_expiration_date %>"
+      <div>
+        <label for="supervised_license_id" class="ts-label block mb-1.5">License number <span class="text-status-attention">*</span></label>
+        <input type="text"
+               id="supervised_license_id"
+               name="user_credential[license_id]"
+               value="<%= @credential.license_id %>"
                required
-               class="ts-input block w-full">
+               class="ts-input block w-full sm:w-1/2"
+               autocomplete="off">
       </div>
+
+      <fieldset class="sm:w-1/2">
+        <legend class="ts-label mb-1.5">Expiration <span class="text-status-attention">*</span></legend>
+        <div class="flex items-center gap-2">
+          <label for="supervised_expiration_month" class="sr-only">Month (01–12)</label>
+          <input type="text"
+                 id="supervised_expiration_month"
+                 name="user_credential[license_expiration_month]"
+                 value="<%= @credential.license_expiration_date&.strftime("%m") %>"
+                 inputmode="numeric"
+                 pattern="\d{1,2}"
+                 maxlength="2"
+                 required
+                 placeholder="MM"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-16 text-center">
+          <span class="text-text-muted" aria-hidden="true">/</span>
+          <label for="supervised_expiration_year" class="sr-only">Year (YYYY)</label>
+          <input type="text"
+                 id="supervised_expiration_year"
+                 name="user_credential[license_expiration_year]"
+                 value="<%= @credential.license_expiration_date&.strftime("%Y") %>"
+                 inputmode="numeric"
+                 pattern="\d{4}"
+                 maxlength="4"
+                 required
+                 placeholder="YYYY"
+                 autocomplete="off"
+                 data-controller="digits-only"
+                 data-action="input->digits-only#filter"
+                 class="ts-input w-24 text-center">
+        </div>
+      </fieldset>
     </div>
 
     <%# ══════════════════════════════════════════
@@ -205,19 +264,18 @@
              class="sr-only"
              aria-label="Upload credential document">
 
-      <div class="flex items-center gap-3">
-        <button type="button"
-                data-action="credential-upload#pick"
-                class="ts-btn-outline px-4 py-2 inline-flex items-center gap-2 text-sm">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-          <%= @credential.credential_document.present? ? "Replace document" : "Upload document" %>
-        </button>
+      <button type="button"
+              data-action="credential-upload#pick"
+              class="ts-btn-outline px-4 py-2 inline-flex items-center gap-2 text-sm">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+        <%= @credential.credential_document.present? ? "Replace document" : "Upload document" %>
+      </button>
 
-        <span data-credential-upload-target="filename"
-              class="text-sm text-text-muted <%= "hidden" unless @credential.credential_document_original_name.present? %>">
-          <%= @credential.credential_document_original_name %>
-        </span>
-      </div>
+      <p data-credential-upload-target="filenameLine"
+         class="mt-2 text-sm text-text-muted <%= "hidden" unless @credential.credential_document_original_name.present? %>">
+        <span data-credential-upload-target="filenamePrefix"><%= "Current document:" if @credential.credential_document_original_name.present? %></span>
+        <span data-credential-upload-target="filename"><%= @credential.credential_document_original_name %></span>
+      </p>
 
       <p data-credential-upload-target="status" class="mt-2 text-sm hidden" aria-live="polite"></p>
 
@@ -243,10 +301,10 @@
                 placeholder="Optional notes about your credential"><%= @credential.credential_note %></textarea>
     </div>
 
-    <%# ── Cancel / Save ── %>
-    <div class="flex justify-end gap-3 pt-2">
-      <a href="<%= dashboard_path %>" class="ts-btn-outline px-6 py-2.5">Cancel</a>
-      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
-    </div>
-  <% end %>
+      <%# ── Save ── %>
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
+  </div>
 <% end %>

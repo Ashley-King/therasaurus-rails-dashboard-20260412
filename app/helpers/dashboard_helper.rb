@@ -31,7 +31,7 @@ module DashboardHelper
   end
 
   def your_practice_sidebar_link(label, path, icon_solid:, icon_outline:)
-    active = current_page?(path) || (path == practice_details_path && current_page?(your_practice_path))
+    active = current_page?(path) || (path == practice_information_path && current_page?(your_practice_path))
 
     base = "py-3 px-5 border-b last:border-0 border-gray-100 flex items-center gap-2.5 text-sm font-medium group"
     classes = if active

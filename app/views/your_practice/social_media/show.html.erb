@@ -1,0 +1,28 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <section class="ts-card">
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Social media</h2>
+    <p class="text-sm text-text-muted mb-5">Add the full URL for any platforms you'd like to show on your profile.</p>
+
+    <%= form_with model: therapist, url: social_media_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-5" do |f| %>
+
+      <% social = therapist.social_media || {} %>
+      <% YourPractice::SocialMediaController::PLATFORMS.each do |platform| %>
+        <div>
+          <label for="social_<%= platform %>" class="ts-label block mb-1.5"><%= platform.capitalize %></label>
+          <input type="url"
+                 id="social_<%= platform %>"
+                 name="therapist[social_media][<%= platform %>]"
+                 value="<%= social[platform] %>"
+                 placeholder="https://"
+                 autocomplete="off"
+                 class="ts-input block w-full sm:w-2/3">
+        </div>
+      <% end %>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

@@ -84,7 +84,7 @@ class AuthController < ApplicationController
       auth_log(:info, "auth.session.created", user_id: user.id, provider: "supabase")
 
       if profile_complete?
-        redirect_to dashboard_path, notice: "Welcome back!"
+        redirect_to account_settings_path, notice: "Welcome back!"
       else
         auth_log(:info, "auth.profile_gate.redirect", user_id: user.id, to: "create_account")
         redirect_to create_account_path
@@ -146,7 +146,7 @@ class AuthController < ApplicationController
     return unless signed_in?
     return if current_user.is_admin?
 
-    redirect_to dashboard_path if profile_complete?
+    redirect_to account_settings_path if profile_complete?
   end
 
   def find_or_create_user!(id:, email:)

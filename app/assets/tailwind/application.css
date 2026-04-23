@@ -14,7 +14,6 @@
 
   /* Brand */
   --color-plum: #795B83;
-  --color-plum-dark: #5C3F66;
   --color-plum-bg: #F3F1F6;
   --color-teal: #2FA0A0;
   --color-teal-dark: #1E7A7A;
@@ -87,6 +86,12 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
   outline: 2px solid var(--color-plum);
   outline-offset: 2px;
   border-radius: var(--radius-sm, 4px);
+}
+
+/* Circular preview for profile photo cropper */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
 }
 
 @layer components {
@@ -235,10 +240,10 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
 
   .ts-label {
     font-family: var(--font-body);
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 500;
     color: var(--color-text-secondary);
-    line-height: 1.25rem;
+    line-height: 1.5rem;
   }
 
   .ts-select {
@@ -309,7 +314,7 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
   .ts-badge-membership-pro {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--color-plum-dark);
+    color: var(--color-plum);
     background: var(--color-plum-bg);
     border-radius: var(--radius-full);
     padding: 0.25rem 0.75rem;

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_21_000001) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -32,7 +32,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
   # Note that some types may not work with other database engines. Be careful if changing database.
   create_enum "public.credential_status", ["PENDING_REVIEW", "VERIFIED", "REVOKED", "EXPIRED"]
   create_enum "public.insurance_status", ["pending", "approved", "rejected", "merged"]
-  create_enum "public.location_type", ["primary", "alternate"]
+  create_enum "public.location_type", ["primary", "additional"]
 
   create_table "public.accessibility_options", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.timestamptz "created_at", default: -> { "now()" }, null: false
@@ -372,6 +372,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
     t.text "description", null: false
     t.uuid "therapist_id", null: false
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.integer "year"
     t.index ["therapist_id"], name: "index_therapist_continuing_education_on_therapist_id"
   end
 
@@ -385,6 +386,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
     t.index ["college_id"], name: "index_therapist_education_on_college_id"
     t.index ["degree_type_id"], name: "index_therapist_education_on_degree_type_id"
     t.index ["therapist_id"], name: "index_therapist_education_on_therapist_id"
+  end
+
+  create_table "public.therapist_targeted_zips", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city", limit: 100, null: false
+    t.boolean "city_match_successful", default: false, null: false
+    t.datetime "created_at", null: false
+    t.string "geocode_status", limit: 20, default: "pending", null: false
+    t.datetime "geocoded_at"
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.string "state", limit: 2, null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "zip", limit: 10, null: false
+    t.index ["therapist_id", "zip"], name: "index_therapist_targeted_zips_on_therapist_id_and_zip", unique: true
+    t.index ["therapist_id"], name: "index_therapist_targeted_zips_on_therapist_id"
   end
 
   create_table "public.therapists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -413,7 +430,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
     t.string "phone_ext"
     t.string "phone_number"
     t.string "practice_description"
-    t.string "practice_image_url"
+    t.string "practice_image_key"
     t.string "practice_name"
     t.string "practice_video_url"
     t.string "practice_website_url"
@@ -453,7 +470,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
     t.datetime "grace_expires_at"
     t.datetime "last_reminder_sent_at"
     t.string "last_reminder_type"
-    t.datetime "last_verified_expires_at"
     t.date "license_expiration_date"
     t.string "license_id"
     t.uuid "license_state_id"
@@ -470,7 +486,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
     t.datetime "verified_at"
     t.index ["credential_organization_id"], name: "index_user_credentials_on_credential_organization_id"
     t.index ["license_state_id"], name: "index_user_credentials_on_license_state_id"
-    t.index ["therapist_id"], name: "index_user_credentials_on_therapist_id"
+    t.index ["therapist_id"], name: "index_user_credentials_on_therapist_id", unique: true
   end
 
   create_table "public.user_genders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -550,6 +566,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_000002) do
   add_foreign_key "public.therapist_education", "public.colleges"
   add_foreign_key "public.therapist_education", "public.degree_types"
   add_foreign_key "public.therapist_education", "public.therapists"
+  add_foreign_key "public.therapist_targeted_zips", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"
   add_foreign_key "public.therapists", "public.users", name: "therapists_user_id_fkey", on_delete: :cascade

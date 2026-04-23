@@ -1,10 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Handles credential document upload via presigned URL.
-// Targets: input (file input), filename (display), status (message), urlField (hidden input for URL),
+// Targets: input (file input), filenameLine (the whole "<prefix> <filename>" paragraph),
+//          filenamePrefix ("Current document:" / "New document:"), filename (the filename text),
+//          status (message), urlField (hidden input for URL),
 //          originalNameField (hidden input for original filename)
 export default class extends Controller {
-  static targets = ["input", "filename", "status", "urlField", "originalNameField"]
+  static targets = ["input", "filenameLine", "filenamePrefix", "filename", "status", "urlField", "originalNameField"]
 
   static values = { uploadUrl: String }
 
@@ -47,7 +49,7 @@ export default class extends Controller {
         return
       }
 
-      const { presigned_url, public_url } = await presignResponse.json()
+      const { presigned_url, key } = await presignResponse.json()
 
       // 2. Upload to R2
       const uploadResponse = await fetch(presigned_url, {
@@ -61,13 +63,21 @@ export default class extends Controller {
         return
       }
 
-      // 3. Set hidden fields so the form submits the URL
-      this.urlFieldTarget.value = public_url
+      // 3. Set hidden fields so the form submits the R2 object key.
+      //    ptd-credentials is a private bucket — we never store a public
+      //    URL. Admin-only download endpoint mints a presigned GET on demand.
+      this.urlFieldTarget.value = key
       this.originalNameFieldTarget.value = file.name
 
-      // 4. Show filename
+      // 4. Show filename — labelled "New document:" until the user saves.
+      //    After save, the page re-renders with "Current document:" from the server.
+      if (this.hasFilenamePrefixTarget) {
+        this.filenamePrefixTarget.textContent = "New document:"
+      }
       this.filenameTarget.textContent = file.name
-      this.filenameTarget.classList.remove("hidden")
+      if (this.hasFilenameLineTarget) {
+        this.filenameLineTarget.classList.remove("hidden")
+      }
       this.showStatus("Uploaded! Click Save to keep this document.", false)
       setTimeout(() => this.clearStatus(), 4000)
     } catch (e) {

@@ -10,14 +10,12 @@ class CreateAccountController < ApplicationController
   def new
     @professions = Profession.order(:name)
     @countries = Country.order(:name)
-    @states = State.order(:code)
   end
 
   # POST /create-account
   def create
     @professions = Profession.order(:name)
     @countries = Country.order(:name)
-    @states = State.order(:code)
 
     profession = Profession.find_by(id: params[:profession_id])
     country = Country.find_by(id: params[:country_id])
@@ -32,8 +30,10 @@ class CreateAccountController < ApplicationController
       return render :new, status: :unprocessable_entity
     end
 
-    state_code = params[:state].to_s.strip.upcase
-    zip_code = params[:zip].to_s.strip
+    loc = params[:location] || {}
+    state_code = loc[:state].to_s.strip.upcase
+    zip_code = loc[:zip].to_s.strip
+    city = loc[:city].to_s.strip
 
     unless state_code.match?(/\A[A-Z]{2}\z/)
       flash.now[:alert] = "State must be a valid 2-letter code."
@@ -46,7 +46,6 @@ class CreateAccountController < ApplicationController
     end
 
     unique_id = generate_unique_id
-    city = params[:city].to_s.strip
 
     ActiveRecord::Base.transaction do
       @therapist = current_user.build_therapist(
@@ -68,9 +67,12 @@ class CreateAccountController < ApplicationController
         location_type: :primary,
         street_address: params[:street_address].to_s.strip,
         street_address2: params[:street_address2].to_s.strip.presence,
-        city: params[:city].to_s.strip,
+        city: city,
         state: state_code,
         zip: zip_code,
+        latitude: loc[:latitude].presence,
+        longitude: loc[:longitude].presence,
+        city_match_successful: loc[:city_match_successful] == "1",
         show_street_address: params[:show_street_address] == "1"
       )
 
@@ -81,14 +83,13 @@ class CreateAccountController < ApplicationController
     end
 
     if @therapist&.persisted? && @location&.persisted?
-      GeocodeLocationJob.perform_later(@location.id)
       Notifier.notify(
         :admin,
         "New signup: #{@therapist.first_name} #{@therapist.last_name} " \
         "(therapist ##{@therapist.id}, #{profession.name}, " \
         "#{@location.city}, #{state_code})"
       )
-      redirect_to dashboard_path, notice: "Your account has been created."
+      redirect_to account_settings_path, notice: "Your account has been created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -99,7 +100,7 @@ class CreateAccountController < ApplicationController
   def redirect_if_profile_complete
     return if current_user.is_admin?
 
-    redirect_to dashboard_path if profile_complete?
+    redirect_to account_settings_path if profile_complete?
   end
 
   def generate_profile_slug(first_name, last_name, profession, city, state_code, unique_id)

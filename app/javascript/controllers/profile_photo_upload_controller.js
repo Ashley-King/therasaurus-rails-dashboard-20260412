@@ -114,7 +114,7 @@ export default class extends Controller {
       return
     }
 
-    const { presigned_url, public_url } = await presignResponse.json()
+    const { presigned_url, key } = await presignResponse.json()
 
     // 2. Upload to R2
     const uploadResponse = await fetch(presigned_url, {
@@ -128,9 +128,10 @@ export default class extends Controller {
       return
     }
 
-    // 3. Save URL to therapist record
+    // 3. Save the object key to the therapist record. The server
+    //    responds with the computed public URL so we can update the UI.
     const saveResponse = await this.request("/account-settings/account", "PATCH", {
-      practice_image_url: public_url
+      practice_image_key: key
     })
 
     if (!saveResponse.ok) {
@@ -139,12 +140,29 @@ export default class extends Controller {
       return
     }
 
-    // 4. Update UI
-    this.imageTarget.src = public_url
+    const { practice_image_url: imageUrl } = await saveResponse.json()
+
+    // 4. Update UI — profile card and nav avatar
+    this.imageTarget.src = imageUrl
     this.imageTarget.classList.remove("hidden")
     if (this.hasInitialsTarget) {
       this.initialsTarget.classList.add("hidden")
     }
+
+    // Update nav avatar(s) outside this controller's scope
+    document.querySelectorAll(".js-nav-avatar").forEach((el) => {
+      if (el.tagName === "IMG") {
+        el.src = imageUrl
+      } else {
+        // Replace initials span with an img
+        const img = document.createElement("img")
+        img.src = imageUrl
+        img.alt = "Profile photo"
+        img.className = "js-nav-avatar h-8 w-8 rounded-full object-cover cursor-pointer"
+        el.replaceWith(img)
+      }
+    })
+
     this.showStatus("Photo updated!", false)
     setTimeout(() => this.clearStatus(), 3000)
   }

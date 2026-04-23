@@ -1,10 +1,7 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Identity</h1>
-<% end %>
-
 <%= render layout: "about_you/shared/layout" do %>
-  <%= form_with model: therapist, url: professional_identity_path, method: :patch,
-        data: { controller: "form-guard" }, class: "space-y-8" do |f| %>
+  <div class="ts-card">
+    <%= form_with model: therapist, url: professional_identity_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-8" do |f| %>
 
     <%# ── Pronouns ── %>
     <div>
@@ -21,12 +18,12 @@
       <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         <% @genders.each do |gender| %>
-          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-sm text-text-primary cursor-pointer hover:border-plum hover:bg-plum-bg/50 has-[:checked]:border-plum has-[:checked]:bg-plum-bg transition">
+          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-base text-text-primary cursor-pointer hover:border-plum has-[:checked]:border-plum transition">
             <input type="checkbox"
                    name="therapist[gender_ids][]"
                    value="<%= gender.id %>"
                    <%= "checked" if therapist&.gender_ids&.include?(gender.id) %>
-                   class="h-4 w-4 rounded border-border-input text-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                   class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
             <%= gender.name %>
           </label>
         <% end %>
@@ -41,12 +38,12 @@
       <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         <% @race_ethnicities.each do |re| %>
-          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-sm text-text-primary cursor-pointer hover:border-plum hover:bg-plum-bg/50 has-[:checked]:border-plum has-[:checked]:bg-plum-bg transition">
+          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-base text-text-primary cursor-pointer hover:border-plum has-[:checked]:border-plum transition">
             <input type="checkbox"
                    name="therapist[race_ethnicity_ids][]"
                    value="<%= re.id %>"
                    <%= "checked" if therapist&.race_ethnicity_ids&.include?(re.id) %>
-                   class="h-4 w-4 rounded border-border-input text-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                   class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
             <%= re.name %>
           </label>
         <% end %>
@@ -54,10 +51,10 @@
       <input type="hidden" name="therapist[race_ethnicity_ids][]" value="">
     </fieldset>
 
-    <%# ── Cancel / Save ── %>
-    <div class="flex justify-end gap-3 pt-2">
-      <a href="<%= dashboard_path %>" class="ts-btn-outline px-6 py-2.5">Cancel</a>
-      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
-    </div>
-  <% end %>
+      <%# ── Save ── %>
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
+  </div>
 <% end %>

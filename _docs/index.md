@@ -6,6 +6,7 @@
 - [Turnstile](./turnstile.md) — captcha setup
 - [Business Rules](./business-rules.md) — account + membership rules
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
+- [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted ZIPs, `Geocodable` concern, ZIP combobox UX
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
 - [Rate Limiting](./_processes/rate-limiting.md) — Rails `rate_limit` + Rack::Attack policy
 - [Notifications](./_processes/notifications.md) — internal Discord pings + Better Stack error tracking

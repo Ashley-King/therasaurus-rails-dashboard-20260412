@@ -11,7 +11,7 @@ Avo.configure do |config|
     end
 
     unless current_user.is_admin?
-      redirect_to main_app.dashboard_path, alert: "Admin access required."
+      redirect_to main_app.account_settings_path, alert: "Admin access required."
     end
   end
 

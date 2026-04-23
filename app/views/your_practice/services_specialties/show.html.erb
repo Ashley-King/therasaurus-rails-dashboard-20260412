@@ -1,13 +1,9 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Services & Specialties</h1>
-<% end %>
-
 <%= render layout: "your_practice/shared/layout" do %>
   <%# ── Services card ── %>
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Services</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= therapist&.services&.any? ? "Edit" : "Add" %></a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline"><%= therapist&.services&.any? ? "Edit" : "Add" %></a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if therapist&.services&.any? %>
@@ -25,7 +21,7 @@
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Focus specialties</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= focus_specialties.any? ? "Edit" : "Add" %></a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline"><%= focus_specialties.any? ? "Edit" : "Add" %></a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if focus_specialties.any? %>
@@ -41,7 +37,7 @@
   <section class="ts-card">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Other areas of expertise</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= other_specialties.any? ? "Edit" : "Add" %></a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline"><%= other_specialties.any? ? "Edit" : "Add" %></a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if other_specialties.any? %>

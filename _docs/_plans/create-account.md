@@ -111,6 +111,8 @@ Matches the existing Next.js create-account form exactly.
 
 ## Phase 3: Geocoding Background Job
 
+> **Superseded (2026-04-21).** The explicit `GeocodeLocationJob.perform_later` call in `CreateAccountController#create` has been removed. Geocoding now happens on the `Location` model itself via the `Geocodable` concern: a `before_save` runs `ZipLookup.geocode_with_fallback` synchronously (trusting lat/lng the ZIP combobox already filled), and an `after_commit` enqueues `GeocodeLocationJob` **only** when the sync path couldn't resolve. See [`_processes/locations.md`](../_processes/locations.md) for the current flow.
+
 Add the background job that resolves lat/lng from the `zip_lookups` table after account creation.
 
 ### Files to create

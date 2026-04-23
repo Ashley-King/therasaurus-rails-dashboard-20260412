@@ -1,0 +1,171 @@
+<%#
+  ZIP autocomplete with three distinct UIs:
+    empty    — ZIP combobox input (the "finder") + "Can't find your ZIP?"
+               checkbox.
+    selected — a chip showing "02138 — Cambridge, MA ×". Finder, checkbox,
+               and manual section are all hidden.
+    manual   — finder hidden; plain ZIP + City + State inputs visible for
+               write-in entry. Autocomplete is off.
+
+  Only one of { finder-zip, manual-zip } is ever enabled at a time, so the
+  form always submits exactly one value for zip/city/state.
+
+  Locals:
+    name_prefix — param prefix, e.g. "location" → "location[zip]".
+    index       — integer used for unique DOM IDs (default 0).
+    zip, city, state, latitude, longitude, city_match, zip_required
+%>
+<% index ||= 0 %>
+<% zip ||= nil %>
+<% city ||= nil %>
+<% state ||= nil %>
+<% latitude ||= nil %>
+<% longitude ||= nil %>
+<% city_match = local_assigns.fetch(:city_match, false) %>
+<% zip_required = local_assigns.fetch(:zip_required, true) %>
+<% finder_zip_id = "zip_combobox_#{index}_finder_zip" %>
+<% manual_zip_id = "zip_combobox_#{index}_manual_zip" %>
+<% city_id = "zip_combobox_#{index}_city" %>
+<% state_id = "zip_combobox_#{index}_state" %>
+<% manual_id = "zip_combobox_#{index}_manual" %>
+<% listbox_id = "zip_combobox_#{index}_listbox" %>
+
+<div data-controller="zip-combobox"
+     data-zip-combobox-search-url-value="<%= zip_search_path %>"
+     data-zip-combobox-index-value="<%= index %>"
+     class="space-y-4">
+
+  <%# ── Selected chip ── %>
+  <div data-zip-combobox-target="selected" hidden>
+    <label class="ts-label block mb-1.5">
+      ZIP code<% if zip_required %> <span class="text-status-attention">*</span><% end %>
+    </label>
+    <div class="inline-flex items-center gap-2 rounded-lg border border-border-default bg-surface-secondary px-3 py-2 max-w-full">
+      <svg class="h-4 w-4 text-text-muted flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span class="text-base text-text-primary">
+        <span class="font-medium" data-zip-combobox-target="selectedZip"></span>
+        <span class="text-text-muted"> — </span>
+        <span data-zip-combobox-target="selectedLocation"></span>
+      </span>
+      <button type="button"
+              data-action="zip-combobox#clear"
+              aria-label="Clear ZIP"
+              class="ml-auto inline-flex items-center justify-center h-6 w-6 rounded-full text-text-muted hover:text-text-primary hover:bg-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <%# ── Finder: ZIP combobox ── %>
+  <div data-zip-combobox-target="finder">
+    <label for="<%= finder_zip_id %>" class="ts-label block mb-1.5">
+      ZIP code<% if zip_required %> <span class="text-status-attention">*</span><% end %>
+    </label>
+    <div class="relative">
+      <input type="text"
+             id="<%= finder_zip_id %>"
+             name="<%= name_prefix %>[zip]"
+             value="<%= zip %>"
+             <%= "required" if zip_required %>
+             inputmode="numeric"
+             pattern="\d{5}"
+             maxlength="5"
+             autocomplete="off"
+             placeholder="Start typing your ZIP…"
+             role="combobox"
+             aria-expanded="false"
+             aria-autocomplete="list"
+             aria-haspopup="listbox"
+             data-zip-combobox-target="finderZip"
+             data-action="input->zip-combobox#onInput keydown->zip-combobox#navigate focus->zip-combobox#onFocus blur->zip-combobox#onBlur"
+             class="ts-input block w-full sm:w-40">
+
+      <ul id="<%= listbox_id %>"
+          data-zip-combobox-target="listbox"
+          role="listbox"
+          aria-label="ZIP code suggestions"
+          hidden
+          class="absolute z-10 mt-1 max-h-60 w-full min-w-80 overflow-auto rounded-lg border border-border-default bg-white shadow-lg"></ul>
+    </div>
+    <p data-zip-combobox-target="hint"
+       hidden
+       role="alert"
+       aria-live="polite"
+       class="mt-1.5 text-xs text-red-600">
+      Pick a ZIP from the suggestions, or check "Enter manually" below.
+    </p>
+  </div>
+
+  <%# ── Manual-entry toggle ── %>
+  <div data-zip-combobox-target="manualToggle" class="flex items-center gap-2.5">
+    <input type="checkbox"
+           id="<%= manual_id %>"
+           data-zip-combobox-target="manualCheckbox"
+           data-action="change->zip-combobox#toggleManual"
+           class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+    <label for="<%= manual_id %>" class="text-base text-text-primary cursor-pointer">
+      Can't find your ZIP? Enter it manually.
+    </label>
+  </div>
+
+  <%# ── Manual: plain City, State, ZIP (stacked, ZIP last) ── %>
+  <div data-zip-combobox-target="manualFields" hidden class="space-y-4">
+    <div>
+      <label for="<%= city_id %>" class="ts-label block mb-1.5">
+        City <span class="text-status-attention">*</span>
+      </label>
+      <input type="text"
+             id="<%= city_id %>"
+             name="<%= name_prefix %>[city]"
+             value="<%= city %>"
+             autocomplete="off"
+             maxlength="100"
+             placeholder="San Francisco"
+             data-zip-combobox-target="cityInput"
+             class="ts-input block w-full">
+    </div>
+
+    <div>
+      <label for="<%= state_id %>" class="ts-label block mb-1.5">
+        State <span class="text-status-attention">*</span>
+      </label>
+      <select id="<%= state_id %>"
+              name="<%= name_prefix %>[state]"
+              data-zip-combobox-target="stateInput"
+              class="ts-select block w-full sm:w-32">
+        <option value="">Select</option>
+        <% us_state_codes.each do |code| %>
+          <option value="<%= code %>" <%= "selected" if state.to_s.upcase == code %>><%= code %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div>
+      <label for="<%= manual_zip_id %>" class="ts-label block mb-1.5">
+        ZIP code<% if zip_required %> <span class="text-status-attention">*</span><% end %>
+      </label>
+      <input type="text"
+             id="<%= manual_zip_id %>"
+             name="<%= name_prefix %>[zip]"
+             value="<%= zip %>"
+             disabled
+             <%= "required" if zip_required %>
+             inputmode="numeric"
+             pattern="\d{5}"
+             maxlength="5"
+             autocomplete="off"
+             placeholder="94102"
+             data-zip-combobox-target="manualZip"
+             class="ts-input block w-full sm:w-40">
+    </div>
+  </div>
+
+  <input type="hidden" name="<%= name_prefix %>[latitude]" value="<%= latitude %>" data-zip-combobox-target="latInput">
+  <input type="hidden" name="<%= name_prefix %>[longitude]" value="<%= longitude %>" data-zip-combobox-target="lngInput">
+  <input type="hidden" name="<%= name_prefix %>[city_match_successful]" value="<%= city_match ? '1' : '0' %>" data-zip-combobox-target="matchInput">
+</div>

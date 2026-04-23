@@ -359,9 +359,12 @@ Therapists cannot directly edit protected system fields like:
 - The therapist can add a website.
 - The therapist can add a phone number extension.
 - The therapist can choose whether to show the phone number on the profile.
-- The introduction should use plain text.
-- The introduction can use blank lines for paragraphs.
-- The app should not require a rich text editor in phase one.
+- The introduction is a rich-text field. The editor allows bold,
+  italic, bulleted lists, and numbered lists only — no headings,
+  links, or underline. Submitted HTML is sanitized to
+  `%w[div br strong em ul ol li]` on save.
+- The introduction is capped at 1,500 characters of visible text
+  (HTML tags do not count against the limit).
 - The therapist must keep one primary location.
 - The therapist can add one additional location in phase one.
 - The therapist can remove the additional location.

@@ -1,46 +1,170 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Locations</h1>
-<% end %>
-
 <%= render layout: "your_practice/shared/layout" do %>
-  <%# ── Practice locations card ── %>
+  <%# ── Primary location ── %>
   <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Practice locations</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if @locations&.any? %>
-        <dl class="grid grid-cols-[200px_1fr] gap-y-2 text-sm">
-          <% @locations.each do |location| %>
-            <dt class="text-text-muted"><%= location.location_type&.titleize %> location</dt>
-            <dd class="text-text-primary">
-              <p><%= location.street_address %></p>
-              <% if location.street_address2.present? %>
-                <p><%= location.street_address2 %></p>
-              <% end %>
-              <p><%= location.city %>, <%= location.state %> <%= location.zip %></p>
-            </dd>
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Primary location</h2>
+    <p class="text-sm text-text-muted mb-4">Where you see clients most often. Used for your profile listing and search radius.</p>
 
-            <dt class="text-text-muted">Show street address on profile</dt>
-            <dd class="text-text-primary"><%= location.show_street_address? ? "Yes" : "No" %></dd>
-          <% end %>
-        </dl>
-      <% else %>
-        <p class="text-sm text-text-muted">No locations added yet.</p>
+    <%= form_with url: location_path, method: :patch,
+          data: { controller: "form-guard", turbo: false }, class: "space-y-6" do %>
+
+      <p class="text-xs text-text-muted"><span class="text-status-attention">*</span> Required</p>
+
+      <% if @primary.errors.any? %>
+        <div class="rounded-lg bg-red-50 border border-red-200 p-3">
+          <p class="text-sm text-red-700"><%= @primary.errors.full_messages.to_sentence %></p>
+        </div>
       <% end %>
-    </div>
+
+      <div>
+        <label for="locations_primary_street_address" class="ts-label block mb-1.5">
+          Street address <span class="text-status-attention">*</span>
+        </label>
+        <input type="text"
+               id="locations_primary_street_address"
+               name="locations[primary][street_address]"
+               value="<%= @primary.street_address %>"
+               required
+               maxlength="200"
+               autocomplete="address-line1"
+               class="ts-input block w-full">
+      </div>
+
+      <div>
+        <label for="locations_primary_street_address2" class="ts-label block mb-1.5">Street address line 2</label>
+        <input type="text"
+               id="locations_primary_street_address2"
+               name="locations[primary][street_address2]"
+               value="<%= @primary.street_address2 %>"
+               maxlength="200"
+               autocomplete="address-line2"
+               placeholder="Suite, unit, floor (optional)"
+               class="ts-input block w-full">
+      </div>
+
+      <%= render "shared/zip_combobox",
+            name_prefix: "locations[primary]",
+            index: 0,
+            zip: @primary.zip,
+            city: @primary.city,
+            state: @primary.state,
+            latitude: @primary.latitude,
+            longitude: @primary.longitude,
+            city_match: @primary.city_match_successful %>
+
+      <div class="flex items-center gap-2.5 pt-2">
+        <input type="hidden" name="locations[primary][show_street_address]" value="0">
+        <input type="checkbox"
+               id="locations_primary_show_street_address"
+               name="locations[primary][show_street_address]"
+               value="1"
+               <%= "checked" if @primary.show_street_address.nil? || @primary.show_street_address %>
+               class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+        <label for="locations_primary_show_street_address" class="text-base text-text-primary cursor-pointer">
+          Show my street address on my public profile
+        </label>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= submit_tag "Save", class: "ts-btn-primary px-6 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
   </section>
 
-  <%# ── Targeted zip codes card ── %>
-  <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Targeted zip codes</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+  <%# ── Additional location ── %>
+  <section class="ts-card" data-controller="additional-location">
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Additional location</h2>
+    <p class="text-sm text-text-muted mb-4">Optional second office where you also see clients. You can add up to one.</p>
+
+    <%# Empty state %>
+    <div data-additional-location-target="empty" <%= "hidden" if @additional %>>
+      <button type="button"
+              data-action="additional-location#show"
+              class="group inline-flex items-center gap-1.5 text-base font-medium text-teal hover:text-teal-dark cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-1 rounded px-1 py-1">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span class="group-hover:underline">Add additional location</span>
+      </button>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <p class="text-sm text-text-muted">No additional targeted zip codes added yet.</p>
-      <p class="text-xs text-text-muted mt-2">You can add up to 5 targeted zip codes to help clients find you.</p>
+
+    <%# Form %>
+    <div data-additional-location-target="form" <%= "hidden" if @additional.nil? %>>
+    <%= form_with url: location_path, method: :patch,
+          data: { controller: "form-guard", turbo: false },
+          class: "space-y-6" do %>
+
+      <p class="text-xs text-text-muted"><span class="text-status-attention">*</span> Required</p>
+
+      <% if @additional&.errors&.any? %>
+        <div class="rounded-lg bg-red-50 border border-red-200 p-3">
+          <p class="text-sm text-red-700"><%= @additional.errors.full_messages.to_sentence %></p>
+        </div>
+      <% end %>
+
+      <div>
+        <label for="locations_additional_street_address" class="ts-label block mb-1.5">
+          Street address <span class="text-status-attention">*</span>
+        </label>
+        <input type="text"
+               id="locations_additional_street_address"
+               name="locations[additional][street_address]"
+               value="<%= @additional&.street_address %>"
+               required
+               maxlength="200"
+               autocomplete="off"
+               class="ts-input block w-full">
+      </div>
+
+      <div>
+        <label for="locations_additional_street_address2" class="ts-label block mb-1.5">Street address line 2</label>
+        <input type="text"
+               id="locations_additional_street_address2"
+               name="locations[additional][street_address2]"
+               value="<%= @additional&.street_address2 %>"
+               maxlength="200"
+               autocomplete="off"
+               placeholder="Suite, unit, floor (optional)"
+               class="ts-input block w-full">
+      </div>
+
+      <%= render "shared/zip_combobox",
+            name_prefix: "locations[additional]",
+            index: 1,
+            zip: @additional&.zip,
+            city: @additional&.city,
+            state: @additional&.state,
+            latitude: @additional&.latitude,
+            longitude: @additional&.longitude,
+            city_match: @additional&.city_match_successful %>
+
+      <div class="flex items-center gap-2.5 pt-2">
+        <input type="hidden" name="locations[additional][show_street_address]" value="0">
+        <input type="checkbox"
+               id="locations_additional_show_street_address"
+               name="locations[additional][show_street_address]"
+               value="1"
+               <%= "checked" if @additional.nil? || @additional.show_street_address %>
+               class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+        <label for="locations_additional_show_street_address" class="text-base text-text-primary cursor-pointer">
+          Show my street address on my public profile
+        </label>
+      </div>
+
+      <div class="flex items-center justify-between pt-5 border-t border-gray-100">
+        <% if @additional %>
+          <button type="submit"
+                  name="locations[additional][remove]"
+                  value="1"
+                  formnovalidate
+                  class="text-sm font-medium text-red-700 hover:text-red-900 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded px-1 py-1">
+            <span class="hover:underline">Remove additional location</span>
+          </button>
+        <% else %>
+          <span></span>
+        <% end %>
+        <%= submit_tag "Save", class: "ts-btn-primary px-6 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
     </div>
   </section>
 <% end %>

@@ -4,27 +4,39 @@ module AccountSettings
     end
 
     def update
-      url = params[:practice_image_url]
-      public_url = fetch_credential!(:R2_PUBLIC_URL)
-
-      unless url.start_with?(public_url)
-        return render json: { error: "Invalid image URL" }, status: :unprocessable_entity
+      if params[:practice_image_key].present?
+        update_practice_image
+      else
+        update_account_details
       end
-
-      therapist.update!(practice_image_url: url)
-      render json: { practice_image_url: url }
-    rescue KeyError => e
-      Rails.logger.error("R2 upload configuration error: #{e.message}")
-      render json: { error: "Profile photo uploads are not configured yet." }, status: :service_unavailable
     end
 
     private
 
-    def fetch_credential!(key)
-      value = Rails.application.credentials.fetch(key)
-      raise KeyError, "#{key} is blank" if value.blank?
+    def update_practice_image
+      key = params[:practice_image_key].to_s
 
-      value
+      # Keys are generated server-side in PresignedUploadsController and
+      # must start with the profiles/ prefix. Reject anything else so a
+      # client can't write an arbitrary key onto the therapist record.
+      unless key.start_with?("profiles/")
+        return render json: { error: "Invalid image key" }, status: :unprocessable_entity
+      end
+
+      therapist.update!(practice_image_key: key)
+      render json: { practice_image_url: therapist.practice_image_url }
+    end
+
+    def update_account_details
+      if therapist.update(account_params)
+        redirect_to account_settings_path, notice: "Account updated."
+      else
+        render :show, status: :unprocessable_entity
+      end
+    end
+
+    def account_params
+      params.require(:therapist).permit(:first_name, :last_name, :profession_id, :credentials)
     end
   end
 end

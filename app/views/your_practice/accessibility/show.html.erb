@@ -1,0 +1,34 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <section class="ts-card">
+    <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Accessibility</h2>
+    <p class="text-sm text-text-muted mb-5">Help clients find a practice that meets their needs. Select all that apply.</p>
+
+    <%= form_with model: therapist, url: accessibility_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
+
+      <fieldset>
+        <legend class="sr-only">Accessibility features</legend>
+        <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-5">
+          <% @accessibility_options.each do |option| %>
+            <li class="break-inside-avoid">
+              <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                <input type="checkbox"
+                       name="therapist[accessibility_option_ids][]"
+                       value="<%= option.id %>"
+                       <%= "checked" if therapist.accessibility_option_ids.include?(option.id) %>
+                       class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                <%= option.name %>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+        <%# Hidden field so unchecking all still submits an empty array %>
+        <input type="hidden" name="therapist[accessibility_option_ids][]" value="">
+      </fieldset>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

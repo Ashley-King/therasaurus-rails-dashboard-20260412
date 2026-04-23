@@ -1,13 +1,9 @@
-<% content_for :page_header do %>
-  <h1 class="font-heading text-3xl md:text-4xl font-bold text-text-primary">Fees & Payment</h1>
-<% end %>
-
 <%= render layout: "your_practice/shared/layout" do %>
   <%# ── Session fees card ── %>
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Session fees</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
@@ -33,7 +29,7 @@
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Payment methods</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if therapist&.payment_methods&.any? %>
@@ -48,7 +44,7 @@
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Insurance</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Edit</a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if therapist&.insurance_companies&.any? %>
@@ -63,7 +59,7 @@
   <section class="ts-card mb-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Notes about your fees</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark"><%= therapist&.fee_notes.present? ? "Edit" : "Add" %></a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline"><%= therapist&.fee_notes.present? ? "Edit" : "Add" %></a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <% if therapist&.fee_notes.present? %>
@@ -78,7 +74,7 @@
   <section class="ts-card">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Cancellation policy</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark">Add</a>
+      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Add</a>
     </div>
     <div class="border border-gray-200 rounded-lg p-5">
       <p class="text-sm text-text-muted">Add your cancellation policy.</p>

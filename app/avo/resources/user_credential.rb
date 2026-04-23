@@ -21,8 +21,20 @@ class Avo::Resources::UserCredential < Avo::BaseResource
     field :organization_expiration_date, as: :date
     field :organization_credential_level, as: :text
 
-    field :credential_document, as: :text
+    field :credential_document, as: :text,
+      help: "R2 object key in the private ptd-credentials bucket."
     field :credential_document_original_name, as: :text
+    field :download_document,
+      as: :text,
+      as_html: true,
+      hide_on: :forms,
+      format_using: -> {
+        next "—" if record.credential_document.blank?
+
+        url = Rails.application.routes.url_helpers.admin_credential_document_path(record.id)
+        view_context.link_to("Download", url, target: "_blank", rel: "noopener",
+          class: "underline text-blue-600 hover:text-blue-800 hover:underline")
+      }
     field :credential_note, as: :textarea
 
     field :verified_at, as: :date_time
@@ -33,5 +45,9 @@ class Avo::Resources::UserCredential < Avo::BaseResource
     field :grace_expires_at, as: :date_time
 
     field :created_at, as: :date_time, sortable: true, only_on: :index
+  end
+
+  def actions
+    action Avo::Actions::RunR2OrphanCleanup
   end
 end

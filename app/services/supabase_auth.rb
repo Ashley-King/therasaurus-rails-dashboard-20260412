@@ -39,6 +39,43 @@ class SupabaseAuth
     body
   end
 
+  # Asks Supabase to send an email-change confirmation code to `new_email`.
+  # The authenticated user's access token authorizes the request.
+  def request_email_change(access_token:, new_email:)
+    response = client.put(
+      "#{BASE_URL}/auth/v1/user",
+      json: { email: new_email },
+      headers: auth_headers.merge("Authorization" => "Bearer #{access_token}")
+    )
+
+    raise_on_error!(response)
+
+    unless response.status == 200
+      body = parse_body(response)
+      raise AuthError, body["msg"] || body["error_description"] || "Failed to request email change"
+    end
+
+    true
+  end
+
+  def verify_email_change(email:, token:)
+    response = client.post(
+      "#{BASE_URL}/auth/v1/verify",
+      json: { email: email, token: token, type: "email_change" },
+      headers: auth_headers
+    )
+
+    raise_on_error!(response)
+
+    body = parse_body(response)
+
+    unless response.status == 200
+      raise AuthError, body["msg"] || body["error_description"] || "Invalid code"
+    end
+
+    body
+  end
+
   def refresh_session(refresh_token)
     response = client.post(
       "#{BASE_URL}/auth/v1/token?grant_type=refresh_token",
