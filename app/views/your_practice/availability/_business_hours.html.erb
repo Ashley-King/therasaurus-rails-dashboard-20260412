@@ -1,0 +1,78 @@
+<%# locals: (therapist:, time_options:) %>
+<section class="ts-card" data-controller="business-hours">
+  <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Business hours</h2>
+  <p class="text-sm text-text-muted mb-5">Set the hours you're typically available for appointments. Leave a day closed if you don't see clients that day.</p>
+
+  <div class="mb-6">
+    <label for="therapist_time_zone" class="ts-label block mb-1.5">Time zone</label>
+    <select name="therapist[time_zone]" id="therapist_time_zone" class="ts-select block w-full sm:w-2/3 cursor-pointer">
+      <option value="">Select a time zone…</option>
+      <% ActiveSupport::TimeZone.us_zones.each do |zone| %>
+        <option value="<%= zone.name %>" <%= "selected" if therapist.time_zone == zone.name %>><%= zone.to_s %></option>
+      <% end %>
+    </select>
+    <p class="text-sm text-text-muted mt-1.5">Used to label your hours on your public profile.</p>
+  </div>
+
+  <div class="flex justify-end mb-3">
+    <button type="button"
+            data-action="business-hours#clearAll"
+            class="text-sm font-medium text-plum hover:underline focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-2 rounded cursor-pointer">
+      Clear all hours
+    </button>
+  </div>
+
+  <div class="space-y-2">
+    <% BusinessHour::DAYS.each_with_index do |(day_key, day_num), index| %>
+      <% existing = therapist.business_hours.find { |h| h.day_of_week == day_num } %>
+      <% open_value = existing ? existing.open_time.strftime("%H:%M") : "09:00" %>
+      <% close_value = existing ? existing.close_time.strftime("%H:%M") : "17:00" %>
+      <% closed = existing.nil? %>
+      <div class="grid grid-cols-1 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-center gap-x-3 gap-y-2 py-2 border-b border-border-subtle last:border-0"
+           data-business-hours-target="row"
+           data-day="<%= day_key %>">
+        <div class="font-medium text-text-primary text-base"><%= day_key.to_s.capitalize %></div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="inline-flex items-center gap-2 text-base text-text-primary cursor-pointer">
+            <input type="checkbox"
+                   name="business_hours[<%= day_key %>][closed]"
+                   value="1"
+                   <%= "checked" if closed %>
+                   data-business-hours-target="closed"
+                   data-action="change->business-hours#toggleClosed"
+                   class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+            <span class="text-sm">Closed</span>
+          </label>
+
+          <div class="flex items-center gap-2 <%= "hidden" if closed %>" data-business-hours-target="times">
+            <select name="business_hours[<%= day_key %>][open]"
+                    class="ts-select cursor-pointer"
+                    aria-label="<%= day_key.to_s.capitalize %> open time">
+              <%= options_for_select(time_options, open_value) %>
+            </select>
+            <span class="text-text-muted">to</span>
+            <select name="business_hours[<%= day_key %>][close]"
+                    class="ts-select cursor-pointer"
+                    aria-label="<%= day_key.to_s.capitalize %> close time">
+              <%= options_for_select(time_options, close_value) %>
+            </select>
+          </div>
+        </div>
+
+        <% if index < BusinessHour::DAYS.size - 1 %>
+          <button type="button"
+                  data-action="business-hours#copyDown"
+                  data-row-index="<%= index %>"
+                  title="Copy these hours to all days below"
+                  class="inline-flex items-center gap-1 text-sm font-medium text-plum hover:underline focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-2 rounded justify-self-start sm:justify-self-end cursor-pointer">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"/>
+            </svg>
+            <span>Copy down</span>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>

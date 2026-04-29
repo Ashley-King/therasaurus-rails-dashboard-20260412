@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rails",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-lc", "eval \"$(/opt/homebrew/bin/mise activate bash)\" && foreman start -f Procfile.dev"],
+      "port": 3000
+    }
+  ]
+}

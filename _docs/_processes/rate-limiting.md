@@ -30,6 +30,7 @@ Configured in [`config/initializers/rack_attack.rb`](../../config/initializers/r
 | `signin/ip`      | 20 / 5 min        | per IP | Outer wall on sign-in. |
 | `signin/email`   | 10 / 1 hour       | per email | Outer wall on targeted attacks. |
 | `verify/ip`      | 30 / 5 min        | per IP | Outer wall on OTP verification. |
+| `zip-search/ip`  | 30 / 1 min        | per IP | Caps the autocomplete JSON endpoint used by the ZIP combobox. |
 
 Asset requests and `/up` are safelisted. Localhost is safelisted in
 development.
@@ -50,6 +51,7 @@ Stack. Filter by event prefix to investigate.
 | `auth.rate_limit.signin_ip`        | Rails controller | `ip`, `ua`, `email_hash` |
 | `auth.rate_limit.signin_email`     | Rails controller | `ip`, `ua`, `email_hash` |
 | `auth.rate_limit.verify_ip`        | Rails controller | `ip`, `ua` |
+| `auth.rate_limit.email_change`     | Rails controller | `ip`, `ua`, `user_id` |
 | `rack_attack.throttled`            | Rack middleware  | `name`, `ip`, `path` |
 
 `email_hash` is the first 12 hex characters of the SHA256 of the
@@ -59,14 +61,27 @@ correlatable without the raw address ever hitting the logs. This
 complies with the project no-PII logging rule in
 [`_docs/_processes/logging.md`](logging.md).
 
+## Layer 1 — also applied to email change
+
+[`AccountSettings::UpdateEmailsController`](../../app/controllers/account_settings/update_emails_controller.rb)
+mirrors the auth-controller pattern with two extra Rails-layer limits,
+scoped per `user_id` (falling back to IP when nil):
+
+| Action                                | Limit       | Scope     | Why |
+|---------------------------------------|-------------|-----------|-----|
+| `PATCH /account-settings/update-email`| 5 / 15 min  | per user  | Caps email-change requests; Supabase enforces its own limit too. |
+| `POST  /account-settings/update-email/confirm` | 10 / 15 min | per user | Caps OTP verify attempts during an email change. |
+
 ## What is NOT rate limited, and why
 
-- **Authenticated dashboard / about-you / your-practice / account-settings
-  routes** — low value to an attacker, and the global IP throttle still
-  applies. Revisit when the app has more users.
+- **Authenticated `about-you` / `your-practice` / `account-settings`
+  routes (other than email change)** — low value to an attacker, and the
+  global IP throttle still applies. Revisit when the app has more users.
 - **`POST /create-account`** — authenticated, one-shot per user.
 - **`POST /account-settings/presigned-upload`** — authenticated. Revisit if
   R2 upload abuse ever appears in logs.
+- **`POST /feature-requests`** — authenticated, low-volume per user. Revisit
+  if abuse appears.
 - **Stripe webhooks** — not yet built. When added, **do not** rate limit;
   verify the signature and let Stripe retry.
 - **Meilisearch** — this Rails app does not expose a search endpoint.
@@ -74,8 +89,6 @@ complies with the project no-PII logging rule in
 
 ## TODOs for future features
 
-- `POST /account-settings/update-email` (currently stubbed): add a rate
-  limit when the send-email flow is implemented.
 - Any future contact form or public POST: add a rate limit at both layers.
 
 ## Operational notes

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -55,7 +55,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.integer "sort_order"
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.index ["sort_order"], name: "index_age_groups_on_sort_order"
-
     t.unique_constraint ["name"], name: "age_groups_name_key"
   end
 
@@ -123,6 +122,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
 
     t.unique_constraint ["name"], name: "faiths_name_key"
+  end
+
+  create_table "public.feature_requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "kind", null: false
+    t.string "page_url"
+    t.string "status", default: "open", null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["created_at"], name: "index_feature_requests_on_created_at"
+    t.index ["kind"], name: "index_feature_requests_on_kind"
+    t.index ["status"], name: "index_feature_requests_on_status"
+    t.index ["therapist_id"], name: "index_feature_requests_on_therapist_id"
   end
 
   create_table "public.genders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -260,16 +273,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.index ["therapist_id", "session_format_id"], name: "idx_practice_session_formats_unique", unique: true
   end
 
-  create_table "public.practice_telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.uuid "telehealth_platform_id", null: false
-    t.uuid "therapist_id", null: false
-    t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.index ["telehealth_platform_id"], name: "index_practice_telehealth_platforms_on_telehealth_platform_id"
-    t.index ["therapist_id", "telehealth_platform_id"], name: "idx_practice_telehealth_platforms_unique", unique: true
-    t.index ["therapist_id"], name: "index_practice_telehealth_platforms_on_therapist_id"
-  end
-
   create_table "public.practice_specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.boolean "is_focus", default: false, null: false
@@ -279,6 +282,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.index ["specialty_id"], name: "index_practice_specialties_on_specialty_id"
     t.index ["therapist_id", "specialty_id"], name: "index_practice_specialties_on_therapist_id_and_specialty_id", unique: true
     t.index ["therapist_id"], name: "index_practice_specialties_on_therapist_id"
+  end
+
+  create_table "public.practice_telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.timestamptz "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "telehealth_platform_id", null: false
+    t.uuid "therapist_id", null: false
+    t.timestamptz "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["telehealth_platform_id"], name: "index_practice_telehealth_platforms_on_telehealth_platform_id"
+    t.index ["therapist_id", "telehealth_platform_id"], name: "idx_practice_telehealth_platforms_unique", unique: true
+    t.index ["therapist_id"], name: "index_practice_telehealth_platforms_on_therapist_id"
   end
 
   create_table "public.profession_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -343,14 +356,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.unique_constraint ["name"], name: "session_formats_name_key"
   end
 
-  create_table "public.telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.timestamptz "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.text "name", null: false
-    t.timestamptz "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-
-    t.index ["name"], name: "index_telehealth_platforms_on_name", unique: true
-  end
-
   create_table "public.specialties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.string "name", null: false
@@ -387,6 +392,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.unique_constraint ["name"], name: "states_name_key"
   end
 
+  create_table "public.telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.timestamptz "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.text "name", null: false
+    t.timestamptz "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["name"], name: "index_telehealth_platforms_on_name", unique: true
+  end
+
   create_table "public.therapist_continuing_education", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.text "description", null: false
@@ -406,6 +418,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.index ["college_id"], name: "index_therapist_education_on_college_id"
     t.index ["degree_type_id"], name: "index_therapist_education_on_degree_type_id"
     t.index ["therapist_id"], name: "index_therapist_education_on_therapist_id"
+  end
+
+  create_table "public.therapist_faqs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "answer", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "question", limit: 200, null: false
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["therapist_id"], name: "index_therapist_faqs_on_therapist_id"
   end
 
   create_table "public.therapist_targeted_zips", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -430,6 +451,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.boolean "allow_messages", default: true, null: false
     t.text "appointment_cancellation_policy"
     t.string "availability_notes"
+    t.date "birth_date"
     t.decimal "consultation_fee"
     t.uuid "country_id", null: false
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -457,10 +479,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
     t.uuid "profession_id", null: false
     t.string "profile_slug"
     t.string "pronouns"
+    t.boolean "show_genders_on_profile", default: false, null: false
     t.boolean "show_phone_number", default: true
+    t.boolean "show_pronouns_on_profile", default: false, null: false
+    t.boolean "show_race_ethnicities_on_profile", default: false, null: false
     t.jsonb "social_media", default: {}
     t.string "telehealth_platform_other"
     t.decimal "therapy_fee"
+    t.string "time_zone"
     t.string "unique_id"
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.boolean "use_practice_name", default: false, null: false
@@ -558,6 +584,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
   end
 
   add_foreign_key "public.business_hours", "public.therapists", name: "business_hours_therapist_id_fkey", on_delete: :cascade
+  add_foreign_key "public.feature_requests", "public.therapists", on_delete: :cascade
   add_foreign_key "public.locations", "public.therapists"
   add_foreign_key "public.practice_accessibility_options", "public.accessibility_options"
   add_foreign_key "public.practice_accessibility_options", "public.therapists"
@@ -577,8 +604,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
   add_foreign_key "public.practice_session_formats", "public.therapists", name: "practice_session_formats_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.practice_specialties", "public.specialties"
   add_foreign_key "public.practice_specialties", "public.therapists"
-  add_foreign_key "public.practice_telehealth_platforms", "public.telehealth_platforms"
-  add_foreign_key "public.practice_telehealth_platforms", "public.therapists", on_delete: :cascade
+  add_foreign_key "public.practice_telehealth_platforms", "public.telehealth_platforms", name: "practice_telehealth_platforms_telehealth_platform_id_fkey"
+  add_foreign_key "public.practice_telehealth_platforms", "public.therapists", name: "practice_telehealth_platforms_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.professions", "public.profession_types", name: "professions_profession_type_id_fkey"
   add_foreign_key "public.service_to_categories", "public.service_categories"
   add_foreign_key "public.service_to_categories", "public.services"
@@ -588,6 +615,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_23_222658) do
   add_foreign_key "public.therapist_education", "public.colleges"
   add_foreign_key "public.therapist_education", "public.degree_types"
   add_foreign_key "public.therapist_education", "public.therapists"
+  add_foreign_key "public.therapist_faqs", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapist_targeted_zips", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"

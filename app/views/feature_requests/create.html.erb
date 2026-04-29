@@ -1,0 +1,11 @@
+<%= turbo_frame_tag @frame_id do %>
+  <% if @feature_request.persisted? %>
+    <%= render "feature_requests/thanks" %>
+  <% else %>
+    <%= render "feature_requests/form",
+          kind: @feature_request.kind,
+          frame_id: @frame_id,
+          page_url: @feature_request.page_url,
+          fr: @feature_request %>
+  <% end %>
+<% end %>

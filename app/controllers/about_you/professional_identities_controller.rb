@@ -21,7 +21,13 @@ module AboutYou
     private
 
     def professional_identity_params
-      params.require(:therapist).permit(:pronouns)
+      params.require(:therapist).permit(
+        :pronouns,
+        :show_pronouns_on_profile,
+        :show_genders_on_profile,
+        :show_race_ethnicities_on_profile,
+        "birth_date(1i)", "birth_date(2i)", "birth_date(3i)"
+      )
     end
 
     def update_genders

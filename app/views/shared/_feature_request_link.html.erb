@@ -1,0 +1,38 @@
+<%
+  copy = feature_request_copy(kind)
+  link_text = local_assigns[:text].presence || copy[:link]
+  suffix = SecureRandom.hex(4)
+  dialog_id = "feature-request-dialog-#{kind}-#{suffix}"
+  frame_id = "feature-request-frame-#{kind}-#{suffix}"
+  link_class = local_assigns[:class].presence ||
+    "text-plum hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-plum rounded"
+%>
+<span data-controller="feature-request" class="contents">
+  <button type="button"
+          class="<%= link_class %>"
+          data-action="click->feature-request#open">
+    <%= link_text %>
+  </button>
+
+  <dialog id="<%= dialog_id %>"
+          aria-label="<%= copy[:title] %>"
+          data-feature-request-target="dialog"
+          class="m-0 p-0 w-screen h-screen max-w-full max-h-full bg-transparent backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+    <div class="flex h-full items-end justify-center sm:items-center"
+         data-action="click->feature-request#backdropClose">
+      <div class="bg-white shadow-xl
+                  rounded-t-2xl sm:rounded-xl
+                  w-full sm:w-[32rem] max-w-full
+                  max-h-[90vh] sm:max-h-[85vh]
+                  overflow-y-auto
+                  p-5 pt-7 sm:p-6">
+        <%= turbo_frame_tag frame_id do %>
+          <%= render "feature_requests/form",
+                kind: kind,
+                frame_id: frame_id,
+                page_url: request.original_url %>
+        <% end %>
+      </div>
+    </div>
+  </dialog>
+</span>

@@ -26,6 +26,8 @@ Keep this doc up to date as the flow changes.
 | GET    | `/create-account`| `create_account#new`      |
 | POST   | `/create-account`| `create_account#create`   |
 
+`root "auth#new"` — unauthenticated visitors land on the sign-in page.
+
 ## Session storage
 
 On successful OTP verification, `store_auth_session` writes to the Rails session:
@@ -40,7 +42,7 @@ On every request, `current_user` decodes the JWT (unverified — Supabase issued
 
 ## Flow 1: Brand-new user (first ever sign-in)
 
-1. User visits `/signin`, enters email. Turnstile runs client-side; Supabase verifies it during OTP send.
+1. User visits `/signin`, enters email. (Turnstile is not currently wired — see [`turnstile.md`](../turnstile.md).)
 2. `AuthController#create` calls `SupabaseAuth#send_otp(email)`. On success, the email is stashed in `session[:pending_email]` and the user is redirected to `/verify`.
 3. User enters the 6-digit code. `AuthController#confirm` calls `SupabaseAuth#verify_otp`.
 4. On success:
@@ -48,21 +50,21 @@ On every request, `current_user` decodes the JWT (unverified — Supabase issued
    - `session[:pending_email]` cleared.
    - `find_or_create_user!` creates a `User` row keyed by the Supabase UUID. `is_admin` is set if the email is in `admin_emails`; `membership_status` defaults to `"member"` (or `"pro"` for admins).
 5. `profile_complete?` returns false (no `therapist` row yet) → redirect to `/create-account`.
-6. User fills out the create-account form. `CreateAccountController#create` validates, then inside a transaction creates the `Therapist` + initial `Location`, generates a unique `profile_slug` and `unique_id`, and enqueues `GeocodeLocationJob` for the location.
-7. Redirect to `/dashboard`. The geocoding job runs async and backfills lat/lng, canonical city/state, and `city_match_successful`.
+6. User fills out the create-account form. `CreateAccountController#create` validates, then inside a transaction creates the `Therapist` + initial `Location`, generates a unique `profile_slug` and `unique_id`. The location is geocoded synchronously when possible via the `Geocodable` concern; only unresolved ZIPs flip to `pending` and enqueue `GeocodeLocationJob`. See [`locations.md`](./locations.md).
+7. Redirect to `/account-settings` (the post-signin landing page).
 
 ## Flow 2: Established user (returning, profile already exists)
 
 1. User visits `/signin`, enters email → OTP sent.
 2. User enters code → `AuthController#confirm` verifies, stores tokens, `find_or_create_user!` finds the existing `User`.
-3. `profile_complete?` returns true (`current_therapist` present) → redirect to `/dashboard` with "Welcome back!".
+3. `profile_complete?` returns true (`current_therapist` present) → redirect to `/account-settings` with "Welcome back!".
 
 ## Flow 3: Already-signed-in user hits `/signin` or `/verify`
 
 `redirect_if_signed_in` (before_action on `new`, `create`, `verify`, `confirm`):
 
 - Admins are allowed to stay on the auth pages (useful for impersonation / testing).
-- Non-admins with a complete profile are bounced to `/dashboard`.
+- Non-admins with a complete profile are bounced to `/account-settings`.
 - Non-admins without a profile fall through — they can re-verify, but the normal path is that they finish create-account.
 
 ## Flow 4: Sign-out
@@ -81,11 +83,11 @@ On every request, `current_user` decodes the JWT (unverified — Supabase issued
 ## Guards used by protected controllers
 
 - `require_auth` — redirects to `/signin` if not signed in. Use on anything that needs a user.
-- `require_profile` — redirects to `/create-account` if signed in but no therapist row. Used by `DashboardController` and all `account_settings` / `about_you` / `your_practice` nested controllers.
+- `require_profile` — redirects to `/create-account` if signed in but no therapist row. Used by all `account_settings` / `about_you` / `your_practice` nested controllers.
 
 ## Turnstile
 
-Turnstile runs on the sign-in form. Supabase verifies the Turnstile token during the OTP send step — Rails does **not** verify it again. Turbo must be disabled on the Turnstile form (see `turnstile.md`).
+Turnstile is **not currently wired** into the auth flow. The sign-in form (`app/views/auth/new.html.erb`) does not render the widget and `AuthController#create` does not pass a captcha token to Supabase. See [`turnstile.md`](../turnstile.md) for the rebuild checklist if it needs to come back.
 
 ## Things this doc intentionally leaves out
 

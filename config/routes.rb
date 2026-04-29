@@ -14,6 +14,7 @@ Rails.application.routes.draw do
 
   # Shared endpoints (used across multiple flows)
   get "zip-search", to: "zip_lookups#search", as: :zip_search
+  resources :feature_requests, only: [ :create ], path: "feature-requests"
 
   # About You
   scope "about-you", module: :about_you do
@@ -36,10 +37,12 @@ Rails.application.routes.draw do
     resource :clients, only: [ :show, :update ]
     resource :availability, only: [ :show, :update ], controller: "availability"
     resource :accessibility, only: [ :show, :update ], controller: "accessibility"
-    resource :fees_payment, only: [ :show ], path: "fees-payment"
-    resource :services_specialties, only: [ :show ], path: "services-specialties"
+    resource :fees_payment, only: [ :show, :update ], path: "fees-payment"
+    get "insurance-companies/search", to: "insurance_companies#search", as: :insurance_company_search
+    resource :services, only: [ :show, :update ]
+    resource :specialties, only: [ :show, :update ]
     resource :social_media, only: [ :show, :update ], path: "social-media", controller: "social_media"
-    resource :faq, only: [ :show ], path: "faqs"
+    resource :faq, only: [ :show, :update ], path: "faqs"
   end
 
   # Account Settings

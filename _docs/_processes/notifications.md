@@ -65,6 +65,11 @@ so typos are caught at call time.
   ([`config/initializers/rack_attack.rb`](../../config/initializers/rack_attack.rb)).
   One ping per IP per hour via a `Rails.cache` cooldown so one scraper
   can't flood the channel.
+- **Feature request submitted** → kind-specific channel
+  ([`FeatureRequestsController#create`](../../app/controllers/feature_requests_controller.rb)).
+  Routing map: `specialty` → `:specialties`, `service` → `:services`,
+  `insurance_company` → `:insurance_write_in`, `college` →
+  `:college_write_in`, `general` → `:feature_requests`.
 
 ## Better Stack error tracking — setup
 

@@ -2,6 +2,40 @@
   <%= form_with model: therapist, url: availability_path, method: :patch,
         data: { controller: "form-guard toggle-visibility" }, class: "space-y-6" do |f| %>
 
+    <%# ── New clients ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">New clients</h2>
+      <p class="text-sm text-text-muted mb-5">Let families know whether you're taking new clients and how to reach you.</p>
+
+      <fieldset data-controller="mutual-exclusion" class="space-y-4">
+        <legend class="sr-only">New client status</legend>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :accepting_new_clients,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer",
+                data: { mutual_exclusion_target: "first", action: "change->mutual-exclusion#uncheckSecond" } %>
+          <span>Accepting new clients</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :has_waitlist,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer",
+                data: { mutual_exclusion_target: "second", action: "change->mutual-exclusion#uncheckFirst" } %>
+          <span>Maintain a waitlist for new clients</span>
+        </label>
+
+        <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+          <%= f.check_box :free_phone_call,
+                class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+          <span>Offer a free introductory phone call</span>
+        </label>
+
+        <% if therapist.errors[:has_waitlist].any? %>
+          <p class="text-sm text-status-attention"><%= therapist.errors[:has_waitlist].first %></p>
+        <% end %>
+      </fieldset>
+    </section>
+
     <%# ── Treatment options ── %>
     <section class="ts-card">
       <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Treatment options</h2>
@@ -107,6 +141,9 @@
         </label>
       </fieldset>
     </section>
+
+    <%# ── Business hours ── %>
+    <%= render "business_hours", therapist: therapist, time_options: business_hour_time_options %>
 
     <%# ── Availability notes ── %>
     <section class="ts-card">

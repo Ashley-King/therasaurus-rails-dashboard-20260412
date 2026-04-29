@@ -76,6 +76,24 @@ module DashboardHelper
     user&.email&.first&.upcase || "?"
   end
 
+  # 15-minute increments rendered as 12-hour labels with stable 24-hour values
+  # (e.g. ["9:00 AM", "09:00"]). 24-hour values are what we persist in the
+  # `business_hours.open_time` / `close_time` columns.
+  def business_hour_time_options
+    @business_hour_time_options ||= (0..23).flat_map do |hour|
+      [ 0, 15, 30, 45 ].map do |minute|
+        [ format_business_hour_label(hour, minute), format("%02d:%02d", hour, minute) ]
+      end
+    end
+  end
+
+  def format_business_hour_label(hour, minute)
+    period = hour < 12 ? "AM" : "PM"
+    display_hour = hour % 12
+    display_hour = 12 if display_hour.zero?
+    format("%d:%02d %s", display_hour, minute, period)
+  end
+
   def dashboard_topnav_link(label, path)
     active = current_page?(path) || request.path.start_with?(path.chomp("/"))
     base_classes = "text-base leading-6 font-medium hover:text-gray-700 focus:outline-none focus:text-gray-700 transition ease-in-out duration-150"

@@ -27,7 +27,7 @@
 - If the therapist is banned, the app signs them out and sends them to the home page.
 - If the therapist has not finished account setup, the app sends them to `Create Account`.
 - If the therapist already finished account setup and they were sent to sign in from a protected internal page by a `GET` or `HEAD` request, the app sends them back to that page after sign in.
-- If the therapist already finished account setup, the app sends them to the dashboard.
+- If the therapist already finished account setup, the app sends them to `Account Settings` (the post-signin landing page).
 
 ### 4. The therapist completes the Create Account page
 
@@ -58,12 +58,16 @@
 - Saving this form also creates or updates the primary location.
 - Saving this form marks the local therapist profile as complete.
 - Saving this form marks the local app user as complete and sets `account_created_at`.
-- Saving this form starts the first geocoding job for the profile after local account completion succeeds.
+- Saving this form geocodes the primary location synchronously when the
+  ZIP resolves against `zip_lookups`; only unresolved ZIPs flip to
+  `pending` and enqueue `GeocodeLocationJob`. See
+  [`_processes/locations.md`](./_processes/locations.md).
 - After this step, the profile is marked as complete.
 
-### 5. The therapist is sent to the dashboard for now
+### 5. The therapist is sent to Account Settings
 
-- After Create Account is saved, the app sends the therapist to the dashboard for now.
+- After Create Account is saved, the app sends the therapist to
+  `Account Settings`, which is the signed-in landing page.
 - The app may later send the therapist straight to checkout instead.
 
 ### 6. Stripe checkout starts membership
@@ -75,25 +79,26 @@
 - Stripe is the source of truth for trial and paid billing status.
 - The app reads Stripe events and turns them into app membership states.
 
-### 7. The therapist lands on the dashboard
+### 7. The therapist lands on Account Settings
 
-- The current dashboard can be a placeholder page during auth testing.
-- The current dashboard should show the word `Dashboard`.
-- The current dashboard should include a log out button.
-- Members can use the dashboard.
-- Trialing members can use the dashboard.
-- Pro members can use the dashboard.
-- The dashboard can be used even when the credential is missing or not verified.
-- The dashboard shows setup progress.
-- Membership is the only required setup item in the current setup guide.
-- Profile image, practice description, and credential are helpful but not required for the account to exist.
+- `Account Settings` is the signed-in landing page; there is no separate
+  dashboard page.
+- The top nav shows `Your Account`, `About You`, and `Your Practice`.
+- The `Account Settings` sidebar has four sections: `Account`,
+  `Update Email`, `Notifications`, `Membership`.
+- A `Share` button in the top nav opens a profile-link dropdown for
+  copying or previewing the public profile.
+- Members, trialing members, and pro members can all use the signed-in
+  area; access does not depend on credential verification.
+- Profile image, practice description, and credential are helpful but
+  not required for the account to exist.
 
 ## Account status
 
 - `active` means the account can sign in and use the app.
 - `banned` means the account is blocked right away.
 - A banned user is logged out right away.
-- A banned user cannot use the dashboard.
+- A banned user cannot use the signed-in area.
 - A banned user cannot sign in again.
 - A banned user does not have a public profile.
 
@@ -110,7 +115,8 @@
 
 ## Profile completion
 
-- A therapist cannot use the dashboard until the Create Account page is complete.
+- A therapist cannot use the signed-in area (Account Settings, About You,
+  Your Practice) until the Create Account page is complete.
 - A therapist cannot start membership until the Create Account page is complete.
 - A complete profile means the app has the required account setup data.
 
@@ -191,12 +197,12 @@ These are not the same rule.
 - The app should set `is_admin` right away when the email matches `admin_emails`.
 - If an admin later changes their email address, they should stay admin.
 - Admins with incomplete setup are sent to `Create Account` after sign in.
-- Admins with complete setup are sent to the dashboard after sign in.
+- Admins with complete setup are sent to `Account Settings` after sign in.
 - Admins can still open the `Create Account` page while signed in.
-- Admins can still open the dashboard while signed in even when their own setup is incomplete.
+- Admins can still open the signed-in area while signed in even when their own setup is incomplete.
 - Admins with complete setup can still open the sign in page while signed in.
 - Admins can verify or unverify credentials.
-- Admins can reach admin pages.
+- Admins can reach admin pages (Avo at `/avo` and admin tools under `/admin-tools`).
 - Admins can still reach admin tools even when their own therapist setup is incomplete.
 
 ## Self-service edit rules
@@ -241,9 +247,13 @@ Therapists cannot directly edit protected system fields like:
 
 ## Route and access rules
 
-- Logged out users who try to open dashboard, membership, create account, or admin pages are sent to sign in.
-- Logged in therapists with incomplete setup are sent to create account before they can use the dashboard or membership pages.
-- Logged in admins can still use the dashboard even when their own setup is incomplete.
+- Logged out users who try to open the signed-in area (Account Settings,
+  About You, Your Practice), membership, create account, or admin pages
+  are sent to sign in.
+- Logged in therapists with incomplete setup are sent to create account
+  before they can use the signed-in area or membership pages.
+- Logged in admins can still use the signed-in area even when their own
+  setup is incomplete.
 - Logged in therapists with complete setup are sent away from create account.
 - Logged in non-admin therapists are sent away from the sign in page.
 - Logged in admins with incomplete setup are sent to create account when they first sign in.
@@ -253,22 +263,23 @@ Therapists cannot directly edit protected system fields like:
 - Banned users cannot sign in again.
 - Only admins can reach admin pages.
 
-## Dashboard home rules
+## Signed-in landing page rules
 
-- The first dashboard page shows the therapist photo area.
-- The first dashboard page lets the therapist upload or replace the photo.
-- The first dashboard page lets the therapist copy the public profile link when the profile is public.
-- The first dashboard page lets the therapist open a profile preview when the profile is not public.
-- The first dashboard page can still show a preview link even when the profile is public.
-- The first dashboard page lets the therapist open Stripe customer portal to manage membership.
-- The first dashboard page lets the therapist open a support modal.
-- The first dashboard page should show membership state.
-- The first dashboard page should show credential review status.
-- The first dashboard page should show whether the profile is public right now.
-- The dashboard UI should stay very close to the current dashboard layout and feel.
-- Dashboard body text should never be smaller than 16 px.
-- Dashboard text sizes should use rem units.
-- Dashboard text that is 16 px should use `1rem`.
+- `Account Settings` is the post-signin landing page; there is no
+  separate dashboard page.
+- The top nav (`app/views/layouts/dashboard.html.erb`) shows
+  `Your Account`, `About You`, and `Your Practice`.
+- A `Share` button in the top nav opens a profile-link dropdown for
+  copying or previewing the public profile.
+- The `Account Settings` sidebar has four sections: `Account`,
+  `Update Email`, `Notifications`, `Membership`.
+- The `Account` section shows the profile photo and lets the therapist
+  upload or replace it.
+- The `Membership` section is where the Stripe customer portal action
+  belongs (when wired up).
+- Body text should never be smaller than 16 px.
+- Text sizes should use rem units; 16 px should use `1rem`.
+- Form labels render at 1rem minimum.
 
 ## Profile preview rules
 
@@ -287,31 +298,39 @@ Therapists cannot directly edit protected system fields like:
 - Phase one does not need a separate billing support page.
 - The membership area should include short billing help text.
 - The membership area should include the Stripe customer portal action.
-- The support modal can also include a billing help category.
 
-## Support request rules
+## Feature requests
 
-- The support modal lets the therapist send a message without leaving the dashboard.
-- A support request should save to the database.
-- A support request should send you an email notification.
-- A support request should have a category.
-- A support request should have a status so you can track open and closed requests.
+- A drop-in `shared/feature_request_link` partial renders a text link
+  plus a native `<dialog>` modal. It accepts a `kind:` —
+  `specialty`, `service`, `insurance_company`, `college`, or `general` —
+  and the helper provides per-kind link text, modal title, lead, and
+  placeholder.
+- Submissions go through `FeatureRequestsController#create`, which
+  saves a `feature_requests` row (`therapist_id`, `kind`, `body`,
+  `page_url`, `status` defaulting to `open`) and pings the
+  kind-specific Discord channel via `Notifier`.
+- Admin triage lives in Avo at `/admin/resources/feature_requests`.
+- There is no support request modal or `support_requests` table today.
+  Feature requests cover the "user wrote in" surface area.
 
 ## Profile editor rules
 
-- The dashboard should edit profile data in sections.
-- The sections are Professional identity, Update email, Primary credential, Practice details, Clients and availability, Fees and payment, and Services and specialties.
-- Update email stays separate because it needs a one time password flow.
-- Each dashboard section should first show a read only summary of the current values.
-- Each dashboard section should have an edit action.
-- Each section should save on its own.
-- Each section should show errors inside the same modal or panel.
-- Most edit forms can open in a modal.
-- Small forms should not open in an oversized modal.
-- Modals should start at a smaller minimum height and grow with the form content up to a maximum height.
-- If a form is tall, the form area should scroll inside the modal.
-- Update email should not use a modal.
-- Update email should open in the page so it is harder to dismiss by accident.
+- Profile data is edited under three top-level areas: `About You`,
+  `Your Practice`, and `Account Settings`. Each area has its own
+  sidebar.
+- The `About You` sidebar has: Identity, Primary Credential,
+  Education, Professional Development.
+- The `Your Practice` sidebar has: Practice Information, Locations,
+  Targeted ZIPs, Availability, Introduction, Clients, Accessibility,
+  Fees & Payments, Services, Specialties, Social Media, FAQs.
+- The `Account Settings` sidebar has: Account, Update Email,
+  Notifications, Membership.
+- Each section is its own page with its own form (one page, one form).
+  Edits no longer happen in modals.
+- Each section saves on its own and shows errors inline.
+- `Update Email` uses a dedicated multi-step in-page flow because it
+  needs a one-time password.
 
 ## Email change rules
 
@@ -359,12 +378,15 @@ Therapists cannot directly edit protected system fields like:
 - The therapist can add a website.
 - The therapist can add a phone number extension.
 - The therapist can choose whether to show the phone number on the profile.
-- The introduction is a rich-text field. The editor allows bold,
-  italic, bulleted lists, and numbered lists only — no headings,
-  links, or underline. Submitted HTML is sanitized to
-  `%w[div br strong em ul ol li]` on save.
+- The introduction is a rich-text field (Trix editor). The toolbar
+  exposes bold, bulleted lists, and numbered lists only — no headings,
+  italic, underline, links, quotes, or attachments. Submitted HTML is
+  sanitized to `%w[div br strong ul ol li]` on save, so anything else
+  (links, headings, scripts) is stripped at the boundary.
 - The introduction is capped at 1,500 characters of visible text
-  (HTML tags do not count against the limit).
+  (HTML tags do not count against the limit). The editor shows a live
+  count and surfaces a per-field validation error if a submission slips
+  past the client-side count.
 - The therapist must keep one primary location.
 - The therapist can add one additional location in phase one.
 - The therapist can remove the additional location.
@@ -373,63 +395,96 @@ Therapists cannot directly edit protected system fields like:
 - The therapist can choose practice accessibility features.
 - The therapist can add an accessibility note.
 - The therapist can add social links.
-- The therapist can add 0 to 4 profile FAQs.
+- The therapist can add 0 to 5 profile FAQs.
 - Each FAQ should include a question and an answer.
 - FAQs should be optional.
-- FAQs should use plain text fields.
+- FAQs should use plain text fields. HTML tags submitted in either field are stripped on save.
 
 ## Client and availability rules
 
+- Clients and Availability are two separate pages
+  (`/your-practice/clients` and `/your-practice/availability`).
 - Free introductory phone call defaults to yes.
 - Accepting new clients defaults to yes.
 - Wait list for new clients and accepting new clients cannot both be true.
 - English is always listed on the profile.
 - Other languages are optional.
 - The therapist can add a note about availability.
-- The therapist can add business hours.
-- Business hours should be simple to enter.
-- Phase one business hours should use one time range per day.
-- Phase one business hours should support `Closed`, `By appointment only`, or `Open`.
-- The hours editor should let the therapist copy one day's hours to other days.
-- The hours editor should let the therapist apply the same hours to weekdays in one step.
+- The therapist can add business hours on the Availability page.
+- Business hours use one open/close time range per day in 15-minute
+  increments. A day has only two states: Open or Closed.
+- Closed days are represented by the absence of a `business_hours` row;
+  there is no "Closed" column. Save replaces all rows in a transaction.
+- The hours editor includes a per-row "Copy down" action that copies a
+  day's open / close / closed state to every day below it, plus a
+  single "Clear all hours" button that marks every day closed.
+- Therapists pick a US time zone (`therapists.time_zone`, IANA name)
+  used to label their hours on the public profile.
 - Early morning, evening, and weekend availability are separate options.
 - In person, virtual, or both should be stored clearly.
+- Session formats are a many-to-many: Individual, Group, Family,
+  Parent-child.
+- Telehealth platforms are a many-to-many backed by the
+  `telehealth_platforms` table (Zoom for Healthcare, Doxy.me,
+  SimplePractice, TheraPlatform, Google Meet, Presence). A freeform
+  `telehealth_platform_other` string captures additions. The telehealth
+  section only reveals when "Virtual therapy" is checked.
 
 ## Fees and payment rules
 
+- Fees & Payments lives at `/your-practice/fees-payment` as a single
+  editable form (session fees, payment methods, insurance, fee notes,
+  cancellation policy).
 - Fees are optional.
-- Payment methods can use multiple select.
-- Insurance entry should support both lookup and write in entry.
-- If the therapist cannot find an insurance company, they can enter it themselves.
-- The therapist can add a note about fees.
+- Session fees are split into evaluation, therapy, group therapy,
+  consultation, and late cancellation.
+- Payment methods are a multi-select.
+- Insurance is a multi-select autocomplete combobox. If the therapist
+  can't find a company, they submit it inline; the new row lands on
+  `insurance_companies` with `status = "pending"` and
+  `submitted_by_therapist_id = therapist.id`. The therapist sees their
+  own pending submissions in their search results until an admin
+  approves or rejects them.
+- The therapist can add a fee note.
+- Cancellation policy is a free-text field.
 
 ## Services and specialties rules
 
-- Services and specialties should use search plus add.
-- Services and specialties should support category filters.
-- The form should show search results and selected items in separate areas.
-- The form should not rely on one large wall of checkboxes.
-- The therapist can add up to 2 write in services.
-- The therapist can add up to 2 write in specialties.
-- Write in services and write in specialties should be optional.
-- Write in items should sit behind a small `Can’t find it? Add your own` action.
-- The form should show close matches before allowing a write in item.
-- The therapist can mark up to 5 specialties as focus specialties.
-- A write in specialty can also be marked as a focus specialty.
-- Focus specialties should be chosen from the selected specialties list, not from the full search results list.
-- The specialties form should show a simple focus counter.
-- Focus specialties should appear first on the public profile.
-- If all selected specialties are marked as focus specialties, the profile should not show an `Other areas of expertise` section.
-- If the therapist selects more than 5 specialties and marks 5 as focus specialties, the 5 focus specialties should show in the main specialties section.
-- Any remaining selected specialties should show only in `Other areas of expertise`.
-- A specialty should never appear in both sections.
+- Services and Specialties live on two separate pages
+  (`/your-practice/services` and `/your-practice/specialties`).
+- Both pages use the same filter/search picker pattern: a
+  selected-chips area at the top, a category filter-chip bar
+  (multi-select OR), text search, and a flat list with each item's
+  categories shown as small labels.
+- Selection is client-side filtering (via the `services_picker` and
+  `specialties_picker` Stimulus controllers); the server assigns
+  `therapist.service_ids` / `therapist.specialty_ids` in one shot on
+  save.
+- The pickers themselves do not accept inline write-ins. If a
+  therapist can't find a service or specialty, they submit a feature
+  request via the `shared/feature_request_link` partial on each page,
+  which routes to the kind-specific Discord channel (`:services` /
+  `:specialties`).
+- The therapist can mark up to 5 specialties as focus specialties via
+  a star toggle on each selected chip.
+  - Server-side, `YourPractice::SpecialtiesController#update` caps
+    focus at 5, syncs `practice_specialties.is_focus`, and wraps the
+    sync in a transaction.
+  - Focus chips sort first and render with a gold border and filled
+    star; the remaining selected specialties become "other areas of
+    expertise".
+  - When 5 are starred, the remaining stars grey out with a helper
+    message.
+  - Focus specialties appear first on the public profile.
+  - If all selected specialties are marked as focus, the profile does
+    not show an `Other areas of expertise` section.
+  - A specialty never appears in both sections.
 - Phase one does not need drag and drop ordering.
-- Phase one should remove the hard cap of 25 services.
-- Phase one should remove the hard cap of 25 specialties.
-- The app can still warn the therapist when the list gets too long.
+- Phase one does not enforce a hard cap on the number of services or
+  specialties.
 - Search ranking can weight focus specialties more heavily than the rest.
-- Specialties should show as badges on the public profile.
-- Services may also show as badges on the public profile.
+- Specialties show as badges on the public profile. Services may also
+  show as badges.
 
 ## Media rules
 
@@ -438,8 +493,9 @@ Therapists cannot directly edit protected system fields like:
 - If R2 upload config is missing, the app should return a clear app error and should not fall back to a developer's local AWS credentials.
 - Profile photo uploads should also ignore any local AWS SSO profile token in the developer shell.
 - Browser uploads to R2 should have a bucket CORS policy that allows the app origin and the `Content-Type` header for `PUT` requests.
-- When a therapist has a profile photo, dashboard account avatars should show that photo instead of initials.
-- A practice logo can be added later or earlier if the dashboard layout needs it.
+- When a therapist has a profile photo, account avatars in the
+  signed-in area should show that photo instead of initials.
+- A practice logo can be added later or earlier if the layout needs it.
 - A short intro video should start as a link field, not a hosted upload.
 - A photo gallery should wait until after phase one.
 
@@ -455,11 +511,11 @@ Therapists cannot directly edit protected system fields like:
 ## Future AI editing rules
 
 - Phase one should not depend on chat based profile editing.
-- The dashboard should still be built so chat based editing can be added later.
-- A future dashboard assistant should use the same save rules as the normal forms.
-- A future dashboard assistant should not write directly to the database in a special path.
+- The signed-in area should still be built so chat based editing can be added later.
+- A future assistant should use the same save rules as the normal forms.
+- A future assistant should not write directly to the database in a special path.
 - The app should still validate required fields, limits, and protected fields the same way no matter how the change was submitted.
-- A future dashboard assistant can help therapists add profile details in plain language instead of filling every field by hand.
+- A future assistant can help therapists add profile details in plain language instead of filling every field by hand.
 
 ## Search sync rules
 

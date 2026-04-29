@@ -1,83 +1,145 @@
 <%= render layout: "your_practice/shared/layout" do %>
-  <%# ── Session fees card ── %>
-  <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Session fees</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <dl class="grid grid-cols-[260px_1fr] gap-y-2 text-sm">
-        <dt class="text-text-muted">Assessment/evaluation fee</dt>
-        <dd class="text-text-primary"><%= therapist&.evaluation_fee.present? ? number_to_currency(therapist.evaluation_fee) : "Not provided" %></dd>
+  <%= form_with model: therapist, url: fees_payment_path, method: :patch,
+        data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
 
-        <dt class="text-text-muted">Individual therapy fee</dt>
-        <dd class="text-text-primary"><%= therapist&.therapy_fee.present? ? number_to_currency(therapist.therapy_fee) : "Not provided" %></dd>
+    <%# ── Session fees ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Session fees</h2>
+      <p class="text-sm text-text-muted mb-5">Leave blank if you prefer not to list a fee. Enter the standard rate in US dollars.</p>
 
-        <dt class="text-text-muted">Group therapy fee</dt>
-        <dd class="text-text-primary"><%= therapist&.group_therapy_fee.present? ? number_to_currency(therapist.group_therapy_fee) : "Not provided" %></dd>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+        <% [
+          [ :evaluation_fee,        "Assessment/evaluation fee" ],
+          [ :therapy_fee,           "Individual therapy fee" ],
+          [ :group_therapy_fee,     "Group therapy fee" ],
+          [ :consultation_fee,      "Consultation fee" ],
+          [ :late_cancellation_fee, "No-show/late cancellation fee" ]
+        ].each do |field, label| %>
+          <% fee_value = therapist.public_send(field) %>
+          <div>
+            <%= f.label field, label, class: "ts-label block mb-1.5" %>
+            <div class="relative">
+              <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">$</span>
+              <%= f.number_field field,
+                    step: 0.01, min: 0,
+                    value: (fee_value.present? ? format("%.2f", fee_value) : nil),
+                    class: "ts-input block w-full pl-7",
+                    inputmode: "decimal",
+                    autocomplete: "off" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </section>
 
-        <dt class="text-text-muted">Consultation fee</dt>
-        <dd class="text-text-primary"><%= therapist&.consultation_fee.present? ? number_to_currency(therapist.consultation_fee) : "Not provided" %></dd>
+    <%# ── Payment methods ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Payment methods</h2>
+      <p class="text-sm text-text-muted mb-5">Select all the ways you accept payment.</p>
 
-        <dt class="text-text-muted">No-show/late cancellation fee</dt>
-        <dd class="text-text-primary"><%= therapist&.late_cancellation_fee.present? ? number_to_currency(therapist.late_cancellation_fee) : "Not provided" %></dd>
-      </dl>
-    </div>
-  </section>
+      <fieldset>
+        <legend class="sr-only">Payment methods</legend>
+        <ul class="columns-1 sm:columns-2 lg:columns-3 gap-x-8 space-y-3">
+          <% @payment_methods.each do |method| %>
+            <li class="break-inside-avoid">
+              <label class="flex items-start gap-2.5 text-base text-text-primary cursor-pointer hover:text-plum">
+                <input type="checkbox"
+                       name="therapist[payment_method_ids][]"
+                       value="<%= method.id %>"
+                       <%= "checked" if therapist.payment_method_ids.include?(method.id) %>
+                       class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                <span><%= method.name %></span>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+        <input type="hidden" name="therapist[payment_method_ids][]" value="">
+      </fieldset>
+    </section>
 
-  <%# ── Payment methods card ── %>
-  <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Payment methods</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if therapist&.payment_methods&.any? %>
-        <p class="text-sm text-text-primary"><%= therapist.payment_methods.order(:name).pluck(:name).join(", ") %></p>
-      <% else %>
-        <p class="text-sm text-text-muted">No payment methods added yet.</p>
-      <% end %>
-    </div>
-  </section>
+    <%# ── Insurance ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Insurance</h2>
+      <p class="text-sm text-text-muted mb-5">Search for every insurance company you're in-network with. If you don't see yours, add it and we'll review it.</p>
 
-  <%# ── Insurance card ── %>
-  <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Insurance</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Edit</a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if therapist&.insurance_companies&.any? %>
-        <p class="text-sm text-text-primary"><%= therapist.insurance_companies.order(:name).pluck(:name).join(", ") %></p>
-      <% else %>
-        <p class="text-sm text-text-muted">No insurance companies added yet.</p>
-      <% end %>
-    </div>
-  </section>
+      <div data-controller="insurance-combobox"
+           data-insurance-combobox-search-url-value="<%= insurance_company_search_path %>"
+           class="relative">
+        <label for="insurance_combobox_input" class="ts-label block mb-1.5">Insurance companies</label>
 
-  <%# ── Fee notes card ── %>
-  <section class="ts-card mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Notes about your fees</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline"><%= therapist&.fee_notes.present? ? "Edit" : "Add" %></a>
-    </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <% if therapist&.fee_notes.present? %>
-        <p class="text-sm text-text-primary whitespace-pre-line"><%= therapist.fee_notes %></p>
-      <% else %>
-        <p class="text-sm text-text-muted">Add notes about your fees.</p>
-      <% end %>
-    </div>
-  </section>
+        <%# Reset the empty array on submit even when no chips are present %>
+        <input type="hidden" name="therapist[insurance_company_ids][]" value="">
 
-  <%# ── Cancellation policy card ── %>
-  <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-heading font-semibold text-text-primary">Cancellation policy</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Add</a>
+        <input type="text"
+               id="insurance_combobox_input"
+               data-insurance-combobox-target="input"
+               data-action="input->insurance-combobox#onInput keydown->insurance-combobox#navigate focus->insurance-combobox#onFocus blur->insurance-combobox#onBlur"
+               role="combobox"
+               aria-expanded="false"
+               aria-autocomplete="list"
+               aria-haspopup="listbox"
+               autocomplete="off"
+               placeholder="Start typing an insurance company…"
+               class="ts-input block w-full">
+
+        <ul data-insurance-combobox-target="listbox"
+            role="listbox"
+            hidden
+            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border-default bg-white shadow-lg"></ul>
+
+        <div data-insurance-combobox-target="chips" class="mt-3 flex flex-wrap gap-2">
+          <% @selected_insurance.each do |c| %>
+            <span data-insurance-chip
+                  class="inline-flex items-center gap-2 rounded-lg border border-border-default bg-gray-50 px-3 py-1.5">
+              <% if c[:id] %>
+                <input type="hidden" name="therapist[insurance_company_ids][]" value="<%= c[:id] %>">
+              <% else %>
+                <input type="hidden" name="therapist[insurance_company_names][]" value="<%= c[:name] %>">
+              <% end %>
+              <span class="text-sm text-text-primary"><%= c[:name] %></span>
+              <% if c[:status] == "pending" %>
+                <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-medium">Pending review</span>
+              <% end %>
+              <button type="button"
+                      data-action="click->insurance-combobox#removeChip"
+                      class="text-text-muted hover:text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1 rounded"
+                      aria-label="Remove <%= c[:name] %>">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    </section>
+
+    <%# ── Fee notes ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Notes about your fees</h2>
+      <p class="text-sm text-text-muted mb-5">Share anything families should know — sliding scale, package pricing, etc.</p>
+
+      <%= f.label :fee_notes, "Fee notes", class: "sr-only" %>
+      <%= f.text_area :fee_notes,
+            rows: 4,
+            class: "ts-input block w-full",
+            placeholder: "E.g. Sliding-scale slots available for families in financial need." %>
+    </section>
+
+    <%# ── Cancellation policy ── %>
+    <section class="ts-card">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Cancellation policy</h2>
+      <p class="text-sm text-text-muted mb-5">Set clear expectations about rescheduling and no-shows.</p>
+
+      <%= f.label :appointment_cancellation_policy, "Cancellation policy", class: "sr-only" %>
+      <%= f.text_area :appointment_cancellation_policy,
+            rows: 4,
+            class: "ts-input block w-full",
+            placeholder: "E.g. Please cancel at least 24 hours in advance to avoid a late cancellation fee." %>
+    </section>
+
+    <div class="flex justify-end">
+      <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <p class="text-sm text-text-muted">Add your cancellation policy.</p>
-    </div>
-  </section>
+  <% end %>
 <% end %>

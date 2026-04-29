@@ -22,7 +22,6 @@ module YourPractice
 
     def clients_params
       params.require(:therapist).permit(
-        :accepting_new_clients, :has_waitlist, :free_phone_call,
         age_group_ids: [], language_ids: [], faith_ids: []
       )
     end

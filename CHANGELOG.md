@@ -1,8 +1,198 @@
 # Changelog
 
+## 2026-04-26
+
+### Changed
+- **Your Practice: "New clients" section moved from Clients to top of
+  Availability.** The accepting / waitlist / free intro call fieldset
+  now lives at the top of the Availability form, and its three
+  attributes (`accepting_new_clients`, `has_waitlist`,
+  `free_phone_call`) moved from `clients_params` to
+  `availability_params`. The model-level validation (waitlist + accepting
+  cannot both be true) is unchanged and now surfaces on the Availability
+  page.
+
+### Added
+- **Ransack search backend for Avo.** Added the `ransack` gem (Avo's
+  documented search/filter backend) and a `Ransackable` concern included
+  in `ApplicationRecord` that allowlists every column and association for
+  Ransack 4. Fixes `undefined method 'ransack' for class Service` in the
+  Avo admin search. If a sensitive column is added to any model in the
+  future, override `ransackable_attributes` on that one model to exclude it.
+
+### Fixed
+- **Your Practice → Specialties and Services: Save button placement.**
+  Restructured both pages so `<section class="ts-card">` wraps the form
+  (matching accessibility/introductions/etc.). The Save button now sits
+  inside the card with a top divider instead of floating below it on the
+  page background, and gains the `cursor-pointer` class.
+
+## 2026-04-25
+
+### Added
+- **Your Practice → Availability: Business hours.** Therapists can set
+  weekly business hours from the Availability page. Each day has an
+  "Open / Closed" toggle and 15-minute open / close-time dropdowns.
+  Per-row "Copy down" replicates a day's hours into every day below it,
+  and a single "Clear all hours" button marks every day closed. A new
+  US time-zone select labels the hours. The Availability sidebar entry
+  also moved above Introduction. The page replaces all `business_hours`
+  rows for the therapist on save inside a transaction; absence of a row
+  for a day means "closed" — no separate column needed. Backed by the
+  existing `business_hours` table and a new `therapists.time_zone`
+  column (validated against `ActiveSupport::TimeZone.us_zones`).
+
+### Changed
+- **About You → Professional identity: identity-field visibility controls.**
+  Birth date moved to the top of the section with reworded helper text
+  clarifying it is voluntary, used only for matching against parent
+  age-range searches, and never shown on the profile. Pronouns, gender
+  identity, and race / ethnicity each gained an "I'm comfortable showing
+  this on my profile" checkbox (unchecked by default) backed by new
+  `therapists.show_pronouns_on_profile`, `show_genders_on_profile`, and
+  `show_race_ethnicities_on_profile` boolean columns. Selections are still
+  used for search matching when the box is unchecked; only profile display
+  is gated.
+
+### Docs
+- **Documentation sweep to match current app state.** Several docs had
+  drifted since the dashboard was removed and Account Settings became
+  the post-signin landing page (CHANGELOG 2026-04-17), since
+  Services/Specialties were split into separate pages with the new
+  picker UX (CHANGELOG 2026-04-23), and since Turnstile was dropped
+  from the auth views.
+  - `_docs/turnstile.md` rewritten to state Turnstile is **not
+    currently wired**; preserves the rebuild checklist in case it
+    comes back. References to `SessionsController` /
+    `app/views/sessions/` (which don't exist) removed.
+  - `_docs/_processes/auth.md` updated: post-signin redirect targets
+    `/account-settings`, not `/dashboard`. `require_profile` no
+    longer claims to be used by `DashboardController` (removed).
+    Turnstile section now points at the rewritten doc.
+  - `_docs/business-rules.md` updated: "Dashboard home rules"
+    section replaced with "Signed-in landing page rules" describing
+    Account Settings. "Support request rules" section replaced with
+    "Feature requests" describing the actual built feature. Profile
+    editor rules now describe the page-per-form pattern (no modals)
+    and list the real `About You` / `Your Practice` /
+    `Account Settings` sidebar entries. Practice details, fees,
+    services, specialties, and availability sections updated to
+    match the current Trix toolbar, write-in-via-feature-request
+    flow, insurance combobox, telehealth platforms, and split pages.
+  - `_docs/_processes/admin-panel.md` updated: resources list now
+    includes `FeatureRequest`, `TelehealthPlatform`,
+    `ServiceToCategory`, `SpecialtyToCategory`. Redirect target for
+    non-admins corrected from `/dashboard` to `/account-settings`.
+    New "Admin tools" section documents
+    `/admin-tools/credentials/:id/document`.
+  - `_docs/_processes/rate-limiting.md` updated: added
+    `zip-search/ip` Rack::Attack throttle to the table; added
+    `AccountSettings::UpdateEmailsController` Rails-layer limits
+    (the email change flow that was previously a TODO is now
+    implemented and rate-limited); added `auth.rate_limit.email_change`
+    log event; added `feature-requests` to the
+    intentionally-not-rate-limited list.
+  - `_docs/_processes/notifications.md` updated: added "Feature
+    request submitted" to the Currently wired section with the kind
+    → channel routing map.
+  - `_docs/index.md` now lists `admin-panel.md` and updates the
+    Turnstile description.
+
+### Added
+- **Therapist birth date.** New `birth_date` (date) column on `therapists`,
+  edited from About You → Identity via Rails' three-dropdown `date_select`
+  (Month / Day / Year, year range 1940..current). Field is optional. Helper
+  text on the form makes clear the value is never displayed publicly and is
+  only used internally to match therapists to age-range searches. Validated
+  in `Therapist#birth_date_within_range` (year in `BIRTH_YEAR_RANGE`, not in
+  the future) and permitted as multiparameter date params in
+  `AboutYou::ProfessionalIdentitiesController`.
+- **Profile FAQs.** Therapists can add up to 5 question/answer pairs
+  on the Your Practice → FAQs page. Stored in a new `therapist_faqs`
+  table (uuid PK, `therapist_id` FK with `on_delete: :cascade`,
+  `question` varchar(200), `answer` text, timestamps). Question
+  capped at 200 chars, answer at 1000 chars. HTML tags in either
+  field are stripped server-side via `strip_tags` before validation;
+  the public profile renders values escaped, so the stored data
+  stays plain text. The form uses `accepts_nested_attributes_for`
+  with `reject_if: :all_blank` and `allow_destroy: true`; the
+  `faqs` Stimulus controller hides the "Add a question" button at
+  5 rows, and the Remove button toggles `_destroy=1` on persisted
+  rows or strips the row outright on unsaved ones. Max-5 is
+  enforced by a model validation on `Therapist` so the cap holds
+  even if the JS is bypassed.
+- **Feature request modal, drop-in anywhere.** New
+  `shared/feature_request_link` partial renders a text link plus a
+  native `<dialog>` modal scoped by `kind:` —
+  `specialty`, `service`, `insurance_company`, `college`, or
+  `general`. Each kind has its own default link text, modal title,
+  lead, and placeholder copy in `FeatureRequestHelper`. Multiple
+  links can live on the same page (e.g. footer "Feature request" plus
+  page-level "Don't see your specialty?"); each instance gets a
+  unique dialog + Turbo Frame ID. Wired into the dashboard footer
+  (general), specialties page (specialty), and services page
+  (service).
+- **`feature_requests` table + model.** Stores
+  `therapist_id`, `kind`, `body`, `page_url`, `status`
+  (default `open`). Submissions go through
+  `FeatureRequestsController#create`, which routes the Discord ping
+  to the kind-specific channel
+  (`:specialties`, `:services`, `:insurance_write_in`,
+  `:college_write_in`, otherwise `:feature_requests`) via the
+  existing `Notifier`. Admin viewing/triage lives in Avo at
+  `/admin/resources/feature_requests`.
+- **`feature-request` Stimulus controller.** Wraps the native
+  `<dialog>` element for free focus trap, ESC dismissal, and inert
+  background. Backdrop click closes; Cancel and ✕ buttons close.
+
 ## 2026-04-23
 
 ### Changed
+- **Specialties gets its own page with focus-star selection.** Mirrors
+  the services filter/search picker and adds a star toggle on each
+  selected chip to mark it as a "focus specialty" (max 5). Focus
+  chips sort first and render with a gold border and filled star;
+  the remaining selected specialties are "other areas of expertise."
+  When 5 are starred, the remaining stars grey out with a helper
+  message. Server-side `YourPractice::SpecialtiesController#update`
+  caps focus at 5, syncs `practice_specialties.is_focus`, and wraps
+  the sync in a transaction. Removed the now-obsolete
+  `services_specialties` combined controller/view/route.
+
+- **Services split off into its own page with a filter/search picker.**
+  `Services & Specialties` becomes two sidebar entries: `Services`
+  (`/your-practice/services`, now fully functional) and `Specialties`
+  (`/your-practice/specialties`, still the placeholder — dedicated
+  page comes next). The services picker handles the many-to-many
+  category model without duplicating rows: selected-chips area at top,
+  category filter-chip bar (multi-select OR), text search, and a flat
+  list of all 149 services with their categories shown as small
+  labels. Client-side filtering in the new `services_picker` Stimulus
+  controller; server-side `YourPractice::ServicesController#update`
+  assigns `therapist.service_ids` in one shot.
+
+- **Fees & Payments is now editable.** The `/your-practice/fees-payment`
+  page was a display-only card layout with dead "Edit" links. Replaced
+  it with a single form matching the one-page-one-form pattern used
+  elsewhere in `Your Practice`: session fees (evaluation, therapy,
+  group therapy, consultation, late cancellation), payment-method
+  checkboxes, insurance-company combobox (see below), fee notes, and
+  cancellation policy (wired to the existing
+  `appointment_cancellation_policy` column, which the show view had
+  been ignoring). Route gained `:update`;
+  `YourPractice::FeesPaymentsController` gained an `update` action.
+
+- **Insurance is now a multi-select autocomplete with pending
+  write-ins.** Mirrors the college-autocomplete pattern used for
+  education. Therapists search, pick from approved companies, or
+  submit a new one — which is stored on `insurance_companies` with
+  `status = "pending"` and `submitted_by_therapist_id = therapist.id`.
+  The therapist can see their own pending submissions in their search
+  results (via `InsuranceCompany.visible_to`) until an admin approves
+  or rejects them. Adds a new search endpoint at
+  `/your-practice/insurance-companies/search` and a new
+  `insurance_combobox` Stimulus controller.
+
 - **Clients & Availability split into two sections.** The single
   `/your-practice/clients-availability` show page (display-only with
   dead "Edit" links) is replaced by two edit pages with forms, matching

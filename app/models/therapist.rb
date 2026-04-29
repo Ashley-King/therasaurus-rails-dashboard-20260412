@@ -47,15 +47,28 @@ class Therapist < ApplicationRecord
   has_many :practice_telehealth_platforms, dependent: :destroy
   has_many :telehealth_platforms, through: :practice_telehealth_platforms
 
+  has_many :feature_requests, dependent: :destroy
+
+  has_many :therapist_faqs, -> { order(:created_at) }, dependent: :destroy
+  accepts_nested_attributes_for :therapist_faqs, allow_destroy: true, reject_if: :all_blank
+
   PRACTICE_YEAR_RANGE = 1940..Date.current.year
+  BIRTH_YEAR_RANGE = 1940..Date.current.year
   PRACTICE_DESCRIPTION_MAX = 1500
+  FAQS_MAX = 5
 
   validates :year_began_practice,
             numericality: { only_integer: true, in: PRACTICE_YEAR_RANGE },
             allow_nil: true
 
+  validates :time_zone,
+            inclusion: { in: ActiveSupport::TimeZone.us_zones.map(&:name) },
+            allow_blank: true
+
   validate :accepting_clients_and_waitlist_exclusion
   validate :practice_description_within_limit
+  validate :therapist_faqs_within_limit
+  validate :birth_date_within_range
 
   # Builds the public URL for the profile photo from the R2 object key
   # stored in `practice_image_key`. The URL is never persisted — storing
@@ -100,6 +113,20 @@ class Therapist < ApplicationRecord
     plain = ActionView::Base.full_sanitizer.sanitize(practice_description).to_s
     if plain.length > PRACTICE_DESCRIPTION_MAX
       errors.add(:practice_description, "must be #{PRACTICE_DESCRIPTION_MAX} characters or fewer")
+    end
+  end
+
+  def therapist_faqs_within_limit
+    count = therapist_faqs.reject(&:marked_for_destruction?).size
+    if count > FAQS_MAX
+      errors.add(:base, "You can only add up to #{FAQS_MAX} FAQs.")
+    end
+  end
+
+  def birth_date_within_range
+    return if birth_date.blank?
+    unless BIRTH_YEAR_RANGE.cover?(birth_date.year) && birth_date <= Date.current
+      errors.add(:birth_date, "must be a real date between #{BIRTH_YEAR_RANGE.first} and today")
     end
   end
 end

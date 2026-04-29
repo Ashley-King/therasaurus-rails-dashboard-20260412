@@ -25,6 +25,6 @@ class CreateJoinTables < ActiveRecord::Migration[8.1]
       t.timestamps default: -> { "CURRENT_TIMESTAMP" }
     end
 
-    add_index table_name, [:therapist_id, :"#{ref_name}_id"], unique: true
+    add_index table_name, [ :therapist_id, :"#{ref_name}_id" ], unique: true
   end
 end

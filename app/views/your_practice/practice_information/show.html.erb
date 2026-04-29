@@ -37,7 +37,8 @@
           <%= f.telephone_field :phone_number,
                 required: true,
                 class: "ts-input block w-full",
-                autocomplete: "off" %>
+                autocomplete: "off",
+                data: { controller: "phone-format", action: "input->phone-format#format" } %>
         </div>
         <div>
           <%= f.label :phone_ext, "Extension", class: "ts-label block mb-1.5" %>

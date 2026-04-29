@@ -251,10 +251,26 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
     font-size: 0.875rem;
     font-weight: 400;
     color: var(--color-text-body);
-    background: var(--color-surface);
+    background-color: var(--color-surface);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%23737373' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
     border: 1px solid var(--color-border-input);
     border-radius: var(--radius-md);
     padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .ts-select:focus {
+    border-color: var(--color-border-plum);
+    outline: none;
+  }
+
+  /* Default cursor on <option> elements so the open dropdown doesn't
+     inherit pointer cursor from a select.cursor-pointer trigger. */
+  option {
+    cursor: default;
   }
 
   /* -- Cards -- */

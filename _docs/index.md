@@ -3,7 +3,8 @@
 ## Processes
 
 - [Auth](./_processes/auth.md) — sign-in, OTP verification, session/token handling, sign-out, profile gate
-- [Turnstile](./turnstile.md) — captcha setup
+- [Admin Panel](./_processes/admin-panel.md) — Avo at `/avo`, admin-tools endpoints, resource list
+- [Turnstile](./turnstile.md) — currently not wired; rebuild checklist if it comes back
 - [Business Rules](./business-rules.md) — account + membership rules
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
 - [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted ZIPs, `Geocodable` concern, ZIP combobox UX

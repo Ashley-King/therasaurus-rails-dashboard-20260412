@@ -1,0 +1,111 @@
+<%= render layout: "your_practice/shared/layout" do %>
+  <section class="ts-card"
+           data-controller="specialties-picker"
+           data-specialties-picker-max-focus-value="<%= @max_focus %>"
+           data-specialties-picker-initial-focus-value="<%= @focus_specialty_ids.to_json %>">
+    <div class="mb-4">
+      <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Specialties</h2>
+      <p class="text-sm text-text-primary">Choose your areas of expertise. Click the star next to your specialties - what you would like to be known for. You can choose up to <%= @max_focus %> specialties.</p>
+    </div>
+
+    <%= form_with model: therapist, url: specialties_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
+
+      <%# ── Selected chips ── %>
+      <div class="mb-5 border border-border-default rounded-lg p-4">
+        <div class="flex items-baseline justify-between mb-1">
+          <h3 class="text-sm font-semibold text-text-primary">
+            Areas of expertise (<span data-specialties-picker-target="selectedCount">0</span>)
+            <span class="font-normal">· <span data-specialties-picker-target="focusCount">0</span>/<%= @max_focus %> specialties</span>
+          </h3>
+        </div>
+        <div data-specialties-picker-target="selectedChips" class="flex flex-wrap items-start content-start gap-2 h-48 overflow-y-auto pr-1 mt-3"></div>
+      </div>
+
+      <%# ── Search ── %>
+      <div class="mb-4">
+        <label for="specialties_search" class="sr-only">Search specialties</label>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3m0 0A7 7 0 1 0 6.8 6.8a7 7 0 0 0 9.9 9.9Z"/>
+            </svg>
+          </span>
+          <input type="search"
+                 id="specialties_search"
+                 data-specialties-picker-target="search"
+                 data-action="input->specialties-picker#onSearch"
+                 placeholder="Search areas of expertise…"
+                 autocomplete="off"
+                 class="ts-input block w-full pl-9">
+        </div>
+      </div>
+
+      <%# ── Category filters ── %>
+      <div class="mb-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-2">Filter by category</h3>
+
+        <label for="specialty_category_select" class="sr-only">Filter by category</label>
+        <select id="specialty_category_select"
+                data-specialties-picker-target="categorySelect"
+                data-action="change->specialties-picker#selectCategory"
+                class="ts-select block w-full sm:w-1/2 cursor-pointer">
+          <option value="">All categories</option>
+          <% @specialty_categories.each do |id, name| %>
+            <option value="<%= id %>"><%= name %></option>
+          <% end %>
+        </select>
+
+        <div class="mt-2 flex items-center gap-4">
+          <button type="button"
+                  data-action="click->specialties-picker#clearFilters"
+                  class="text-xs font-semibold text-teal hover:text-teal-dark hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1 rounded">
+            Clear filters
+          </button>
+          <%= render "shared/feature_request_link",
+                kind: "specialty",
+                class: "text-xs font-semibold text-teal hover:text-teal-dark hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum focus:ring-offset-1 rounded" %>
+        </div>
+      </div>
+
+      <%# ── Specialty list ── %>
+      <div class="border-t border-gray-100 pt-4">
+        <p class="text-xs text-text-primary mb-3">
+          Showing <span data-specialties-picker-target="visibleCount"><%= @specialties.size %></span> of <%= @specialties.size %>
+        </p>
+
+        <%# Hidden field so unchecking every specialty still submits an empty array %>
+        <input type="hidden" name="therapist[specialty_ids][]" value="">
+        <%# And same for focus, so clearing all stars still submits empty %>
+        <input type="hidden" name="therapist[focus_specialty_ids][]" value="">
+
+        <ul class="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
+          <% @specialties.each do |specialty| %>
+            <li data-specialties-picker-target="specialty"
+                data-specialty-id="<%= specialty[:id] %>"
+                data-specialty-name="<%= specialty[:name] %>"
+                data-category-ids="<%= specialty[:category_ids].join(" ") %>">
+              <label class="flex items-start gap-2.5 py-2.5 px-1 text-base text-text-primary cursor-pointer hover:bg-gray-50">
+                <input type="checkbox"
+                       name="therapist[specialty_ids][]"
+                       value="<%= specialty[:id] %>"
+                       <%= "checked" if @selected_specialty_ids.include?(specialty[:id].to_s) %>
+                       data-action="change->specialties-picker#onSpecialtyChange"
+                       class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+                <span><%= specialty[:name] %></span>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+
+        <p data-specialties-picker-target="empty" hidden class="text-sm text-text-primary text-center py-6">
+          No areas of expertise match your search or filters.
+        </p>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5 cursor-pointer" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

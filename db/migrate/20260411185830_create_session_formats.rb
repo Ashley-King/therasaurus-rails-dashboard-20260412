@@ -15,6 +15,6 @@ class CreateSessionFormats < ActiveRecord::Migration[8.1]
       t.timestamps default: -> { "CURRENT_TIMESTAMP" }
     end
 
-    add_index :practice_session_formats, [:therapist_id, :session_format_id], unique: true, name: "idx_practice_session_formats_unique"
+    add_index :practice_session_formats, [ :therapist_id, :session_format_id ], unique: true, name: "idx_practice_session_formats_unique"
   end
 end

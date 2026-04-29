@@ -60,9 +60,11 @@ gem "rack-attack"
 
 # Admin panel [https://avohq.io]
 gem "avo"
+# Search/filter backend used by Avo resources
+gem "ransack"
 
 # Environment variables
-gem "dotenv-rails", groups: [:development, :test]
+gem "dotenv-rails", groups: [ :development, :test ]
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

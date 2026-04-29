@@ -1,11 +1,45 @@
 <%= render layout: "your_practice/shared/layout" do %>
-  <section class="ts-card">
-    <div class="flex items-center justify-between mb-4">
+  <section class="ts-card"
+           data-controller="faqs"
+           data-faqs-max-value="<%= Therapist::FAQS_MAX %>">
+    <div class="mb-5">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Frequently asked questions</h2>
-      <a href="#" class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline">Add</a>
+      <p class="text-sm text-text-muted mt-1">Add up to <%= Therapist::FAQS_MAX %> questions and answers about your practice.</p>
     </div>
-    <div class="border border-gray-200 rounded-lg p-5">
-      <p class="text-sm text-text-muted">Add up to 5 frequently asked questions about your practice.</p>
-    </div>
+
+    <% if therapist.errors[:base].any? %>
+      <p class="mb-4 text-sm text-status-attention"><%= therapist.errors[:base].to_sentence %></p>
+    <% end %>
+
+    <%= form_with model: therapist, url: faq_path, method: :patch,
+          data: { controller: "form-guard" }, class: "space-y-4" do |f| %>
+
+      <div data-faqs-target="rows" class="space-y-4">
+        <% therapist.therapist_faqs.each do |faq| %>
+          <%= f.fields_for :therapist_faqs, faq do |ff| %>
+            <%= render "faq_row", ff: ff %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <template data-faqs-target="template">
+        <%= f.fields_for :therapist_faqs, TherapistFaq.new, child_index: "NEW_RECORD" do |ff| %>
+          <%= render "faq_row", ff: ff %>
+        <% end %>
+      </template>
+
+      <div>
+        <button type="button"
+                data-action="click->faqs#add"
+                data-faqs-target="addButton"
+                class="text-sm font-semibold text-teal hover:text-teal-dark hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-1 rounded">
+          + Add a question
+        </button>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-gray-100">
+        <%= f.submit "Save", class: "ts-btn-primary px-6 py-2.5" %>
+      </div>
+    <% end %>
   </section>
 <% end %>

@@ -1,2 +1,5 @@
 [env]
 PATH = "/opt/homebrew/Cellar/libpq/18.3/bin:{{env.PATH}}"
+
+[tools]
+ruby = "3.3.11"

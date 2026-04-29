@@ -1,0 +1,34 @@
+<div data-faqs-target="row" class="border border-gray-200 rounded-lg p-5 space-y-4">
+  <%= ff.hidden_field :id if ff.object.persisted? %>
+  <%= ff.hidden_field :_destroy, value: "0" %>
+
+  <div>
+    <%= ff.label :question, "Question", class: "ts-label block mb-1.5" %>
+    <%= ff.text_field :question,
+          maxlength: TherapistFaq::QUESTION_MAX,
+          autocomplete: "off",
+          class: "ts-input block w-full" %>
+    <% if ff.object.errors[:question].any? %>
+      <p class="mt-1 text-sm text-status-attention"><%= ff.object.errors[:question].first %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= ff.label :answer, "Answer", class: "ts-label block mb-1.5" %>
+    <%= ff.text_area :answer,
+          rows: 3,
+          maxlength: TherapistFaq::ANSWER_MAX,
+          class: "ts-input block w-full" %>
+    <% if ff.object.errors[:answer].any? %>
+      <p class="mt-1 text-sm text-status-attention"><%= ff.object.errors[:answer].first %></p>
+    <% end %>
+  </div>
+
+  <div class="flex justify-end">
+    <button type="button"
+            data-action="click->faqs#remove"
+            class="text-sm font-medium text-status-attention hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-status-attention focus:ring-offset-1 rounded">
+      Remove
+    </button>
+  </div>
+</div>

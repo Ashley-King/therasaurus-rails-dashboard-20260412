@@ -3,6 +3,38 @@
     <%= form_with model: therapist, url: professional_identity_path, method: :patch,
           data: { controller: "form-guard" }, class: "space-y-8" do |f| %>
 
+    <div class="space-y-3 text-sm text-text-muted">
+      <p>
+        All of this information is voluntary. We use it to improve matching
+        when parents search for therapists — the more you share, the more
+        accurately we can connect you with the right families.
+      </p>
+      <p>
+        Your age and birth date are never shown on your profile. For everything
+        else, use the checkbox under each section to choose what appears
+        publicly.
+      </p>
+    </div>
+
+    <%# ── Birth date ── %>
+    <div>
+      <%= f.label :birth_date, "Birth date", class: "ts-label block mb-1.5" %>
+      <div class="flex flex-wrap gap-2"
+           role="group"
+           aria-labelledby="therapist_birth_date">
+        <%= f.date_select :birth_date,
+              { order: [ :month, :day, :year ],
+                start_year: Date.current.year,
+                end_year: Therapist::BIRTH_YEAR_RANGE.first,
+                use_month_names: Date::MONTHNAMES.compact,
+                prompt: { month: "Month", day: "Day", year: "Year" } },
+              { class: "ts-select" } %>
+      </div>
+      <% if therapist.errors[:birth_date].any? %>
+        <p class="text-sm text-red-600 mt-1.5"><%= therapist.errors[:birth_date].to_sentence %></p>
+      <% end %>
+    </div>
+
     <%# ── Pronouns ── %>
     <div>
       <%= f.label :pronouns, class: "ts-label block mb-1.5" %>
@@ -10,45 +42,64 @@
             class: "ts-input block w-full sm:w-1/2",
             placeholder: "e.g. she/her, he/him, they/them",
             autocomplete: "off" %>
+      <label class="flex items-start gap-2.5 mt-3 text-base text-text-primary cursor-pointer">
+        <%= f.check_box :show_pronouns_on_profile,
+              class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+        <span>Show my pronouns on my profile.</span>
+      </label>
     </div>
 
     <%# ── Gender Identity ── %>
     <fieldset>
       <legend class="ts-label mb-2">Gender identity</legend>
-      <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        <% @genders.each do |gender| %>
-          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-base text-text-primary cursor-pointer hover:border-plum has-[:checked]:border-plum transition">
-            <input type="checkbox"
-                   name="therapist[gender_ids][]"
-                   value="<%= gender.id %>"
-                   <%= "checked" if therapist&.gender_ids&.include?(gender.id) %>
-                   class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
-            <%= gender.name %>
-          </label>
-        <% end %>
-      </div>
+      <p class="text-sm text-text-muted mb-3">Select all that apply.</p>
       <%# Hidden field so unchecking all still submits an empty array %>
       <input type="hidden" name="therapist[gender_ids][]" value="">
+      <ul class="divide-y divide-gray-100">
+        <% @genders.each do |gender| %>
+          <li>
+            <label class="flex items-start gap-2.5 py-2.5 px-1 text-base text-text-primary cursor-pointer hover:bg-gray-50">
+              <input type="checkbox"
+                     name="therapist[gender_ids][]"
+                     value="<%= gender.id %>"
+                     <%= "checked" if therapist&.gender_ids&.include?(gender.id) %>
+                     class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+              <span><%= gender.name %></span>
+            </label>
+          </li>
+        <% end %>
+      </ul>
+      <label class="flex items-start gap-2.5 mt-3 text-base text-text-primary cursor-pointer">
+        <%= f.check_box :show_genders_on_profile,
+              class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+        <span>Show my gender identity on my profile.</span>
+      </label>
     </fieldset>
 
     <%# ── Race / Ethnicity ── %>
     <fieldset>
       <legend class="ts-label mb-2">Race / ethnicity</legend>
-      <p class="text-xs text-text-muted mb-3">Select all that apply.</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        <% @race_ethnicities.each do |re| %>
-          <label class="flex items-center gap-2.5 rounded-lg border border-border-default px-3.5 py-2.5 text-base text-text-primary cursor-pointer hover:border-plum has-[:checked]:border-plum transition">
-            <input type="checkbox"
-                   name="therapist[race_ethnicity_ids][]"
-                   value="<%= re.id %>"
-                   <%= "checked" if therapist&.race_ethnicity_ids&.include?(re.id) %>
-                   class="h-4 w-4 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
-            <%= re.name %>
-          </label>
-        <% end %>
-      </div>
+      <p class="text-sm text-text-muted mb-3">Select all that apply.</p>
       <input type="hidden" name="therapist[race_ethnicity_ids][]" value="">
+      <ul class="divide-y divide-gray-100">
+        <% @race_ethnicities.each do |re| %>
+          <li>
+            <label class="flex items-start gap-2.5 py-2.5 px-1 text-base text-text-primary cursor-pointer hover:bg-gray-50">
+              <input type="checkbox"
+                     name="therapist[race_ethnicity_ids][]"
+                     value="<%= re.id %>"
+                     <%= "checked" if therapist&.race_ethnicity_ids&.include?(re.id) %>
+                     class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
+              <span><%= re.name %></span>
+            </label>
+          </li>
+        <% end %>
+      </ul>
+      <label class="flex items-start gap-2.5 mt-3 text-base text-text-primary cursor-pointer">
+        <%= f.check_box :show_race_ethnicities_on_profile,
+              class: "mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer" %>
+        <span>Show my race / ethnicity on my profile.</span>
+      </label>
     </fieldset>
 
       <%# ── Save ── %>
