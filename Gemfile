@@ -42,7 +42,7 @@ gem "jwt"    # Decode/verify Supabase JWTs
 gem "httpx"  # HTTP client for Supabase Auth API
 
 # Cloudflare R2 (S3-compatible) for file uploads
-gem "aws-sdk-s3", "~> 1.0"
+gem "aws-sdk-s3", "~> 1.220"
 
 # Structured single-line request logs in JSON [https://github.com/roidrage/lograge]
 gem "lograge"
