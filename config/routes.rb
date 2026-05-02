@@ -12,6 +12,16 @@ Rails.application.routes.draw do
   get "create-account", to: "create_account#new", as: :create_account
   post "create-account", to: "create_account#create"
 
+  # Start Your Trial (post-Create-Account interstitial; reachable later
+  # from Account Settings for therapists without an active sub)
+  get "start-trial", to: "start_trial#show", as: :start_trial
+  post "start-trial/checkout", to: "start_trial#checkout", as: :start_trial_checkout
+  post "start-trial/skip", to: "start_trial#skip", as: :start_trial_skip
+
+  # App-owned post-checkout landing page. Stripe's success_url points
+  # here. Renders without depending on the webhook having landed.
+  get "trial-started", to: "trial_started#show", as: :trial_started
+
   # Shared endpoints (used across multiple flows)
   get "zip-search", to: "zip_lookups#search", as: :zip_search
   resources :feature_requests, only: [ :create ], path: "feature-requests"
@@ -55,7 +65,9 @@ Rails.application.routes.draw do
       delete :cancel
     end
     resource :notification, only: [ :show ], path: "notifications"
-    resource :membership, only: [ :show ]
+    resource :membership, only: [ :show ] do
+      post :portal
+    end
   end
 
   # Admin tools (not mounted under Avo's /admin path to avoid engine routing
@@ -63,6 +75,9 @@ Rails.application.routes.draw do
   scope "admin-tools", module: :admin_tools do
     get "credentials/:id/document", to: "credential_documents#show", as: :admin_credential_document
   end
+
+  # Stripe webhooks come in via Pay's auto-mounted engine at
+  # `/pay/webhooks/stripe`. See `config/initializers/pay.rb`.
 
   # Health checks
   get "health", to: "health#show"

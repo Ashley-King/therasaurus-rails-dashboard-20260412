@@ -1,3 +1,41 @@
+<% sub = current_user&.payment_processor&.subscription %>
+
+<% if sub&.status == "past_due" %>
+  <div class="ts-banner-warning mb-6">
+    <p class="text-sm">
+      <span class="font-semibold">Your last payment failed.</span>
+      Stripe will keep retrying for a few days. Update your card now in
+      <%= link_to "Membership", membership_path, class: "font-semibold hover:underline" %>
+      to avoid losing public profile access.
+    </p>
+  </div>
+<% elsif sub&.status == "trialing" %>
+  <div class="ts-banner-info mb-6">
+    <p class="text-sm text-teal-dark">
+      <span class="font-semibold">You're on a free trial.</span>
+      <% if sub.trial_ends_at.present? %>
+        Your trial ends on <%= l sub.trial_ends_at.to_date, format: :long %>.
+      <% end %>
+      <% if sub.current_period_end.present? %>
+        Your card will be charged on
+        <%= l sub.current_period_end.to_date, format: :long %>.
+      <% end %>
+      You can cancel any time before then from the
+      <%= link_to "Membership", membership_path, class: "font-semibold hover:underline" %>
+      section.
+    </p>
+  </div>
+<% elsif current_user && (sub.nil? || %w[canceled unpaid incomplete incomplete_expired paused].include?(sub.status)) %>
+  <div class="ts-banner-warning mb-6">
+    <p class="text-sm">
+      <span class="font-semibold">Your profile is offline.</span>
+      <%= link_to "Start your 14-day free trial today", start_trial_path,
+                  class: "font-semibold hover:underline" %>
+      to put your profile in front of clients searching now.
+    </p>
+  </div>
+<% end %>
+
 <div class="lg:grid lg:grid-cols-[256px_1fr] lg:gap-8">
   <%# Sidebar %>
   <aside class="hidden lg:block">

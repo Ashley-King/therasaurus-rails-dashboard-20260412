@@ -1,0 +1,79 @@
+<% content_for(:auth_max_width) { "sm:max-w-xl" } %>
+
+<% if @reactivation %>
+  <h1 class="ts-auth-title mb-6">Reactivate your subscription</h1>
+
+  <p class="text-base text-text-body mb-4">
+    Welcome back. Your free trial has already been used, so subscribing
+    today charges your card right away and puts your profile back online
+    immediately.
+  </p>
+
+  <p class="text-base text-text-body mb-6">
+    Cancel any time from Account Settings.
+  </p>
+
+  <%= form_with url: start_trial_checkout_path, method: :post, class: "space-y-3", data: { turbo: false } do %>
+    <button type="submit"
+            name="plan"
+            value="monthly"
+            class="ts-btn-primary w-full px-6 py-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer">
+      Subscribe monthly &mdash; $17/month
+    </button>
+
+    <button type="submit"
+            name="plan"
+            value="annual"
+            class="ts-btn-outline w-full px-6 py-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer">
+      Subscribe annually and save $34 &mdash; $170/year
+    </button>
+  <% end %>
+<% else %>
+  <h1 class="ts-auth-title mb-6">Start your free trial</h1>
+
+  <p class="text-base text-text-body mb-4">
+    Two weeks to get your profile perfect before your card is charged. Your
+    profile goes online as soon as the trial starts.
+  </p>
+
+  <p class="text-base text-text-body mb-6">
+    We collect a card today so the trial can start immediately, but you
+    won't be charged until the 14&#8209;day trial ends. Cancel any time before
+    then and you won't be charged.
+  </p>
+
+  <%= form_with url: start_trial_checkout_path, method: :post, class: "space-y-3", data: { turbo: false } do %>
+    <button type="submit"
+            name="plan"
+            value="monthly"
+            class="ts-btn-primary w-full px-6 py-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer">
+      Start my 14-day free trial &mdash; $17/month
+    </button>
+
+    <button type="submit"
+            name="plan"
+            value="annual"
+            class="ts-btn-outline w-full px-6 py-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer">
+      Or pay annually and save $34 &mdash; $170/year
+    </button>
+  <% end %>
+<% end %>
+
+<hr class="my-6 border-border-default">
+
+<p class="text-base text-text-body mb-3">
+  Not ready yet? You can come back from Account Settings any time.
+</p>
+<p class="text-sm text-text-muted mb-4">
+  If you skip, no card is collected and your profile stays offline until
+  you start your <%= @reactivation ? "subscription" : "trial" %>.
+</p>
+
+<%= form_with url: start_trial_skip_path, method: :post, data: { turbo: false } do %>
+  <button type="submit"
+          class="text-base text-plum hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer bg-transparent border-0 p-0">
+    Skip for now &mdash; I'll
+    <%= @reactivation ? "subscribe" : "start my trial" %>
+    later
+  </button>
+<% end %>

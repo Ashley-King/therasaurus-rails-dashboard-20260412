@@ -44,6 +44,15 @@ gem "httpx"  # HTTP client for Supabase Auth API
 # Cloudflare R2 (S3-compatible) for file uploads
 gem "aws-sdk-s3", "~> 1.220"
 
+# Stripe billing wrapper — see _docs/_processes/stripe.md.
+# Pay handles the Stripe SDK, webhook idempotency, and subscription
+# tables; we add the `stripe` gem too so we can call into the SDK
+# directly when Pay's helpers don't cover something. `matrix` is a
+# transitive Prawn dep that Ruby 3.1+ no longer ships in stdlib.
+gem "pay", "~> 11.6"
+gem "stripe", "~> 19.1"
+gem "matrix"
+
 # Structured single-line request logs in JSON [https://github.com/roidrage/lograge]
 gem "lograge"
 

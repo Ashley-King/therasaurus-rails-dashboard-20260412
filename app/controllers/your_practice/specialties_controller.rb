@@ -1,5 +1,6 @@
 module YourPractice
   class SpecialtiesController < BaseController
+    MAX_SPECIALTIES = 20
     MAX_FOCUS = 5
 
     def show
@@ -7,7 +8,7 @@ module YourPractice
     end
 
     def update
-      selected_ids = Array(params.dig(:therapist, :specialty_ids)).reject(&:blank?).uniq
+      selected_ids = Array(params.dig(:therapist, :specialty_ids)).reject(&:blank?).uniq.first(MAX_SPECIALTIES)
       focus_ids = Array(params.dig(:therapist, :focus_specialty_ids)).reject(&:blank?).uniq
       focus_ids &= selected_ids
       focus_ids = focus_ids.first(MAX_FOCUS)
@@ -46,6 +47,7 @@ module YourPractice
       selections = therapist.practice_specialties.pluck(:specialty_id, :is_focus)
       @selected_specialty_ids = selections.map { |id, _| id.to_s }
       @focus_specialty_ids = selections.filter_map { |id, focus| id.to_s if focus }
+      @max_specialties = MAX_SPECIALTIES
       @max_focus = MAX_FOCUS
     end
   end

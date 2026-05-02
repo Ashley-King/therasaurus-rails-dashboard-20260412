@@ -1,0 +1,19 @@
+<% content_for(:auth_max_width) { "sm:max-w-xl" } %>
+<% content_for :head do %>
+  <meta http-equiv="refresh" content="3;url=<%= account_settings_path %>">
+<% end %>
+
+<h1 class="ts-auth-title mb-6">Your trial is being set up</h1>
+
+<p class="text-base text-text-body mb-4">
+  Thanks! We're confirming your card with Stripe and getting your
+  profile online. We'll take you to your account in a moment.
+</p>
+
+<p class="text-base text-text-body mb-6">
+  If this page doesn't move on its own, you can continue manually below.
+</p>
+
+<%= link_to "Continue to my account",
+            account_settings_path,
+            class: "ts-btn-primary inline-block px-6 py-3 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer" %>

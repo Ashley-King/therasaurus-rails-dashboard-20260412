@@ -10,6 +10,7 @@ export default class extends Controller {
     "search", "categorySelect", "service", "selectedChips",
     "selectedCount", "totalCount", "visibleCount", "empty"
   ]
+  static values = { max: Number }
 
   connect() {
     this.activeCategories = new Set()
@@ -35,8 +36,35 @@ export default class extends Controller {
     this.applyFilters()
   }
 
-  onServiceChange() {
+  onServiceChange(event) {
+    // If checking this would exceed the cap, undo it.
+    const cb = event.currentTarget
+    if (cb.checked && this.atCap()) {
+      cb.checked = false
+      return
+    }
     this.renderChips()
+  }
+
+  atCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return false
+    const count = this.serviceTargets
+      .filter(r => r.querySelector("input[type='checkbox']").checked).length
+    return count >= this.maxValue
+  }
+
+  applyCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return
+    const atCap = this.atCap()
+    this.serviceTargets.forEach(row => {
+      const cb = row.querySelector("input[type='checkbox']")
+      if (!cb) return
+      const disable = atCap && !cb.checked
+      cb.disabled = disable
+      row.classList.toggle("opacity-50", disable)
+      const label = row.querySelector("label")
+      if (label) label.classList.toggle("cursor-not-allowed", disable)
+    })
   }
 
   removeChip(event) {
@@ -77,6 +105,7 @@ export default class extends Controller {
       .map(r => ({ id: r.dataset.serviceId, name: r.dataset.serviceName }))
 
     if (this.hasSelectedCountTarget) this.selectedCountTarget.textContent = selected.length
+    this.applyCap()
 
     if (!this.hasSelectedChipsTarget) return
 

@@ -29,7 +29,7 @@ of truth.
 |---|---|---|
 | `:admin` | `ADMIN_WEBHOOK` | General admin events, new signups, rate limit trips, anything without a more specific home |
 | `:errors` | `ERRORS_WEBHOOK` | Reserved for future manual use. Errors go to Better Stack's native alerting, not Discord. Nothing auto-posts here. |
-| `:stripe_errors` | `CLOUDFLARE_STRIPE_ERRORS_WEBHOOK` | Stripe webhook failures, payment errors |
+| `:stripe_errors` | `CLOUDFLARE_STRIPE_ERRORS_WEBHOOK` | Stripe webhook failures, payment errors. See [`stripe.md`](./stripe.md). |
 | `:college_write_in` | `COLLEGE_WRITE_IN_WEBHOOK` | User submitted a college not in the DB |
 | `:feature_requests` | `FEATURE_REQUESTS_WEBHOOK` | Feature request form submissions |
 | `:email_service` | `EMAIL_SERVICE_WEBHOOK` | Resend delivery / bounce issues |

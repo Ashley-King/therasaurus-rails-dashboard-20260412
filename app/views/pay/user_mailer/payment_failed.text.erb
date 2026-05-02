@@ -1,0 +1,24 @@
+<% invoice = params[:stripe_invoice] %>
+<% amount_due = invoice&.amount_due %>
+<% currency = invoice&.currency %>
+<% next_attempt = invoice&.next_payment_attempt && Time.at(invoice.next_payment_attempt) %>
+<% amount_label = if amount_due && currency
+    currency.to_s.downcase == "usd" ? "$#{format('%.2f', amount_due.to_i / 100.0)}" :
+                                       "#{format('%.2f', amount_due.to_i / 100.0)} #{currency.to_s.upcase}"
+  end %>
+Hi,
+
+We tried to charge your card<% if amount_label %> (<%= amount_label %>)<% end %> for your TheraSaurus subscription, and it didn't go through.
+
+<% if next_attempt %>
+Stripe will try again automatically on <%= l next_attempt.to_date, format: :long %>.
+<% else %>
+Stripe will try again automatically over the next few days.
+<% end %>
+Until then, your profile stays online so families can still find you.
+
+To update your card now and avoid further interruption, visit your Membership settings and click "Manage subscription":
+<%= membership_url %>
+
+Thanks,
+The TheraSaurus team

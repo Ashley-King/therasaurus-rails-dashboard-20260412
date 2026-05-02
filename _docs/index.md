@@ -11,6 +11,7 @@
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
 - [Rate Limiting](./_processes/rate-limiting.md) — Rails `rate_limit` + Rack::Attack policy
 - [Notifications](./_processes/notifications.md) — internal Discord pings + Better Stack error tracking
+- [Stripe](./_processes/stripe.md) — billing keys, webhook endpoint, event handling, idempotency
 
 ## Folders
 

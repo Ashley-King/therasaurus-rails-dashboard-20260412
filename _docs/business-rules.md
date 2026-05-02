@@ -64,20 +64,58 @@
   [`_processes/locations.md`](./_processes/locations.md).
 - After this step, the profile is marked as complete.
 
-### 5. The therapist is sent to Account Settings
+### 5. The therapist is sent to the Start Your Trial page
 
-- After Create Account is saved, the app sends the therapist to
-  `Account Settings`, which is the signed-in landing page.
-- The app may later send the therapist straight to checkout instead.
+- After Create Account is saved, the app sends the therapist to the
+  `Start Your Trial` page (the post-signup interstitial).
+- The page tells the therapist their account is almost created.
+- The page frames the value prop in plain language: "2 weeks to get
+  your profile perfect before your card is charged. Your profile goes
+  online as soon as the trial starts."
+- The page also makes the no-card path clear: if the therapist skips
+  checkout, no card is collected and the app does not store one.
+- The page has a primary action that sends the therapist to Stripe
+  checkout to add a card and start the 14-day trial.
+- The page has a secondary action that lets the therapist skip checkout
+  and go straight to `Account Settings`.
+- A therapist who already used the free trial sees a "subscribe" page
+  instead of a "start trial" page (no second free trial).
 
 ### 6. Stripe checkout starts membership
 
-- A first time therapist gets a free trial.
-- The free trial is 30 days right now.
-- The free trial length may change later.
-- A therapist who already used the free trial does not get another free trial.
+- A first time therapist gets a 14-day free trial.
+- The trial only starts after the therapist completes Stripe checkout
+  and a card is on file.
+- If the therapist skips checkout, no card is collected and no trial
+  starts.
+- A therapist who already used the free trial does not get another free
+  trial; they go straight to a paid subscription at checkout.
 - Stripe is the source of truth for trial and paid billing status.
 - The app reads Stripe events and turns them into app membership states.
+
+### 6a. After successful Stripe checkout
+
+- Stripe Checkout's `success_url` sends the therapist to an app-owned
+  post-checkout landing page (`Trial Started`), not directly to
+  `Account Settings`.
+- The landing page acknowledges the checkout in plain language ("Your
+  trial is being set up — we'll take you to your account in a moment")
+  and shows a continue link to `Account Settings`.
+- The post-checkout landing page must render correctly even if the
+  Stripe webhook has not been processed yet. Stripe waits up to 10
+  seconds for the webhook before redirecting, but the app must still
+  tolerate the case where the redirect lands before the webhook does.
+- The post-checkout landing page does NOT decide membership state from
+  URL parameters or the `CHECKOUT_SESSION_ID`. Membership state is only
+  set when the Stripe webhook is processed.
+- From the landing page the therapist continues to `Account Settings`.
+  Once the webhook has flipped them to `trialing_member`,
+  `Account Settings` shows the `trialing` notification at the top.
+- If the therapist reaches `Account Settings` before the webhook has
+  been processed, they should still see the app render normally; the
+  trialing notification appears once the webhook lands.
+- Stripe's `cancel_url` sends the therapist back to the
+  `Start Your Trial` page so they can try again or skip.
 
 ### 7. The therapist lands on Account Settings
 
@@ -92,6 +130,11 @@
   area; access does not depend on credential verification.
 - Profile image, practice description, and credential are helpful but
   not required for the account to exist.
+- A therapist who arrives here without an active trial or paid
+  subscription sees a notification at the top that invites them to
+  start their 14-day free trial.
+- A trialing therapist sees a `trialing` notification at the top that
+  shows when the trial ends and when the card will be charged.
 
 ## Account status
 
@@ -174,13 +217,46 @@ These are not the same rule.
 - The app does not let therapists set their own membership state.
 - The app does not let therapists set their own Stripe customer ID.
 - The app keeps a record of trial start, trial end, trial conversion, and trial expiration dates.
+- The app only stores a card on file for therapists who completed
+  Stripe checkout. Therapists who skipped checkout have no card on file.
+- Stripe sends its standard pre-charge email before the first charge.
+- The app also sends its own reminder email shortly before the first
+  charge so the therapist hears it from us, not just Stripe.
+- The app sends an internal admin notification when a therapist cancels
+  and when a therapist reactivates.
 
 ## Trial and paid membership rules
 
 - A new Stripe trial makes the therapist `trialing_member`.
+- The free trial is 14 days and only starts after the therapist
+  completes Stripe checkout.
+- A `trialing_member` profile goes public immediately (subject to the
+  public visibility rules below).
+- A `trialing_member` can cancel any time before the trial ends and
+  will not be charged.
+- If the trial ends without cancellation, Stripe charges the card on
+  file and the therapist becomes `pro_member`.
 - Paid active billing makes the therapist `pro_member`.
 - If the free trial ends and nothing active replaces it, the therapist becomes `member`.
 - If paid access ends and nothing active replaces it, the therapist becomes `member`.
+- A therapist who never completed checkout stays a `member` with no
+  card on file and no public profile.
+
+## Dunning rules
+
+- A failed charge moves the subscription to `past_due` (Stripe).
+- A `past_due` therapist's profile stays public through Stripe's
+  smart-retry window so a one-off declined charge does not nuke their
+  visibility.
+- The therapist gets a `past_due` banner in Account Settings and an
+  email from the app linking to the customer portal.
+- If Stripe's retries succeed, the subscription returns to `active`
+  and the banner disappears.
+- If Stripe's retries are exhausted, the subscription moves to
+  `unpaid`. At that point the public profile is taken down (treat
+  `unpaid` and `canceled` as not-public).
+- The transition from `past_due` to `unpaid` is Stripe's call, not
+  the app's — the app reads the state from `customer.subscription.updated`.
 
 ## What happens when membership stops
 
@@ -188,6 +264,7 @@ These are not the same rule.
 - The therapist keeps the saved profile data.
 - The therapist loses public profile access.
 - The therapist can reactivate later.
+- Reactivation triggers an internal admin notification.
 
 ## Admin rules
 
@@ -255,6 +332,12 @@ Therapists cannot directly edit protected system fields like:
 - Logged in admins can still use the signed-in area even when their own
   setup is incomplete.
 - Logged in therapists with complete setup are sent away from create account.
+- A therapist who just completed Create Account is sent to the
+  `Start Your Trial` page once. They can take the trial or skip to
+  Account Settings; either path counts as having seen the offer.
+- The `Start Your Trial` page is reachable later from Account Settings
+  (under `Membership`) for any therapist without an active trial or
+  subscription.
 - Logged in non-admin therapists are sent away from the sign in page.
 - Logged in admins with incomplete setup are sent to create account when they first sign in.
 - Logged in admins with complete setup can still open the sign in page.

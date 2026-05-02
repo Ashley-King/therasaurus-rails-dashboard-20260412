@@ -1,8 +1,10 @@
 <%= render layout: "your_practice/shared/layout" do %>
-  <section class="ts-card" data-controller="services-picker">
+  <section class="ts-card"
+           data-controller="services-picker"
+           data-services-picker-max-value="<%= @max_services %>">
     <div class="mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Services</h2>
-      <p class="text-sm text-text-primary">Pick every service you offer. Filter by category or search to narrow the list.</p>
+      <p class="text-sm text-text-primary">Pick every service you offer, up to <%= @max_services %>. Filter by category or search to narrow the list.</p>
     </div>
 
     <%= form_with model: therapist, url: services_path, method: :patch,
@@ -12,7 +14,7 @@
       <div class="mb-5 border border-border-default rounded-lg p-4">
         <div class="flex items-baseline justify-between mb-2">
           <h3 class="text-sm font-semibold text-text-primary">
-            Selected (<span data-services-picker-target="selectedCount">0</span>)
+            Selected (<span data-services-picker-target="selectedCount">0</span>/<%= @max_services %>)
           </h3>
         </div>
         <div data-services-picker-target="selectedChips" class="flex flex-wrap items-start content-start gap-2 h-48 overflow-y-auto pr-1"></div>

@@ -1,0 +1,31 @@
+<% pay_subscription = params[:pay_subscription] %>
+<% trial_ends_at = pay_subscription&.trial_ends_at %>
+<% charge_date = pay_subscription&.current_period_end %>
+
+<p>Hi,</p>
+
+<p>
+  Your TheraSaurus free trial ends
+  <% if trial_ends_at %>
+    on <strong><%= l trial_ends_at.to_date, format: :long %></strong>.
+  <% else %>
+    soon.
+  <% end %>
+</p>
+
+<p>
+  <% if charge_date %>
+    Your card will be charged on
+    <strong><%= l charge_date.to_date, format: :long %></strong>
+    unless you cancel before then.
+  <% else %>
+    Your card will be charged when your trial ends, unless you cancel before then.
+  <% end %>
+</p>
+
+<p>
+  To manage or cancel your subscription, visit your
+  <%= link_to "Membership settings", membership_url %>.
+</p>
+
+<p>Thanks for trying TheraSaurus.</p>

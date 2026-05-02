@@ -3,14 +3,52 @@
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary">Your membership</h2>
     </div>
+
+    <% sub = current_user.payment_processor&.subscription %>
+
     <div class="border border-gray-200 rounded-lg p-5">
-      <dl class="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
+      <dl class="grid grid-cols-[180px_1fr] gap-y-3 text-base">
         <dt class="text-text-muted">Status</dt>
-        <dd class="text-text-primary">
-          <span class="ts-badge-active"><%= current_user.membership_status&.capitalize || "Unknown" %></span>
+        <dd class="text-text-primary font-medium">
+          <% case current_user.membership_status %>
+          <% when "trialing_member" %>
+            On a free trial
+          <% when "pro_member" %>
+            Pro member
+          <% else %>
+            Free member
+          <% end %>
         </dd>
+
+        <% if sub&.status == "trialing" && sub.trial_ends_at.present? %>
+          <dt class="text-text-muted">Trial ends</dt>
+          <dd class="text-text-primary"><%= l sub.trial_ends_at.to_date, format: :long %></dd>
+        <% end %>
+
+        <% if sub&.current_period_end.present? && %w[trialing active past_due].include?(sub&.status) %>
+          <dt class="text-text-muted">
+            <%= sub.status == "trialing" ? "First charge" : "Next charge" %>
+          </dt>
+          <dd class="text-text-primary"><%= l sub.current_period_end.to_date, format: :long %></dd>
+        <% end %>
       </dl>
-      <p class="mt-4 text-sm text-text-muted">Subscription management coming soon.</p>
     </div>
+
+    <% if current_user.payment_processor&.processor_id? %>
+      <%= form_with url: portal_membership_path, method: :post, class: "mt-5", data: { turbo: false } do %>
+        <button type="submit"
+                class="ts-btn-primary px-6 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer">
+          Manage subscription
+        </button>
+      <% end %>
+      <p class="mt-3 text-sm text-text-muted">
+        Opens the Stripe billing portal where you can update your card,
+        view invoices, switch plans, or cancel.
+      </p>
+    <% else %>
+      <%= link_to "Start your 14-day free trial",
+                  start_trial_path,
+                  class: "ts-btn-primary inline-block mt-5 px-6 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-plum cursor-pointer" %>
+    <% end %>
   </section>
 <% end %>

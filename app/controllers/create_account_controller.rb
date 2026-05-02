@@ -89,7 +89,7 @@ class CreateAccountController < ApplicationController
         "(therapist ##{@therapist.id}, #{profession.name}, " \
         "#{@location.city}, #{state_code})"
       )
-      redirect_to account_settings_path, notice: "Your account has been created."
+      redirect_to start_trial_path, notice: "Your account has been created."
     else
       render :new, status: :unprocessable_entity
     end

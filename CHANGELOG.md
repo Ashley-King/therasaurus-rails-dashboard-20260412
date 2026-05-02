@@ -1,5 +1,231 @@
 # Changelog
 
+## 2026-05-02
+
+### Changed
+- **Trial flow rewired on top of the Pay gem.** Replaced the
+  hand-rolled Stripe integration (built 2026-04-30) with
+  [`pay` ~> 11.6](https://github.com/pay-rails/pay) so we offload
+  webhook idempotency, customer/subscription/charge persistence, and
+  pre-charge / dunning mailers to a maintained library. The user-facing
+  flow (Start Your Trial → Stripe Checkout → Trial Started → Account
+  Settings → portal → cancel + reactivate) is unchanged.
+  - **Schema.** Dropped `stripe_events` and the
+    `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`,
+    `trial_started_at`, `trial_ends_at`, `current_period_end` columns
+    from `users` (all migrated to `pay_customers` / `pay_subscriptions`,
+    with UUID-compatible polymorphic owner refs since the app default
+    `primary_key_type` is `:uuid`). Kept `users.membership_status` as
+    the app-side denorm.
+  - **Single writer for `users.membership_status`.** New
+    [`BillingSync`](app/services/billing_sync.rb) maps Stripe's
+    subscription status to one of `trialing_member` / `pro_member` /
+    `member` and is the only code that writes the column.
+    `past_due` stays `pro_member` (and therefore public) through
+    Stripe's smart-retry window per business rules.
+  - **App-side webhook subscribers** registered via
+    `Pay::Webhooks.delegator.subscribe` in
+    [`config/initializers/billing_subscribers.rb`](config/initializers/billing_subscribers.rb)
+    handle our three custom reactions: `BillingSync` re-sync, `:admin`
+    Discord ping on cancel, `:admin` Discord ping on reactivation
+    (detected via `subscription.metadata.reactivation = "true"`).
+    Subscriber exceptions ping `:stripe_errors` and re-raise.
+  - **Controllers.** `StartTrialController#checkout` now calls
+    `current_user.payment_processor.checkout(...)`. Reactivation is
+    detected via `current_user.pay_subscriptions.exists?` (no second
+    free trial). `AccountSettings::MembershipsController#portal` calls
+    `current_user.payment_processor.billing_portal(return_url:)`.
+  - **Webhook endpoint** moved from our hand-rolled
+    `POST /stripe/webhooks` to Pay's auto-mounted
+    `POST /pay/webhooks/stripe`.
+  - **Mailers.** Replaced `TrialEndingReminderMailer` and
+    `PaymentFailedMailer` with overridden Pay templates at
+    `app/views/pay/user_mailer/{subscription_trial_will_end,payment_failed}.{html,text}.erb`.
+    Pay sends both via `deliver_later`. Receipt + refund mailers
+    disabled (Stripe sends its own).
+  - **Deleted:** `StripeService`, `Stripe::WebhooksController`,
+    `ProcessStripeEventJob`, `StripeEvent` model, the entire
+    `app/services/stripe/event_handlers/` tree, `TrialEndingReminderMailer`,
+    `PaymentFailedMailer`, and the per-job doc.
+  - **Docs.** Rewrote
+    [`_docs/_processes/stripe.md`](_docs/_processes/stripe.md);
+    removed the `ProcessStripeEventJob` entry from
+    [`_docs/background-jobs.md`](_docs/background-jobs.md).
+
+## 2026-04-30
+
+### Changed
+- **Cap services and areas of expertise at 20 each.** Therapists can
+  now select up to 20 services and up to 20 areas of expertise (of
+  which up to 5 may still be starred as focused specialties). Caps are
+  enforced server-side via `MAX_SERVICES` in
+  [`YourPractice::ServicesController`](app/controllers/your_practice/services_controller.rb)
+  and `MAX_SPECIALTIES` in
+  [`YourPractice::SpecialtiesController`](app/controllers/your_practice/specialties_controller.rb)
+  using a defensive `.first(N)` truncation, mirroring the existing
+  `MAX_FOCUS = 5` pattern. The Stimulus pickers
+  ([`services_picker_controller.js`](app/javascript/controllers/services_picker_controller.js),
+  [`specialties_picker_controller.js`](app/javascript/controllers/specialties_picker_controller.js))
+  disable unchecked rows once the cap is reached. No DB constraint is
+  added — Postgres CHECK can't count sibling rows, and a trigger would
+  conflict with the project's "prefer Rails over DB functions and
+  triggers" rule.
+
+### Added
+- **Payment failure + dunning (phase 7 of trial flow).** New
+  [`Stripe::EventHandlers::InvoicePaymentFailed`](app/services/stripe/event_handlers/invoice_payment_failed.rb)
+  enqueues
+  [`PaymentFailedMailer.notify`](app/mailers/payment_failed_mailer.rb)
+  with the failed amount and Stripe's next retry timestamp; the handler
+  deliberately does not touch `membership_status` (per business rules a
+  `past_due` therapist stays public through Stripe's smart-retry
+  window). Account Settings shared layout shows a "Your last payment
+  failed" warning banner for `subscription_status == "past_due"`. New
+  Dunning rules section in
+  [`business-rules.md`](_docs/business-rules.md) codifies the
+  `past_due` → `unpaid` / `canceled` public-visibility transition.
+- **Pre-charge reminder email (phase 6 of trial flow).** New
+  [`Stripe::EventHandlers::CustomerSubscriptionTrialWillEnd`](app/services/stripe/event_handlers/customer_subscription_trial_will_end.rb)
+  fires 3 days before the trial ends and enqueues
+  [`TrialEndingReminderMailer.notify`](app/mailers/trial_ending_reminder_mailer.rb)
+  with the trial-end date, charge date, and a derived price label
+  (e.g. "$17/month") via `deliver_later`. HTML and text templates
+  ship together. ApplicationMailer default `from` updated to the
+  TheraSaurus address.
+- **Cancel + reactivate handling, admin pings (phase 5 of trial flow).**
+  New
+  [`Stripe::EventHandlers::CustomerSubscriptionDeleted`](app/services/stripe/event_handlers/customer_subscription_deleted.rb)
+  demotes the user to `member`, sets `subscription_status = "canceled"`
+  (keeps the Stripe ids for audit), and pings `:admin` on Discord.
+  Wired into
+  [`ProcessStripeEventJob`](app/jobs/process_stripe_event_job.rb).
+  Reactivation path: a returning therapist whose
+  `trial_started_at` is set sees a "subscribe" variant of `/start-trial`
+  (no second free trial); their checkout session is created without
+  `trial_period_days` and carries `metadata.reactivation = "true"`. On
+  `checkout.session.completed`, the handler pings `:admin` so we know
+  the user came back. `StartTrialController#redirect_if_currently_subscribed`
+  now lets cancelled-then-returning users through (only bounces
+  trialing/active/past_due states).
+- **Account Settings notifications + Customer Portal (phase 4 of trial
+  flow).** Account Settings shared layout now also shows a "start your
+  free trial today" warning banner for therapists with no active trial
+  or paid sub (`subscription_status` blank or `canceled`). Membership
+  section
+  ([`AccountSettings::MembershipsController`](app/controllers/account_settings/memberships_controller.rb))
+  replaces the placeholder copy with status, trial-end / next-charge
+  date, and a "Manage subscription" button that posts to the new
+  `POST /account-settings/membership/portal` route to mint a
+  `Stripe::BillingPortal::Session` and redirect. Therapists without a
+  `stripe_customer_id` see a "Start your 14-day free trial" CTA
+  instead. Portal failures ping `:stripe_errors` on Discord.
+- **Stripe Checkout + Trial Started landing + happy-path webhooks
+  (phase 3 of trial flow).**
+  [`StripeService.create_checkout_session`](app/services/stripe_service.rb)
+  builds a `mode: "subscription"` Checkout session with
+  `payment_method_collection: "always"`,
+  `subscription_data.trial_period_days: 14`,
+  `automatic_tax: { enabled: true }`, `customer_update` set to `auto`
+  for both name and address (required when automatic tax is on),
+  monthly or annual price, and `client_reference_id` plus
+  `metadata.user_id` on both the session and the subscription so
+  out-of-order webhook deliveries can still find the user. Real
+  checkout is wired in
+  [`StartTrialController#checkout`](app/controllers/start_trial_controller.rb);
+  Stripe errors get a `:stripe_errors` Discord ping and a graceful
+  re-render of `/start-trial`.
+  New `GET /trial-started` route +
+  [`TrialStartedController`](app/controllers/trial_started_controller.rb)
+  +
+  [view](app/views/trial_started/show.html.erb) — the page does NOT
+  read `session_id` to decide membership state and tolerates the
+  webhook landing after the redirect (3-second meta refresh +
+  manual continue link to Account Settings).
+  New
+  [`ProcessStripeEventJob`](app/jobs/process_stripe_event_job.rb)
+  dispatches `stripe_events` rows to the matching
+  [`Stripe::EventHandlers::*`](app/services/stripe/event_handlers)
+  handler and stamps `processed_at`. Phase 3 ships handlers for
+  `checkout.session.completed`, `customer.subscription.created`, and
+  `customer.subscription.updated`. Trial → active flips
+  `membership_status` from `trialing_member` to `pro_member`. The
+  webhook controller now enqueues the job after persisting each row.
+  Account Settings shared layout shows a "You're on a free trial"
+  notification for `subscription_status == "trialing"` users with
+  trial-end and card-charge dates.
+  New per-job doc
+  [`process_stripe_event_job.md`](_docs/_background-jobs/process_stripe_event_job.md)
+  and updated [`stripe.md`](_docs/_processes/stripe.md).
+- **Start Your Trial interstitial (phase 2 of trial flow).** New
+  `GET /start-trial` route renders the post-signup interstitial copy
+  with a primary "Start my 14-day free trial — $17/month" submit
+  button, an outline "Or pay annually and save $34 — $170/year" submit
+  button (both posting `plan` to `POST /start-trial/checkout`), and a
+  "Skip for now" text-link button posting to
+  `POST /start-trial/skip` (POST so a GET prefetch can't trigger
+  skip). `CreateAccountController#create` now redirects to
+  `/start-trial` instead of `/account-settings`.
+  [`StartTrialController`](app/controllers/start_trial_controller.rb)
+  bounces users with `trial_started_at` set or with
+  `subscription_status` of `trialing`/`active` to Account Settings.
+  The checkout action is a placeholder until phase 3 wires real
+  Stripe Checkout.
+- **Stripe foundation (phase 1 of trial flow).** Added the `stripe`
+  gem, pinned `Stripe.api_version = "2026-04-22.dahlia"` in
+  `config/initializers/stripe.rb`, with a boot-time guard that fails
+  in production if any Stripe credential is missing and refuses to
+  start in development if the secret key is a `sk_live_…` key. New
+  schema: `users.stripe_subscription_id` (unique), `trial_started_at`,
+  `current_period_end`, `subscription_status`; new `stripe_events`
+  table (uuid pk, unique `stripe_event_id`, `event_type`, jsonb
+  `payload`, `processed_at`) backing webhook idempotency. New
+  `POST /stripe/webhooks` endpoint
+  ([`Stripe::WebhooksController`](app/controllers/stripe/webhooks_controller.rb))
+  verifies the signature, persists the raw event, returns 200 fast,
+  and treats `RecordNotUnique` re-deliveries as success. Added
+  [`StripeService.customer_for(user)`](app/services/stripe_service.rb)
+  for find-or-create of the Stripe Customer. Renamed the
+  `STRIPE_PRICE_ID`/`STRIPE_PRODUCT_ID` example credentials to
+  `STRIPE_PRICE_MONTHLY_ID` / `STRIPE_PRICE_ANNUAL_ID`. New
+  [`_docs/_processes/stripe.md`](_docs/_processes/stripe.md).
+
+### Changed
+- **Business rules: post-signup trial flow.** Updated
+  `_docs/business-rules.md` to reflect the new funnel. After Create
+  Account, the therapist hits a `Start Your Trial` interstitial that
+  offers Stripe checkout (14-day trial, card on file, profile goes
+  public immediately) or a skip to Account Settings (no card, profile
+  not public, persistent "start your free trial" notification).
+  Trial length changed from 30 days to 14 days. Added rules for
+  pre-charge reminder email from the app, internal admin notifications
+  on cancel and reactivate, and "no card on file" state for therapists
+  who skipped checkout. Code and copy changes to follow.
+- **Plan: Stripe trial + checkout flow.** Added
+  `_docs/_plans/stripe-trial-flow.md`, a 7-phase implementation plan
+  for the post-signup billing funnel: foundation (gem, schema,
+  webhook), Start Your Trial interstitial, Stripe Checkout + Trial
+  Started landing + happy-path webhooks, Account Settings
+  notifications + customer portal, cancel/reactivate + admin pings,
+  pre-charge reminder email, payment failure / dunning. Calls out
+  three non-standard patterns up front (Checkout `trial_period_days`
+  shape, app-owned post-checkout landing page, Postgres-backed
+  webhook idempotency). Resolved decisions: $17/mo + $170/yr two
+  prices on one Product, Stripe Tax always on, public profile stays
+  through smart retries (drops on `unpaid` / `deleted`), Customer
+  Portal allows monthly → annual upgrades only (annual → monthly
+  goes through email support in phase one).
+- **Business rules: post-checkout landing page (Section 6a).** Added
+  rules for an app-owned `Trial Started` landing page that Stripe's
+  `success_url` points to. The landing page renders correctly even if
+  the webhook has not been processed yet (Stripe waits up to 10s
+  before redirecting, per Stripe Checkout fulfillment docs), does not
+  set membership state from URL parameters, and forwards the therapist
+  to Account Settings where the `trialing` notification appears once
+  the webhook lands. `cancel_url` sends them back to
+  `Start Your Trial`. Sharpened the `Start Your Trial` value prop copy
+  to "2 weeks to get your profile perfect before your card is charged.
+  Your profile goes online as soon as the trial starts."
+
 ## 2026-04-26
 
 ### Changed

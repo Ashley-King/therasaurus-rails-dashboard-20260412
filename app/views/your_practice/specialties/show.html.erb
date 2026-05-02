@@ -1,11 +1,12 @@
 <%= render layout: "your_practice/shared/layout" do %>
   <section class="ts-card"
            data-controller="specialties-picker"
+           data-specialties-picker-max-value="<%= @max_specialties %>"
            data-specialties-picker-max-focus-value="<%= @max_focus %>"
            data-specialties-picker-initial-focus-value="<%= @focus_specialty_ids.to_json %>">
     <div class="mb-4">
       <h2 class="text-lg font-heading font-semibold text-text-primary mb-1">Specialties</h2>
-      <p class="text-sm text-text-primary">Choose your areas of expertise. Click the star next to your specialties - what you would like to be known for. You can choose up to <%= @max_focus %> specialties.</p>
+      <p class="text-sm text-text-primary">Choose up to <%= @max_specialties %> areas of expertise. Click the star next to your specialties - what you would like to be known for. You can choose up to <%= @max_focus %> specialties.</p>
     </div>
 
     <%= form_with model: therapist, url: specialties_path, method: :patch,
@@ -15,7 +16,7 @@
       <div class="mb-5 border border-border-default rounded-lg p-4">
         <div class="flex items-baseline justify-between mb-1">
           <h3 class="text-sm font-semibold text-text-primary">
-            Areas of expertise (<span data-specialties-picker-target="selectedCount">0</span>)
+            Areas of expertise (<span data-specialties-picker-target="selectedCount">0</span>/<%= @max_specialties %>)
             <span class="font-normal">· <span data-specialties-picker-target="focusCount">0</span>/<%= @max_focus %> specialties</span>
           </h3>
         </div>

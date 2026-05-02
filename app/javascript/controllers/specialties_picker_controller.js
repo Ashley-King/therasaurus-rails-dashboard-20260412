@@ -13,7 +13,7 @@ export default class extends Controller {
     "search", "categorySelect", "specialty", "selectedChips",
     "selectedCount", "focusCount", "visibleCount", "empty"
   ]
-  static values = { maxFocus: Number, initialFocus: Array }
+  static values = { max: Number, maxFocus: Number, initialFocus: Array }
 
   connect() {
     this.activeCategories = new Set()
@@ -41,10 +41,36 @@ export default class extends Controller {
   }
 
   onSpecialtyChange(event) {
-    // Unchecking a focus specialty removes its focus too.
     const cb = event.currentTarget
+    // If checking this would exceed the total cap, undo it.
+    if (cb.checked && this.atCap()) {
+      cb.checked = false
+      return
+    }
+    // Unchecking a focus specialty removes its focus too.
     if (!cb.checked) this.focusIds.delete(cb.value)
     this.renderChips()
+  }
+
+  atCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return false
+    const count = this.specialtyTargets
+      .filter(r => r.querySelector("input[type='checkbox']").checked).length
+    return count >= this.maxValue
+  }
+
+  applyCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return
+    const atCap = this.atCap()
+    this.specialtyTargets.forEach(row => {
+      const cb = row.querySelector("input[type='checkbox']")
+      if (!cb) return
+      const disable = atCap && !cb.checked
+      cb.disabled = disable
+      row.classList.toggle("opacity-50", disable)
+      const label = row.querySelector("label")
+      if (label) label.classList.toggle("cursor-not-allowed", disable)
+    })
   }
 
   removeChip(event) {
@@ -111,6 +137,7 @@ export default class extends Controller {
 
     if (this.hasSelectedCountTarget) this.selectedCountTarget.textContent = selected.length
     if (this.hasFocusCountTarget) this.focusCountTarget.textContent = focus.length
+    this.applyCap()
     if (!this.hasSelectedChipsTarget) return
 
     if (ordered.length === 0) {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -22,7 +22,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
   enable_extension "extensions.pgcrypto"
   enable_extension "extensions.postgis"
   enable_extension "extensions.uuid-ossp"
-  enable_extension "graphql.pg_graphql"
   enable_extension "pg_catalog.pg_cron"
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgsodium.pgsodium"
@@ -185,6 +184,105 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "zip", null: false
     t.index ["therapist_id"], name: "index_locations_on_therapist_id"
+  end
+
+  create_table "public.pay_charges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "amount", null: false
+    t.integer "amount_refunded"
+    t.integer "application_fee_amount"
+    t.datetime "created_at", null: false
+    t.string "currency"
+    t.uuid "customer_id", null: false
+    t.jsonb "data"
+    t.jsonb "metadata"
+    t.jsonb "object"
+    t.string "processor_id", null: false
+    t.string "stripe_account"
+    t.uuid "subscription_id"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_charges_on_customer_id_and_processor_id", unique: true
+    t.index ["subscription_id"], name: "index_pay_charges_on_subscription_id"
+  end
+
+  create_table "public.pay_customers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.datetime "deleted_at", precision: nil
+    t.jsonb "object"
+    t.uuid "owner_id"
+    t.string "owner_type"
+    t.string "processor", null: false
+    t.string "processor_id"
+    t.string "stripe_account"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "deleted_at"], name: "pay_customer_owner_index", unique: true
+    t.index ["processor", "processor_id"], name: "index_pay_customers_on_processor_and_processor_id", unique: true
+  end
+
+  create_table "public.pay_merchants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.uuid "owner_id"
+    t.string "owner_type"
+    t.string "processor", null: false
+    t.string "processor_id"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "processor"], name: "index_pay_merchants_on_owner_type_and_owner_id_and_processor"
+  end
+
+  create_table "public.pay_payment_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "customer_id", null: false
+    t.jsonb "data"
+    t.boolean "default"
+    t.string "payment_method_type"
+    t.string "processor_id", null: false
+    t.string "stripe_account"
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_payment_methods_on_customer_id_and_processor_id", unique: true
+  end
+
+  create_table "public.pay_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.decimal "application_fee_percent", precision: 8, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end", precision: nil
+    t.datetime "current_period_start", precision: nil
+    t.uuid "customer_id", null: false
+    t.jsonb "data"
+    t.datetime "ends_at", precision: nil
+    t.jsonb "metadata"
+    t.boolean "metered"
+    t.string "name", null: false
+    t.jsonb "object"
+    t.string "pause_behavior"
+    t.datetime "pause_resumes_at", precision: nil
+    t.datetime "pause_starts_at", precision: nil
+    t.string "payment_method_id"
+    t.string "processor_id", null: false
+    t.string "processor_plan", null: false
+    t.integer "quantity", default: 1, null: false
+    t.string "status", null: false
+    t.string "stripe_account"
+    t.datetime "trial_ends_at", precision: nil
+    t.string "type"
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "processor_id"], name: "index_pay_subscriptions_on_customer_id_and_processor_id", unique: true
+    t.index ["metered"], name: "index_pay_subscriptions_on_metered"
+    t.index ["pause_starts_at"], name: "index_pay_subscriptions_on_pause_starts_at"
+  end
+
+  create_table "public.pay_webhooks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "event"
+    t.string "event_type"
+    t.string "processor"
+    t.datetime "updated_at", null: false
   end
 
   create_table "public.payment_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -561,8 +659,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
     t.boolean "is_admin", default: false, null: false
     t.boolean "is_banned", default: false, null: false
     t.string "membership_status", default: "member", null: false
-    t.string "stripe_customer_id"
-    t.datetime "trial_ends_at", precision: nil
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
   end
 
@@ -586,6 +682,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_25_160000) do
   add_foreign_key "public.business_hours", "public.therapists", name: "business_hours_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.feature_requests", "public.therapists", on_delete: :cascade
   add_foreign_key "public.locations", "public.therapists"
+  add_foreign_key "public.pay_charges", "public.pay_customers", column: "customer_id"
+  add_foreign_key "public.pay_charges", "public.pay_subscriptions", column: "subscription_id"
+  add_foreign_key "public.pay_payment_methods", "public.pay_customers", column: "customer_id"
+  add_foreign_key "public.pay_subscriptions", "public.pay_customers", column: "customer_id"
   add_foreign_key "public.practice_accessibility_options", "public.accessibility_options"
   add_foreign_key "public.practice_accessibility_options", "public.therapists"
   add_foreign_key "public.practice_age_groups", "public.age_groups"
