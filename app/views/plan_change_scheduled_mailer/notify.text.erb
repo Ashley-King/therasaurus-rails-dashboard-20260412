@@ -1,0 +1,16 @@
+Hi,
+
+We received your request to change your TheraSaurus plan.
+<% if @effective_at %>
+The change will take effect on <%= l @effective_at.to_date, format: :long %> (the end of your current billing period).
+<% else %>
+The change will take effect at the end of your current billing period.
+<% end %>
+
+Until then, your current plan stays active and nothing changes for you. There are no proration charges or refunds — <% if @new_amount_label %>the new <%= @new_amount_label %> rate will simply replace your current plan at renewal.<% else %>the new rate will simply replace your current plan at renewal.<% end %>
+
+Changed your mind? You can cancel the scheduled change any time before it takes effect from your Membership settings:
+<%= membership_url %>
+
+Thanks,
+The TheraSaurus team

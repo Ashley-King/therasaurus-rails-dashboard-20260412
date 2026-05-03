@@ -20,7 +20,9 @@ loudly instead of returning `nil`. See `credentials.example`.
 | `STRIPE_SECRET_KEY` | Server-side secret. Test in dev, live in prod. |
 | `STRIPE_WEBHOOK_SECRET` | Verifies signatures on `POST /pay/webhooks/stripe`. |
 | `STRIPE_PRICE_MONTHLY_ID` | Recurring price id, $17/month. |
-| `STRIPE_PRICE_ANNUAL_ID` | Recurring price id, $170/year (saves $34). |
+| `STRIPE_PRICE_YEARLY_ID` | Recurring price id, $170/year (saves $34). |
+| `STRIPE_PRODUCT_MONTHLY_ID` | Stripe Product id for the monthly price (reference only — not read by code). |
+| `STRIPE_PRODUCT_YEARLY_ID` | Stripe Product id for the yearly price (reference only — not read by code). |
 
 `config/initializers/stripe.rb` pins `Stripe.api_version` so a
 Stripe-side default bump can't change behavior silently. It also fails
@@ -83,6 +85,10 @@ Subscribers also:
   carries `metadata.reactivation = "true"`, which we stamp in
   `StartTrialController#checkout` for users who already used their
   free trial).
+- Send the therapist a `PlanChangeScheduledMailer` on
+  `stripe.subscription_schedule.created` (portal-initiated plan change
+  queued to end of period — see Plan change rules in
+  [`business-rules.md`](../business-rules.md)).
 - Capture exceptions and ping `:stripe_errors` on Discord; re-raise so
   Better Stack also sees them via the Sentry SDK.
 
@@ -96,10 +102,16 @@ toggles which mailers Pay sends.
 |---|---|---|
 | `subscription_trial_will_end` | on | `customer.subscription.trial_will_end` (3 days before trial end) — our pre-charge reminder. |
 | `payment_failed` | on | `invoice.payment_failed` — our dunning email. |
-| `subscription_renewing` | on (annual only) | `invoice.upcoming` for renewing subs. |
+| `subscription_renewing` | on (yearly only) | `invoice.upcoming` for renewing subs. |
 | `payment_action_required` | on | 3DS / extra auth needed. |
 | `receipt` | **off** | Stripe sends its own. |
 | `refund` | **off** | Stripe sends its own. |
+
+Plus our own (not from Pay):
+
+| Mailer | Trigger |
+|---|---|
+| `PlanChangeScheduledMailer` | `stripe.subscription_schedule.created` — confirms a portal-initiated plan change and the date it takes effect. |
 
 ## Customer Portal configuration
 
@@ -112,14 +124,43 @@ user has a `Pay::Customer` with a Stripe `processor_id`.
 Configured in the Stripe Dashboard (Billing → Customer portal). Phase
 one settings:
 
-- Cancel subscription: on
+- Cancel subscription: on (cancel at end of billing period)
 - Update payment method: on
 - View invoices: on
 - Automatic tax: on
-- Subscription update: on, but **monthly → annual upgrades only**
-  (annual price has no switchable destinations). Annual customers who
-  want monthly email support and are handled case by case until volume
-  justifies a Subscription Schedule flow.
+- Customer information (address): on (required by automatic tax)
+- Subscription update: on. Both monthly and yearly listed as switchable
+  destinations.
+  - **Proration: "No charges or credits"** (`proration_behavior: none`).
+    Plan changes apply at the next billing cycle; no instant charges,
+    no refunds for unused time.
+  - **Downgrades → "When switching to a cheaper plan": Wait until end
+    of billing period to update.**
+  - **Downgrades → "When switching to a shorter interval period": Wait
+    until end of billing period to update.**
+
+Stripe does NOT support per-source-price restrictions in the portal
+config (the `subscription_update.products[].prices` array is a flat
+list of allowed destinations — there's no way to say "monthly users can
+switch to yearly but yearly users cannot switch to monthly"). So both
+directions are technically self-serve. The "wait until end of billing
+period" setting prevents Stripe from issuing surprise refund credits
+when a yearly customer downgrades — they pay out the year they bought,
+then the change kicks in at renewal.
+
+When a customer schedules a change, Stripe automatically creates a
+Subscription Schedule and fires `subscription_schedule.created`. We
+subscribe to that event in `billing_subscribers.rb` and send the
+therapist a `PlanChangeScheduledMailer` confirming the change and the
+effective date (Stripe doesn't send a scheduled-change email by
+default). The actual transition fires `customer.subscription.updated`
+at the period boundary, which Pay's existing handler picks up.
+
+If we ever want to enforce direction (truly block yearly → monthly
+self-serve), the path is two portal configurations selected per session
+via the `configuration:` parameter on
+`payment_processor.billing_portal`. See
+[`business-rules.md`](../business-rules.md#plan-change-rules).
 
 ## Testing locally with the Stripe CLI
 

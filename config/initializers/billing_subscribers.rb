@@ -3,7 +3,9 @@
 #
 # 1. Re-sync `users.membership_status` (single writer; see BillingSync).
 # 2. Ping `:admin` on Discord on cancel and reactivation.
-# 3. Catch-all `:stripe_errors` ping if a subscriber raises (so a
+# 3. Email the therapist when they schedule a plan change in the
+#    portal (Stripe doesn't send a scheduled-change email by default).
+# 4. Catch-all `:stripe_errors` ping if a subscriber raises (so a
 #    silent code bug doesn't go un-noticed).
 #
 # Subscribers run AFTER Pay's own handlers, so by the time we run, the
@@ -80,6 +82,46 @@ Rails.application.reloader.to_prepare do
         "Therapist user_id=#{user.id} canceled their subscription " \
         "(stripe_subscription_id=#{event.data.object.id})."
       )
+    end
+  end
+
+  # When a therapist schedules a plan change in the Customer Portal
+  # (monthly ↔ yearly), Stripe creates a Subscription Schedule and
+  # waits until the end of the current period to apply it. Email the
+  # therapist so they have a record of what they did and when it
+  # takes effect — Stripe does not send this email by default.
+  Pay::Webhooks.delegator.subscribe("stripe.subscription_schedule.created") do |event|
+    with_error_capture.call("subscription_schedule.created") do
+      schedule = event.data.object
+      pay_customer = Pay::Customer.find_by(processor: "stripe", processor_id: schedule.customer)
+      user = pay_customer&.owner
+      next unless user
+
+      # The upcoming phase carries the new price + start time.
+      upcoming_phase = schedule.phases.find { |p| p.start_date && Time.at(p.start_date) > Time.current }
+      next unless upcoming_phase
+
+      effective_at = Time.at(upcoming_phase.start_date)
+
+      new_amount_label =
+        begin
+          item = upcoming_phase.items&.first
+          price = item && ::Stripe::Price.retrieve(item.price)
+          if price&.unit_amount && price.currency
+            amount = price.unit_amount.to_i / 100.0
+            interval = price.recurring&.interval
+            formatted = price.currency.to_s.downcase == "usd" ? "$#{format('%.0f', amount)}" : "#{format('%.2f', amount)} #{price.currency.to_s.upcase}"
+            interval ? "#{formatted}/#{interval}" : formatted
+          end
+        rescue ::Stripe::StripeError
+          nil
+        end
+
+      PlanChangeScheduledMailer.with(
+        user: user,
+        effective_at: effective_at,
+        new_amount_label: new_amount_label
+      ).notify.deliver_later
     end
   end
 end

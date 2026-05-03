@@ -14,7 +14,7 @@ Supabase auth is used for authentication and authorization. Role based access co
 
 Read the docs for rails and use the supabase mcp 
 
-Use stripe docs for stripe integration.
+Stripe billing goes through the [Pay gem](https://github.com/pay-rails/pay). Read [`_docs/_processes/stripe.md`](/Users/ashleyking/side-projects/therasaurus-apps-assets/therasaurus-apps/therasaurus-rails/_docs/_processes/stripe.md) before changing anything billing-related. Reach for Pay's helpers (`user.payment_processor.checkout`, `user.payment_processor.billing_portal`, `Pay::Webhooks.delegator.subscribe`) before reaching for the raw Stripe SDK.
 
 call out non-industry-standard patterns in the code and stop code generation until you get my approval.
 

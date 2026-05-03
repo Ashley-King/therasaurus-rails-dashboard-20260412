@@ -22,6 +22,6 @@ if Rails.env.production?
     STRIPE_PUBLISHABLE_KEY
     STRIPE_WEBHOOK_SECRET
     STRIPE_PRICE_MONTHLY_ID
-    STRIPE_PRICE_ANNUAL_ID
+    STRIPE_PRICE_YEARLY_ID
   ].each { |key| Rails.application.credentials.fetch(key) }
 end

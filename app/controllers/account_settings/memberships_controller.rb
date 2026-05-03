@@ -5,7 +5,7 @@ module AccountSettings
 
     # POST /account-settings/membership/portal
     # Sends the therapist to the Stripe Customer Portal where they can
-    # update their card, view invoices, switch monthly→annual, or cancel.
+    # update their card, view invoices, switch monthly→yearly, or cancel.
     def portal
       processor = current_user.payment_processor
       unless processor&.processor_id?

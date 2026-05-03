@@ -242,6 +242,24 @@ These are not the same rule.
 - A therapist who never completed checkout stays a `member` with no
   card on file and no public profile.
 
+## Plan change rules
+
+- Therapists can self-serve plan changes (monthly ↔ yearly) through
+  the Stripe Customer Portal.
+- All plan changes take effect at the end of the current billing
+  period, not immediately. There are no prorations, no instant
+  charges, and no refunds for unused time.
+- Until the end of the period the therapist keeps their current plan
+  and benefits.
+- When a plan change is scheduled, the app sends the therapist an
+  email confirming what will change and when. (Stripe does not send a
+  scheduled-change email by default.)
+- When the scheduled change actually takes effect, the app does not
+  send a separate email; the next invoice receipt from Stripe carries
+  the new amount and that is enough.
+- The app does not show or block plan changes inside the app. The
+  Customer Portal is the single surface for plan changes.
+
 ## Dunning rules
 
 - A failed charge moves the subscription to `past_due` (Stripe).

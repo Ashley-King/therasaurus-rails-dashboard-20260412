@@ -1,7 +1,35 @@
 # Stripe Trial + Checkout Flow Plan
 
 **Date:** 2026-04-30
-**Status:** Draft
+**Status:** Completed 2026-04-30, then superseded by the Pay migration on 2026-05-02.
+
+## Status note (2026-05-02)
+
+All seven phases below shipped as written, then the entire
+implementation was rewritten on top of the
+[Pay gem](https://github.com/pay-rails/pay) — see the 2026-05-02
+CHANGELOG entry. The user-facing flow (Start Your Trial → Stripe
+Checkout → Trial Started → Account Settings → portal → cancel +
+reactivate) is unchanged. What changed is everything underneath:
+
+- Pay owns the webhook controller, idempotency table (`pay_webhooks`),
+  customer/subscription/charge persistence, and the trial-end and
+  payment-failed mailers.
+- `users.membership_status` is the only app-side denorm we still keep;
+  it is set by a single writer (`BillingSync`) called from
+  `Pay::Webhooks.delegator.subscribe` blocks in
+  `config/initializers/billing_subscribers.rb`.
+- The hand-rolled `StripeService`, `Stripe::WebhooksController`,
+  `ProcessStripeEventJob`, `StripeEvent` model, six event handlers,
+  `TrialEndingReminderMailer`, and `PaymentFailedMailer` were all
+  deleted.
+- The webhook endpoint moved from `POST /stripe/webhooks` to Pay's
+  `POST /pay/webhooks/stripe`.
+
+The current implementation lives in
+[`_docs/_processes/stripe.md`](../_processes/stripe.md). Read THAT
+for how the system works today; read this plan only as historical
+context for how the user-facing flow was designed.
 
 ## Goal
 

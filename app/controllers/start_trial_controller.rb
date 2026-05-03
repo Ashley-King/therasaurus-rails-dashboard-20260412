@@ -11,7 +11,7 @@ class StartTrialController < ApplicationController
   before_action :require_profile
   before_action :redirect_if_currently_subscribed
 
-  ALLOWED_PLANS = %w[monthly annual].freeze
+  ALLOWED_PLANS = %w[monthly yearly].freeze
 
   # GET /start-trial
   def show
@@ -63,7 +63,7 @@ class StartTrialController < ApplicationController
   def price_id_for(plan)
     case plan
     when "monthly" then Rails.application.credentials.fetch(:STRIPE_PRICE_MONTHLY_ID)
-    when "annual"  then Rails.application.credentials.fetch(:STRIPE_PRICE_ANNUAL_ID)
+    when "yearly"  then Rails.application.credentials.fetch(:STRIPE_PRICE_YEARLY_ID)
     end
   end
 

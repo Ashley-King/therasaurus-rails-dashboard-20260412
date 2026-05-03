@@ -2,7 +2,43 @@
 
 ## 2026-05-02
 
+### Added
+- **Plan change scheduled email + business rule.** When a therapist
+  schedules a plan change in the Stripe Customer Portal (monthly ↔
+  yearly), Stripe queues the change to the end of the current billing
+  period and fires `subscription_schedule.created`. New
+  [`PlanChangeScheduledMailer`](app/mailers/plan_change_scheduled_mailer.rb)
+  sends the therapist a confirmation with the effective date and the
+  new amount (Stripe doesn't send a scheduled-change email by
+  default). Wired in
+  [`config/initializers/billing_subscribers.rb`](config/initializers/billing_subscribers.rb).
+  New "Plan change rules" section in
+  [`business-rules.md`](_docs/business-rules.md) codifies: portal is
+  the single surface for plan changes, all changes apply at
+  end-of-period (no proration, no refunds), the app sends a scheduled
+  email, no separate email at apply-time (the next Stripe receipt
+  carries the new amount).
+
 ### Changed
+- **Customer Portal phase-one config corrected.** Earlier docs claimed
+  the portal could enforce "monthly → yearly upgrades only" via
+  per-source-price restrictions. That feature does not exist in
+  Stripe; the `subscription_update.products[].prices` array is a flat
+  list of allowed destinations with no source filtering. Updated
+  [`_docs/_processes/stripe.md`](_docs/_processes/stripe.md) to
+  describe the actual phase-one config: subscription update on, both
+  prices listed, proration `none`, downgrades wait until end of
+  billing period (so a yearly customer's downgrade queues to renewal
+  and never triggers a refund).
+- **Renamed `STRIPE_PRICE_ANNUAL_ID` → `STRIPE_PRICE_YEARLY_ID`** to
+  match the credential names actually set in dev. Added
+  `STRIPE_PRODUCT_MONTHLY_ID` and `STRIPE_PRODUCT_YEARLY_ID` to
+  `credentials.example` for reference (the app does not read them —
+  Pay/Stripe associate prices with products automatically). Internal
+  `plan` param in `StartTrialController` and the start-trial form
+  buttons rename `"annual"` → `"yearly"` to match. User-facing copy
+  ("annually", "$170/year") is unchanged. Production boot guard in
+  `config/initializers/stripe.rb` now checks for `STRIPE_PRICE_YEARLY_ID`.
 - **Trial flow rewired on top of the Pay gem.** Replaced the
   hand-rolled Stripe integration (built 2026-04-30) with
   [`pay` ~> 11.6](https://github.com/pay-rails/pay) so we offload
