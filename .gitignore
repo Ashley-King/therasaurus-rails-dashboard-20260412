@@ -29,3 +29,12 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Claude Code per-machine state.
+# - worktrees/          temporary isolated-work scratch (not source)
+# - settings.local.json per-machine settings (the name says it)
+# - projects/           per-machine session/conversation/memory cache
+# Note: .claude/launch.json + .claude/skills/ are intentionally tracked.
+.claude/worktrees/
+.claude/settings.local.json
+.claude/projects/
