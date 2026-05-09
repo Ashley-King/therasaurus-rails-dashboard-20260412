@@ -25,10 +25,18 @@ Rails.application.reloader.to_prepare do
   with_error_capture = lambda do |label, &blk|
     blk.call
   rescue StandardError => e
-    Notifier.notify(
-      :stripe_errors,
-      "Subscriber #{label} failed: #{e.class}: #{e.message}"
-    )
+    begin
+      Notifier.notify(
+        :stripe_errors,
+        "Subscriber #{label} failed: #{e.class}: #{e.message}"
+      )
+    rescue StandardError => notifier_error
+      Rails.logger.warn(
+        "event=stripe_error_notification_failed " \
+        "source=billing_subscribers.#{label} " \
+        "error=#{notifier_error.class}"
+      )
+    end
     raise
   end
 
@@ -48,11 +56,13 @@ Rails.application.reloader.to_prepare do
       pay_sub = Pay::Subscription.find_by(processor_id: sub_id)
       next unless pay_sub&.metadata.is_a?(Hash) && pay_sub.metadata["reactivation"] == "true"
 
-      Notifier.notify(
-        :admin,
-        "Therapist user_id=#{user.id} reactivated their subscription " \
-        "(stripe_subscription_id=#{sub_id})."
-      )
+      StripeWebhookReceipt.run_once_for_event!(event) do
+        Notifier.notify(
+          :admin,
+          "Therapist user_id=#{user.id} reactivated their subscription " \
+          "(stripe_subscription_id=#{sub_id})."
+        )
+      end
     end
   end
 
@@ -77,11 +87,13 @@ Rails.application.reloader.to_prepare do
 
       BillingSync.sync_membership_status!(user)
 
-      Notifier.notify(
-        :admin,
-        "Therapist user_id=#{user.id} canceled their subscription " \
-        "(stripe_subscription_id=#{event.data.object.id})."
-      )
+      StripeWebhookReceipt.run_once_for_event!(event) do
+        Notifier.notify(
+          :admin,
+          "Therapist user_id=#{user.id} canceled their subscription " \
+          "(stripe_subscription_id=#{event.data.object.id})."
+        )
+      end
     end
   end
 
@@ -97,31 +109,38 @@ Rails.application.reloader.to_prepare do
       user = pay_customer&.owner
       next unless user
 
-      # The upcoming phase carries the new price + start time.
-      upcoming_phase = schedule.phases.find { |p| p.start_date && Time.at(p.start_date) > Time.current }
-      next unless upcoming_phase
+      StripeWebhookReceipt.run_once_for_event!(event) do
+        # The upcoming phase carries the new price + start time.
+        upcoming_phase = schedule.phases.find { |p| p.start_date && Time.at(p.start_date) > Time.current }
+        next unless upcoming_phase
 
-      effective_at = Time.at(upcoming_phase.start_date)
+        effective_at = Time.at(upcoming_phase.start_date)
 
-      new_amount_label =
-        begin
-          item = upcoming_phase.items&.first
-          price = item && ::Stripe::Price.retrieve(item.price)
-          if price&.unit_amount && price.currency
-            amount = price.unit_amount.to_i / 100.0
-            interval = price.recurring&.interval
-            formatted = price.currency.to_s.downcase == "usd" ? "$#{format('%.0f', amount)}" : "#{format('%.2f', amount)} #{price.currency.to_s.upcase}"
-            interval ? "#{formatted}/#{interval}" : formatted
+        new_amount_label =
+          begin
+            item = upcoming_phase.items&.first
+            price = item && ::Stripe::Price.retrieve(item.price)
+            if price&.unit_amount && price.currency
+              amount = price.unit_amount.to_i / 100.0
+              interval = price.recurring&.interval
+              formatted =
+                if price.currency.to_s.downcase == "usd"
+                  "$#{format('%.0f', amount)}"
+                else
+                  "#{format('%.2f', amount)} #{price.currency.to_s.upcase}"
+                end
+              interval ? "#{formatted}/#{interval}" : formatted
+            end
+          rescue ::Stripe::StripeError
+            nil
           end
-        rescue ::Stripe::StripeError
-          nil
-        end
 
-      PlanChangeScheduledMailer.with(
-        user: user,
-        effective_at: effective_at,
-        new_amount_label: new_amount_label
-      ).notify.deliver_later
+        PlanChangeScheduledMailer.with(
+          user: user,
+          effective_at: effective_at,
+          new_amount_label: new_amount_label
+        ).notify.deliver_later
+      end
     end
   end
 end

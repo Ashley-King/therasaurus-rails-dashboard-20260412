@@ -7,6 +7,7 @@
 - [Turnstile](./turnstile.md) — currently not wired; rebuild checklist if it comes back
 - [Business Rules](./business-rules.md) — account + membership rules
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
+- [Email](./_processes/email.md) — Rails-owned email delivery through Resend SMTP
 - [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted ZIPs, `Geocodable` concern, ZIP combobox UX
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
 - [Rate Limiting](./_processes/rate-limiting.md) — Rails `rate_limit` + Rack::Attack policy
@@ -28,6 +29,7 @@
   - `therasaurus-design-tokens-v2.css` — CSS custom properties and component classes (ts- prefix)
   - `therasaurus-design-tokens-v2.json` — Structured token data for tooling
   - `index.html` — Visual reference of all components
+- **Therapist profile designer field inventory:** [`therapist-profile-design-brief.md`](./therapist-profile-design-brief.md)
 - **Background jobs:** [`background-jobs.md`](./background-jobs.md)
 - **Dashboard inspiration screenshots:** [`_frontend/_images/`](./../_frontend/_images/)
   - `desktop/` — Paperbell desktop screenshots (dashboard, settings, email, nav, etc.)

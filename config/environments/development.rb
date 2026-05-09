@@ -28,8 +28,21 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Development sends real email through Resend by default.
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.smtp_settings = {
+    address: "smtp.resend.com",
+    port: 465,
+    domain: "therasaurus.org",
+    user_name: "resend",
+    password: Rails.application.credentials.fetch(:RESEND_API_KEY),
+    authentication: :plain,
+    tls: true,
+    open_timeout: 5,
+    read_timeout: 5
+  }
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

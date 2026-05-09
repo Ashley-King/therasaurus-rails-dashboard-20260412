@@ -38,3 +38,7 @@
 .claude/worktrees/
 .claude/settings.local.json
 .claude/projects/
+
+_docs/.DS_Store
+
+.DS_Store

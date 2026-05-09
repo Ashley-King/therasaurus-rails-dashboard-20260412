@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_130000) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -488,6 +488,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_120000) do
 
     t.unique_constraint ["code"], name: "states_code_key"
     t.unique_constraint ["name"], name: "states_name_key"
+  end
+
+  create_table "public.stripe_webhook_receipts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "event_type", null: false
+    t.datetime "processed_at"
+    t.string "status", default: "processing", null: false
+    t.string "stripe_event_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["status", "event_type"], name: "index_stripe_webhook_receipts_on_status_and_event_type"
+    t.index ["stripe_event_id", "event_type"], name: "index_stripe_webhook_receipts_on_event", unique: true
   end
 
   create_table "public.telehealth_platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

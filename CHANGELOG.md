@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-05-09
+
+### Changed
+- **Therapist profile designer brief now matches current public-profile rules.**
+  Rebuilt the profile field inventory so it no longer dictates layout
+  and clearly documents email, phone, street address, and
+  optional-section behavior. The generated PDF now uses a larger
+  sans-serif font with roomier table and section spacing. Added
+  tablet and phone design deliverables for final profile designs.
+- **Rails email delivery now uses Resend SMTP.** Development and
+  production Rails-owned emails now send through Resend with
+  `RESEND_API_KEY`, and production email links use
+  `https://therasaurus.org`.
+
+## 2026-05-03
+
+### Added
+- **Stripe webhook side-effect receipts.** Added
+  `stripe_webhook_receipts` and `StripeWebhookReceipt` so duplicate
+  Stripe deliveries do not send duplicate app-side admin notifications
+  or duplicate plan-change email jobs.
+
+### Changed
+- **Billing state reads now use Pay-backed state.** The dashboard
+  membership banner now uses `member`, `trialing_member`, and
+  `pro_member`, with trial dates read from Pay subscriptions. Avo no
+  longer points at dropped legacy user billing columns.
+- **Pay webhook jobs retry transient failures.** A small initializer
+  now adds narrow Stripe, database, and network retries to
+  `Pay::Webhooks::ProcessJob` so Pay webhook processing can recover
+  after Stripe has already received a `200`.
+- **Checkout errors include Pay's Stripe wrapper.**
+  `StartTrialController` now rescues both Stripe errors and
+  `Pay::Stripe::Error`, while preserving the friendly redirect.
+- **Admin-created users use current membership values.** New admin
+  users now start as `pro_member` instead of the old `pro` value.
+
 ## 2026-05-02
 
 ### Added

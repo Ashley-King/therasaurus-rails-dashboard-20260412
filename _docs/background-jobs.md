@@ -1,5 +1,20 @@
 # Background Jobs
 
+## Pay::Webhooks::ProcessJob
+
+**Queue:** default (Solid Queue)
+**Trigger:** Enqueued by Pay after `POST /pay/webhooks/stripe` verifies
+and stores a Stripe webhook.
+**Input:** `Pay::Webhook`
+**Idempotent:** Pay's sync work is safe to run more than once. App-side
+emails and admin notifications use `stripe_webhook_receipts` so the
+same Stripe event does not send the same side effect twice.
+
+Processes Pay webhook rows after Stripe has already received a `200`
+response. `config/initializers/pay_webhook_job_retries.rb` retries
+transient Stripe, database, and network failures. Bad input still fails
+normally so it reaches the configured error reporting path.
+
 ## R2OrphanCleanupJob
 
 **Queue:** default (Solid Queue)

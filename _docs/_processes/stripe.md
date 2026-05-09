@@ -52,13 +52,19 @@ and the Customer Portal is configured the same way. US-only in phase one.
 
 1. Reads the raw body and verifies the signature against
    `STRIPE_SIGNING_SECRET`.
-2. Persists the event to `pay_webhooks` (idempotent: the event id is
-   the dedupe key — re-deliveries are dropped).
-3. Dispatches to Pay's built-in handlers, which sync customer +
+2. Persists the event to `pay_webhooks` and queues
+   `Pay::Webhooks::ProcessJob`.
+3. `Pay::Webhooks::ProcessJob` dispatches to Pay's built-in handlers,
+   which sync customer +
    subscription + charge state into `pay_customers` /
    `pay_subscriptions` / `pay_charges`.
 4. Fires app-side subscribers registered in
    [`config/initializers/billing_subscribers.rb`](../../config/initializers/billing_subscribers.rb).
+
+`config/initializers/pay_webhook_job_retries.rb` adds retry rules to
+`Pay::Webhooks::ProcessJob` for transient Stripe, database, and network
+failures that happen after Stripe has already received a `200`
+response.
 
 ## App-side subscribers
 
@@ -91,6 +97,12 @@ Subscribers also:
   [`business-rules.md`](../business-rules.md)).
 - Capture exceptions and ping `:stripe_errors` on Discord; re-raise so
   Better Stack also sees them via the Sentry SDK.
+
+The admin notifications and plan-change email enqueue are wrapped in
+[`StripeWebhookReceipt`](../../app/models/stripe_webhook_receipt.rb).
+That table lets each app-side side effect run once per Stripe event id
+and event type. `BillingSync.sync_membership_status!` stays outside the
+receipt guard because it is safe to run more than once.
 
 ## Pay mailers we use
 
@@ -179,12 +191,16 @@ The CLI prints the webhook signing secret on first run; copy it into
 
 ## Idempotency notes
 
-- Pay's `pay_webhooks` table dedupes by Stripe event id. Re-deliveries
-  are dropped before any handler runs.
 - Pay's own handlers re-apply the latest Stripe-side state, so they
   are safe to re-run.
 - `BillingSync.sync_membership_status!` only writes when the computed
   value differs from the stored one.
+- Stripe can deliver the same event more than once. The app records
+  completed notification and email side effects in
+  `stripe_webhook_receipts`.
+- `stripe_webhook_receipts` has a unique index on Stripe event id and
+  event type. A side effect is marked `completed` only after it has
+  been queued or sent. If it fails, the receipt is left retryable.
 - `StripeService` and our hand-rolled handlers were removed; Pay owns
   this surface area now.
 

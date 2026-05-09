@@ -44,11 +44,11 @@ On every request, `current_user` decodes the JWT (unverified — Supabase issued
 
 1. User visits `/signin`, enters email. (Turnstile is not currently wired — see [`turnstile.md`](../turnstile.md).)
 2. `AuthController#create` calls `SupabaseAuth#send_otp(email)`. On success, the email is stashed in `session[:pending_email]` and the user is redirected to `/verify`.
-3. User enters the 6-digit code. `AuthController#confirm` calls `SupabaseAuth#verify_otp`.
+3. User enters the 8-digit code. `AuthController#confirm` calls `SupabaseAuth#verify_otp`.
 4. On success:
    - Tokens stored in session via `store_auth_session`.
    - `session[:pending_email]` cleared.
-   - `find_or_create_user!` creates a `User` row keyed by the Supabase UUID. `is_admin` is set if the email is in `admin_emails`; `membership_status` defaults to `"member"` (or `"pro"` for admins).
+   - `find_or_create_user!` creates a `User` row keyed by the Supabase UUID. `is_admin` is set if the email is in `admin_emails`; `membership_status` defaults to `"member"` (or `"pro_member"` for admins).
 5. `profile_complete?` returns false (no `therapist` row yet) → redirect to `/create-account`.
 6. User fills out the create-account form. `CreateAccountController#create` validates, then inside a transaction creates the `Therapist` + initial `Location`, generates a unique `profile_slug` and `unique_id`. The location is geocoded synchronously when possible via the `Geocodable` concern; only unresolved ZIPs flip to `pending` and enqueue `GeocodeLocationJob`. See [`locations.md`](./locations.md).
 7. Redirect to `/account-settings` (the post-signin landing page).

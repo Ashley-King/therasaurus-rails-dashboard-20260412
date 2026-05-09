@@ -44,11 +44,8 @@ class StartTrialController < ApplicationController
     )
 
     redirect_to session.url, allow_other_host: true, status: :see_other
-  rescue ::Stripe::StripeError => e
-    Notifier.notify(
-      :stripe_errors,
-      "Checkout session create failed for user #{current_user.id}: #{e.class}: #{e.message}"
-    )
+  rescue ::Stripe::StripeError, ::Pay::Stripe::Error => e
+    notify_checkout_failure(e)
     redirect_to start_trial_path,
                 alert: "We couldn't start your trial right now. Please try again in a moment."
   end
@@ -65,6 +62,19 @@ class StartTrialController < ApplicationController
     when "monthly" then Rails.application.credentials.fetch(:STRIPE_PRICE_MONTHLY_ID)
     when "yearly"  then Rails.application.credentials.fetch(:STRIPE_PRICE_YEARLY_ID)
     end
+  end
+
+  def notify_checkout_failure(error)
+    Notifier.notify(
+      :stripe_errors,
+      "Checkout session create failed for user #{current_user.id}: #{error.class}: #{error.message}"
+    )
+  rescue StandardError => notifier_error
+    Rails.logger.warn(
+      "event=stripe_error_notification_failed " \
+      "source=start_trial.checkout " \
+      "error=#{notifier_error.class}"
+    )
   end
 
   # Bounce users with an active trial / paid sub / past_due. Users whose

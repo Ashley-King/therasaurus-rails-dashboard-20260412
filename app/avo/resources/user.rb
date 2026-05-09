@@ -14,8 +14,24 @@ class Avo::Resources::User < Avo::BaseResource
       "Trialing Member": "trialing_member",
       "Pro Member": "pro_member"
     }
-    field :stripe_customer_id, as: :text
-    field :trial_ends_at, as: :date_time
+    field :pay_stripe_customer_id,
+      as: :text,
+      name: "Stripe Customer ID",
+      only_on: :show,
+      format_using: -> { record.payment_processor&.processor_id.presence || "Not set" }
+    field :pay_subscription_status,
+      as: :text,
+      name: "Current Subscription Status",
+      only_on: :show,
+      format_using: -> { record.payment_processor&.subscription&.status.presence || "Not set" }
+    field :pay_trial_ends_at,
+      as: :text,
+      name: "Current Trial Ends",
+      only_on: :show,
+      format_using: -> {
+        trial_ends_at = record.payment_processor&.subscription&.trial_ends_at
+        trial_ends_at.present? ? I18n.l(trial_ends_at.to_date, format: :long) : "Not set"
+      }
     field :therapist, as: :has_one
     field :created_at, as: :date_time, sortable: true, only_on: :index
   end

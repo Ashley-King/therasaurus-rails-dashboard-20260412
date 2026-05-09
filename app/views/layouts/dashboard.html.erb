@@ -35,8 +35,11 @@
       banner_state = nil
       if current_user&.is_admin
         banner_state = params[:banner_preview] == "active" ? "active" : "ended"
-      elsif current_user && current_user.membership_status != "pro"
-        trial_ended = current_user.membership_status == "trial" && current_user.trial_ends_at.present? && current_user.trial_ends_at <= Time.current
+      elsif current_user&.membership_status == "member"
+        current_subscription = current_user.payment_processor&.subscription
+        latest_trial_subscription = current_user.pay_subscriptions.where.not(trial_ends_at: nil).order(trial_ends_at: :desc).first
+        trial_ends_at = current_subscription&.trial_ends_at || latest_trial_subscription&.trial_ends_at
+        trial_ended = trial_ends_at.present? && trial_ends_at <= Time.current
         banner_state = trial_ended ? "ended" : "active"
       end
     %>

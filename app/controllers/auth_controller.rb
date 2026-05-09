@@ -158,7 +158,7 @@ class AuthController < ApplicationController
       id: id,
       email: email,
       is_admin: is_admin,
-      membership_status: is_admin ? "pro" : "member"
+      membership_status: is_admin ? "pro_member" : "member"
     )
     auth_log(:info, "auth.user.created", user_id: user.id, is_admin: is_admin, membership_status: user.membership_status)
     user
