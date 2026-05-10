@@ -1,8 +1,8 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  url: <%= Rails.application.credentials.DATABASE_URL %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= Rails.application.credentials.fetch(:DATABASE_URL) %>
   prepared_statements: false # Required for Supabase transaction pooler (pgBouncer)
 
 development:

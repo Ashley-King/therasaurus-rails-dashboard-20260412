@@ -16,6 +16,13 @@
   `EXPIRED`.
 
 ### Changed
+- **Production Solid Queue setup now uses the app database and a job role.**
+  Added normal Rails migrations for Solid Cache, Solid Cable, and Solid
+  Queue tables so Supabase Postgres does not need fake separate
+  databases. Kamal now runs `bin/jobs` as a dedicated `job` role instead
+  of running Solid Queue inside Puma, and queue polling now runs once per
+  second to keep database traffic low. RLS is enabled on the Solid tables
+  with no browser policies.
 - **Stripe process docs now match the current Customer Portal config.**
   Documented that Stripe customer email is not editable in the portal
   and that trial plan changes continue the trial.

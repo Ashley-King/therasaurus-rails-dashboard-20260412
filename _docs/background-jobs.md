@@ -1,5 +1,20 @@
 # Background Jobs
 
+## Production runner
+
+Production uses Solid Queue and stores the queue tables in the normal
+Supabase Postgres database. There is no separate `queue` database.
+
+Kamal runs jobs through a dedicated `job` role with `cmd: bin/jobs`.
+Jobs do not run inside Puma in production.
+
+Workers poll once per second. This keeps database traffic low for a
+low-volume Supabase-backed app.
+
+Solid Cable and Solid Cache also use the normal app database. Their
+tables are created by normal Rails migrations, not separate schema files.
+RLS is enabled on the Solid tables with no browser policies.
+
 ## Pay::Webhooks::ProcessJob
 
 **Queue:** default (Solid Queue)
