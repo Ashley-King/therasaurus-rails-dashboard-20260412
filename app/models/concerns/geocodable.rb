@@ -1,5 +1,5 @@
-# Shared geocoding hooks for records that carry a US address (ZIP + city +
-# state + lat/lng + geocode_status). Including this module wires up:
+# Shared geocoding hooks for records that carry a US address (postal code +
+# city + state + lat/lng + geocode_status). Including this module wires up:
 #
 #   - a before_save that resolves lat/lng from ZipLookup when the address
 #     changes (or trusts values the caller already supplied, e.g. filled by
@@ -21,7 +21,7 @@ module Geocodable
 
   def address_changed_or_unresolved?
     new_record? ||
-      zip_changed? || city_changed? || state_changed? ||
+      postal_code_changed_for_geocoding? || city_changed? || state_changed? ||
       geocode_status != "ok"
   end
 
@@ -33,7 +33,7 @@ module Geocodable
     end
 
     record, match = ZipLookup.geocode_with_fallback(
-      zip: zip, state_id: state, city: city
+      zip: postal_code_for_geocoding, state_id: state, city: city
     )
 
     if record
@@ -51,6 +51,22 @@ module Geocodable
 
   def enqueue_geocode_if_pending
     geocode_job_class.perform_later(id) if geocode_status == "pending"
+  end
+
+  def postal_code_for_geocoding
+    if has_attribute?(:postal_code)
+      postal_code
+    else
+      zip
+    end
+  end
+
+  def postal_code_changed_for_geocoding?
+    if has_attribute?(:postal_code)
+      postal_code_changed?
+    else
+      zip_changed?
+    end
   end
 
   def geocode_job_class

@@ -9,11 +9,17 @@
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
 - [Billing Lifecycle QA](./_processes/billing-lifecycle-qa.md) — end-to-end billing review checklist
 - [Email](./_processes/email.md) — Rails-owned email delivery through Resend SMTP
-- [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted ZIPs, `Geocodable` concern, ZIP combobox UX
+- [Localization + Country Rules](./_processes/localization.md) — active locale, hidden countries, and country postal-code rules
+- [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted postal codes, `Geocodable` concern, ZIP combobox UX
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping
 - [Rate Limiting](./_processes/rate-limiting.md) — Rails `rate_limit` + Rack::Attack policy
 - [Notifications](./_processes/notifications.md) — internal Discord pings + Better Stack error tracking
 - [Stripe](./_processes/stripe.md) — Pay gem integration, billing keys, webhook subscribers, `BillingSync`, idempotency
+
+## Active Plans
+
+- [Cloudflare Rate Limiting + Tunnel Access](./_plans/cloudflare-rate-limiting-and-tunnel-access.md) — Cloudflare Tunnel access, edge rate limits, and abuse monitoring for Rails, Next.js, and Meilisearch
+- [Localization + Country Foundation](./_plans/localization-country-foundation.md) — backend setup for future translation support and hidden Canada/Mexico preparation
 
 ## Folders
 

@@ -78,11 +78,11 @@ If all stages still fail, sets `geocode_status = "failed"` with nil lat/lng.
 
 See [`_processes/locations.md`](./_processes/locations.md) for the full save-time + async flow.
 
-## GeocodeTargetedZipJob
+## GeocodeTargetedPostalCodeJob
 
 **Queue:** default (Solid Queue)
-**Trigger:** Enqueued by the `Geocodable` concern in an `after_commit` callback on `TherapistTargetedZip`, only when `geocode_status == "pending"`.
-**Input:** `targeted_zip_id`
+**Trigger:** Enqueued by the `Geocodable` concern in an `after_commit` callback on `TherapistTargetedPostalCode`, only when `geocode_status == "pending"`.
+**Input:** `targeted_postal_code_id`
 **Idempotent:** Yes.
 
-Sibling of `GeocodeLocationJob`. Same three-stage `ZipLookup.geocode_with_fallback`, but `TherapistTargetedZip` has no `canonical_city` / `canonical_state` columns, so those writes are skipped. If all stages fail, sets `geocode_status = "failed"`.
+Sibling of `GeocodeLocationJob`. Same three-stage `ZipLookup.geocode_with_fallback`, but `TherapistTargetedPostalCode` has no `canonical_city` / `canonical_state` columns, so those writes are skipped. If all stages fail, sets `geocode_status = "failed"`.

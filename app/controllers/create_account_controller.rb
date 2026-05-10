@@ -8,25 +8,23 @@ class CreateAccountController < ApplicationController
 
   # GET /create-account
   def new
-    @professions = Profession.order(:name)
-    @countries = Country.order(:name)
+    load_form_options
   end
 
   # POST /create-account
   def create
-    @professions = Profession.order(:name)
-    @countries = Country.order(:name)
+    load_form_options
 
     profession = Profession.find_by(id: params[:profession_id])
-    country = Country.find_by(id: params[:country_id])
+    country = Country.active.find_by(id: params[:country_id])
 
     unless profession
-      flash.now[:alert] = "Please select a valid profession."
+      flash.now[:alert] = t("controllers.create_account.invalid_profession")
       return render :new, status: :unprocessable_entity
     end
 
     unless country
-      flash.now[:alert] = "Please select a valid country."
+      flash.now[:alert] = t("controllers.create_account.invalid_country")
       return render :new, status: :unprocessable_entity
     end
 
@@ -36,12 +34,15 @@ class CreateAccountController < ApplicationController
     city = loc[:city].to_s.strip
 
     unless state_code.match?(/\A[A-Z]{2}\z/)
-      flash.now[:alert] = "State must be a valid 2-letter code."
+      flash.now[:alert] = t("controllers.create_account.invalid_state")
       return render :new, status: :unprocessable_entity
     end
 
-    unless zip_code.match?(/\A\d{5}\z/)
-      flash.now[:alert] = "ZIP code must be exactly 5 digits."
+    unless country.accepts_postal_code?(zip_code)
+      flash.now[:alert] = t(
+        "controllers.create_account.invalid_postal_code",
+        label: country.postal_code_label
+      )
       return render :new, status: :unprocessable_entity
     end
 
@@ -59,7 +60,10 @@ class CreateAccountController < ApplicationController
       )
 
       unless @therapist.save
-        flash.now[:alert] = @therapist.errors.full_messages.join(", ")
+        flash.now[:alert] = t(
+          "controllers.create_account.therapist_errors",
+          errors: @therapist.errors.full_messages.join(", ")
+        )
         raise ActiveRecord::Rollback
       end
 
@@ -77,7 +81,10 @@ class CreateAccountController < ApplicationController
       )
 
       unless @location.save
-        flash.now[:alert] = @location.errors.full_messages.join(", ")
+        flash.now[:alert] = t(
+          "controllers.create_account.location_errors",
+          errors: @location.errors.full_messages.join(", ")
+        )
         raise ActiveRecord::Rollback
       end
     end
@@ -89,7 +96,7 @@ class CreateAccountController < ApplicationController
         "(therapist ##{@therapist.id}, #{profession.name}, " \
         "#{@location.city}, #{state_code})"
       )
-      redirect_to start_trial_path, notice: "Your account has been created."
+      redirect_to start_trial_path, notice: t("controllers.create_account.account_created")
     else
       render :new, status: :unprocessable_entity
     end
@@ -112,5 +119,10 @@ class CreateAccountController < ApplicationController
       id = rand(1_000_001..9_999_999).to_s
       return id unless Therapist.exists?(unique_id: id)
     end
+  end
+
+  def load_form_options
+    @professions = Profession.order(:name)
+    @countries = Country.active.order(:name)
   end
 end

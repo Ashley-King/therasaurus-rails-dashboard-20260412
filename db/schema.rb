@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -85,7 +85,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.text "name", null: false
     t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
+    t.boolean "active", default: false, null: false
+    t.string "default_locale", default: "en", null: false
+    t.string "currency_code", limit: 3, default: "USD", null: false
+    t.string "postal_code_label", default: "Postal code", null: false
+    t.string "administrative_area_label", default: "State", null: false
 
+    t.index ["active"], name: "index_countries_on_active"
     t.unique_constraint ["code"], name: "countries_code_key"
     t.unique_constraint ["name"], name: "countries_name_key"
   end
@@ -680,7 +686,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
     t.index ["therapist_id"], name: "index_therapist_faqs_on_therapist_id"
   end
 
-  create_table "public.therapist_targeted_zips", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "public.therapist_targeted_postal_codes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "city", limit: 100, null: false
     t.boolean "city_match_successful", default: false, null: false
     t.datetime "created_at", null: false
@@ -691,9 +697,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
     t.string "state", limit: 2, null: false
     t.uuid "therapist_id", null: false
     t.datetime "updated_at", null: false
-    t.string "zip", limit: 10, null: false
-    t.index ["therapist_id", "zip"], name: "index_therapist_targeted_zips_on_therapist_id_and_zip", unique: true
-    t.index ["therapist_id"], name: "index_therapist_targeted_zips_on_therapist_id"
+    t.string "postal_code", limit: 10, null: false
+    t.index ["therapist_id", "postal_code"], name: "idx_targeted_postal_codes_unique_postal_code", unique: true
+    t.index ["therapist_id"], name: "idx_targeted_postal_codes_therapist_id"
   end
 
   create_table "public.therapists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -875,7 +881,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
   add_foreign_key "public.therapist_education", "public.degree_types"
   add_foreign_key "public.therapist_education", "public.therapists"
   add_foreign_key "public.therapist_faqs", "public.therapists", on_delete: :cascade
-  add_foreign_key "public.therapist_targeted_zips", "public.therapists", on_delete: :cascade
+  add_foreign_key "public.therapist_targeted_postal_codes", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"
   add_foreign_key "public.therapists", "public.users", name: "therapists_user_id_fkey", on_delete: :cascade

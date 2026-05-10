@@ -1,20 +1,20 @@
-# Locations + Targeted ZIPs + Geocoding
+# Locations + Targeted Postal Codes + Geocoding
 
-How primary/additional locations and targeted ZIPs are captured, geocoded, and kept searchable.
+How primary/additional locations and targeted ZIP search points are captured, geocoded, and kept searchable.
 
 ## Tables
 
 | Table | Purpose |
 |---|---|
 | `locations` | One `primary` + optionally one `additional` row per therapist. Full street address + geocode state. |
-| `therapist_targeted_zips` | Up to 5 `(zip, city, state)` tuples a therapist wants to appear in search results for, with no physical office. |
-| `zip_lookups` | Read-only reference table (~131k rows, 39k unique ZIPs) backing the ZIP autocomplete + fallback geocoder. |
+| `therapist_targeted_postal_codes` | Up to 5 `(postal_code, city, state)` tuples a therapist wants to appear in search results for, with no physical office. |
+| `zip_lookups` | United States only read-only reference table (~131k rows, 39k unique ZIPs) backing the ZIP autocomplete + fallback geocoder. |
 
 The `location_type` Postgres enum is `("primary", "additional")` (renamed from `alternate` in migration `20260421000000`). The `locations` table uniqueness of primary is enforced by app logic (`find_or_initialize_by(location_type: "primary")`), not a DB constraint.
 
 ## Geocodable concern
 
-`app/models/concerns/geocodable.rb` is included by both `Location` and `TherapistTargetedZip`. It wires up two callbacks:
+`app/models/concerns/geocodable.rb` is included by both `Location` and `TherapistTargetedPostalCode`. It wires up two callbacks:
 
 ### `before_save :resolve_geocode`
 Guarded by `address_changed_or_unresolved?` so unrelated edits (e.g. toggling `show_street_address`) don't re-geocode.
@@ -28,7 +28,7 @@ Logic:
 ### `after_commit :enqueue_geocode_if_pending`
 If status landed on `"pending"`, enqueue `#geocode_job_class.perform_later(id)`. Each model implements the hook:
 - `Location#geocode_job_class` → `GeocodeLocationJob`
-- `TherapistTargetedZip#geocode_job_class` → `GeocodeTargetedZipJob`
+- `TherapistTargetedPostalCode#geocode_job_class` → `GeocodeTargetedPostalCodeJob`
 
 The jobs do the same three-stage match and write `ok` or `failed`.
 
@@ -40,7 +40,7 @@ The jobs do the same three-stage match and write `ok` or `failed`.
 
 ## ZIP combobox (`_zip_combobox` partial + `zip-combobox` Stimulus controller)
 
-Single partial drives the ZIP field across `/create-account`, `/your-practice/locations`, and `/your-practice/targeted-zips`. Three UI states:
+Single partial drives the ZIP field across `/create-account`, `/your-practice/locations`, and `/your-practice/targeted-postal-codes`. Three UI states:
 
 | State | Visible | Form submits |
 |---|---|---|
@@ -49,7 +49,10 @@ Single partial drives the ZIP field across `/create-account`, `/your-practice/lo
 | `manual` | Plain City → State → ZIP inputs (stacked, all required) | Same keys but `latitude`/`longitude` empty and `city_match_successful=0`, so the server falls through to `geocode_with_fallback`. |
 
 **Implementation notes:**
-- Two inputs share `name="<prefix>[zip]"`, one in the finder and one in the manual section. The Stimulus controller toggles `disabled` so only the mode-appropriate one submits.
+- Two inputs submit the configured postal-code field, usually `zip`.
+  Targeted postal codes submit `targeted_postal_code[postal_code]`.
+  The Stimulus controller toggles `disabled` so only the
+  mode-appropriate one submits.
 - `city` / `state` inputs live inside the manual section but stay enabled in all modes so autocomplete-picked values survive into `selected`. The controller toggles `required` on them only while the manual section is visible (browsers don't gracefully validate hidden-but-required fields).
 - `ZipLookup.prefix_search` returns `city_alt` rows as separate options, so therapists searching under the common name (`Ventura` for `San Buenaventura`, `Saint Lucie` for `Port Saint Lucie`) find their ZIP.
 
@@ -69,9 +72,9 @@ Single partial drives the ZIP field across `/create-account`, `/your-practice/lo
 | `POST /create-account` | `CreateAccountController#create` | Builds therapist + primary `Location`; passes `latitude`/`longitude`/`city_match_successful` through so `Geocodable#resolve_geocode` trusts them. |
 | `GET /your-practice/locations` | `YourPractice::LocationsController#show` | Two cards: primary (always, required) + additional (optional, collapsible). |
 | `PATCH /your-practice/locations` | `YourPractice::LocationsController#update` | Reads `locations[primary][...]` OR `locations[additional][...]`. A submit button named `locations[additional][remove]=1` destroys the additional. |
-| `GET /your-practice/targeted-zips` | `YourPractice::TargetedZipsController#index` | Chip list of saved ZIPs + add-form (cap: 5). |
-| `POST /your-practice/targeted-zips` | `TargetedZipsController#create` | Adds one ZIP; `within_therapist_cap` validation blocks the 6th. Unique index on `(therapist_id, zip)`. |
-| `DELETE /your-practice/targeted-zips/:id` | `TargetedZipsController#destroy` | Removes a single chip. |
+| `GET /your-practice/targeted-postal-codes` | `YourPractice::TargetedPostalCodesController#index` | Chip list of saved ZIPs + add-form (cap: 5). |
+| `POST /your-practice/targeted-postal-codes` | `TargetedPostalCodesController#create` | Adds one targeted postal code; `within_therapist_cap` validation blocks the 6th. Unique index on `(therapist_id, postal_code)`. |
+| `DELETE /your-practice/targeted-postal-codes/:id` | `TargetedPostalCodesController#destroy` | Removes a single chip. |
 
 ## Pending-geocode banner
 
@@ -94,4 +97,4 @@ A therapist's profile is eligible to appear in directory search results when `th
 | Create account with unresolved ZIP (e.g. `99998`) | `geocode_status = "pending"`, `GeocodeLocationJob` queued, banner shows. |
 | Toggle `show_street_address` only | No re-geocode (callback guard skips it). |
 | Add 6th targeted ZIP | Validation error "You can save at most 5 targeted ZIPs". |
-| Add duplicate targeted ZIP | Validation error "Zip already added for this therapist"; DB unique index backs it up. |
+| Add duplicate targeted ZIP | Validation error "Postal code already added for this therapist"; DB unique index backs it up. |

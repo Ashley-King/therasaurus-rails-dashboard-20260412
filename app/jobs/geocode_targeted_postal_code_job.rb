@@ -1,12 +1,12 @@
-class GeocodeTargetedZipJob < ApplicationJob
+class GeocodeTargetedPostalCodeJob < ApplicationJob
   queue_as :default
 
-  def perform(targeted_zip_id)
-    targeted = TherapistTargetedZip.find_by(id: targeted_zip_id)
+  def perform(targeted_postal_code_id)
+    targeted = TherapistTargetedPostalCode.find_by(id: targeted_postal_code_id)
     return unless targeted
 
     record, city_match = ZipLookup.geocode_with_fallback(
-      zip: targeted.zip,
+      zip: targeted.postal_code,
       state_id: targeted.state,
       city: targeted.city
     )

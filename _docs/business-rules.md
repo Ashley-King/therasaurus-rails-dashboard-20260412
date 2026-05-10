@@ -46,7 +46,11 @@
 - The therapist can enter a phone extension.
 - The therapist must choose a country.
 - The country select should show `United States` as the preselected option.
-- `United States` is the only country option in phase one.
+- Only active countries should appear in the country select.
+- `United States` is the only active country in phase one.
+- Canada and Mexico exist as inactive backend records only. They should
+  not appear as country options or "coming soon" options.
+- The server must reject inactive countries and fake country IDs.
 - The page should explain that TheraSaurus only supports therapists in the United States right now.
 - The page should tell therapists they can email `countries@therasaurus.org` to request support for another country.
 - The `Show street address on profile` checkbox should default to true.
@@ -430,6 +434,9 @@ Therapists cannot directly edit protected system fields like:
 - The `Your Practice` sidebar has: Practice Information, Locations,
   Targeted ZIPs, Availability, Introduction, Clients, Accessibility,
   Fees & Payments, Services, Specialties, Social Media, FAQs.
+- The Targeted ZIPs page uses `therapist_targeted_postal_codes` in the
+  backend. The visible label stays `Targeted ZIPs` while the app only
+  supports the United States.
 - The `Account Settings` sidebar has: Account, Update Email,
   Notifications, Membership.
 - Each section is its own page with its own form (one page, one form).

@@ -1,0 +1,14 @@
+en:
+  controllers:
+    create_account:
+      account_created: "Your account has been created."
+      invalid_country: "Please select a valid country."
+      invalid_postal_code: "%{label} must be exactly 5 digits."
+      invalid_profession: "Please select a valid profession."
+      invalid_state: "State must be a valid 2-letter code."
+      location_errors: "%{errors}"
+      therapist_errors: "%{errors}"
+    targeted_postal_codes:
+      added: "Targeted ZIP added."
+      fix_errors: "Please fix the errors below."
+      removed: "Targeted ZIP removed."

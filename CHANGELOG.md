@@ -3,6 +3,16 @@
 ## 2026-05-10
 
 ### Added
+- **Cloudflare rate limiting and tunnel access plan.** Added a phased
+  plan for Cloudflare Tunnel-only access, edge rate limits, and abuse
+  monitoring across the future Kamal Rails deploy, existing Dockerized
+  Next.js app, and Dockerized Meilisearch service.
+- **Localization and country foundation plan.** Added a phased backend
+  setup plan for future translation support and hidden Canada/Mexico
+  country preparation without changing launch behavior.
+- **Localization and country rules foundation.** Added Rails I18n
+  locale setup, country launch rule columns, hidden Canada and Mexico
+  country records, and process docs for future localization work.
 - **Billing lifecycle QA checklist.** Added a manual checklist for
   reviewing trial start, trial plan changes, cancellation, trial end,
   failed payments, webhook events, Rails emails, Stripe emails, and
@@ -16,6 +26,16 @@
   `EXPIRED`.
 
 ### Changed
+- **Create Account now enforces active countries on the server.**
+  Country choices load from active countries only, inactive country IDs
+  are rejected, and the therapist model blocks inactive countries.
+- **Targeted ZIP backend now uses postal-code naming.** Renamed the
+  targeted ZIP table, model, controller, route, job, params, and column
+  to targeted postal-code names while keeping the visible `Targeted
+  ZIPs` label for the United States-only launch.
+- **Rate limiting docs now match current Supabase OTP behavior.**
+  Updated the OTP brute-force note from 6 digits to 8 digits and
+  corrected the safelist note to include `/health`.
 - **Production Solid Queue setup now uses the app database and a job role.**
   Added normal Rails migrations for Solid Cache, Solid Cable, and Solid
   Queue tables so Supabase Postgres does not need fake separate

@@ -14,7 +14,7 @@ Configured in [`AuthController`](../../app/controllers/auth_controller.rb):
 |---------------|------------------|-----------------|-----|
 | `POST /signin`  | 5 / 15 min       | per IP          | Catches distributed scraping. |
 | `POST /signin`  | 5 / 1 hour       | per email       | Catches targeted inbox-flooding. Matches Supabase's own 4/hour OTP limit so we don't get out of sync. |
-| `POST /verify`  | 10 / 15 min      | per IP          | Catches OTP brute-force. 6-digit codes mean an attacker needs thousands of tries to be dangerous. |
+| `POST /verify`  | 10 / 15 min      | per IP          | Catches OTP brute-force. Supabase currently sends 8-digit codes by default, which keeps guessing impractical. |
 
 ## Layer 2 — Rack::Attack (middleware)
 
@@ -32,8 +32,8 @@ Configured in [`config/initializers/rack_attack.rb`](../../config/initializers/r
 | `verify/ip`      | 30 / 5 min        | per IP | Outer wall on OTP verification. |
 | `zip-search/ip`  | 30 / 1 min        | per IP | Caps the autocomplete JSON endpoint used by the ZIP combobox. |
 
-Asset requests and `/up` are safelisted. Localhost is safelisted in
-development.
+Asset requests, `/up`, and `/health` are safelisted. Localhost is
+safelisted in development.
 
 ## Response when throttled
 

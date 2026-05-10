@@ -42,7 +42,7 @@ Rails.application.routes.draw do
     get "/", to: "practice_information#show", as: :your_practice
     resource :practice_information, only: [ :show, :update ], path: "practice-information", controller: "practice_information"
     resource :location, only: [ :show, :update ], path: "locations"
-    resources :targeted_zips, only: [ :index, :create, :destroy ], path: "targeted-zips"
+    resources :targeted_postal_codes, only: [ :index, :create, :destroy ], path: "targeted-postal-codes"
     resource :introduction, only: [ :show, :update ]
     resource :clients, only: [ :show, :update ]
     resource :availability, only: [ :show, :update ], controller: "availability"

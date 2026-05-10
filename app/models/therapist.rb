@@ -4,7 +4,7 @@ class Therapist < ApplicationRecord
   belongs_to :country
 
   has_many :locations, dependent: :destroy
-  has_many :therapist_targeted_zips, dependent: :destroy
+  has_many :therapist_targeted_postal_codes, dependent: :destroy
   has_one :user_credential, dependent: :destroy
   has_many :therapist_education, class_name: "TherapistEducation", dependent: :destroy
   has_many :therapist_continuing_education, class_name: "TherapistContinuingEducation", dependent: :destroy
@@ -69,6 +69,7 @@ class Therapist < ApplicationRecord
   validate :practice_description_within_limit
   validate :therapist_faqs_within_limit
   validate :birth_date_within_range
+  validate :country_is_active
 
   # Builds the public URL for the profile photo from the R2 object key
   # stored in `practice_image_key`. The URL is never persisted — storing
@@ -128,5 +129,11 @@ class Therapist < ApplicationRecord
     unless BIRTH_YEAR_RANGE.cover?(birth_date.year) && birth_date <= Date.current
       errors.add(:birth_date, "must be a real date between #{BIRTH_YEAR_RANGE.first} and today")
     end
+  end
+
+  def country_is_active
+    return if country.blank? || country.active?
+
+    errors.add(:country, :inactive)
   end
 end

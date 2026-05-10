@@ -7,6 +7,12 @@ class Avo::Resources::Country < Avo::BaseResource
   def fields
     field :id, as: :id
     field :name, as: :text
+    field :code, as: :text
+    field :active, as: :boolean
+    field :default_locale, as: :text
+    field :currency_code, as: :text
+    field :postal_code_label, as: :text
+    field :administrative_area_label, as: :text
     field :created_at, as: :date_time, sortable: true, only_on: :index
   end
 end

@@ -8,12 +8,13 @@
                write-in entry. Autocomplete is off.
 
   Only one of { finder-zip, manual-zip } is ever enabled at a time, so the
-  form always submits exactly one value for zip/city/state.
+  form always submits exactly one postal code, city, and state value.
 
   Locals:
     name_prefix — param prefix, e.g. "location" → "location[zip]".
     index       — integer used for unique DOM IDs (default 0).
-    zip, city, state, latitude, longitude, city_match, zip_required
+    zip, city, state, latitude, longitude, city_match, zip_required,
+    postal_code_field
 %>
 <% index ||= 0 %>
 <% zip ||= nil %>
@@ -23,6 +24,7 @@
 <% longitude ||= nil %>
 <% city_match = local_assigns.fetch(:city_match, false) %>
 <% zip_required = local_assigns.fetch(:zip_required, true) %>
+<% postal_code_field = local_assigns.fetch(:postal_code_field, "zip") %>
 <% finder_zip_id = "zip_combobox_#{index}_finder_zip" %>
 <% manual_zip_id = "zip_combobox_#{index}_manual_zip" %>
 <% city_id = "zip_combobox_#{index}_city" %>
@@ -69,7 +71,7 @@
     <div class="relative">
       <input type="text"
              id="<%= finder_zip_id %>"
-             name="<%= name_prefix %>[zip]"
+             name="<%= name_prefix %>[<%= postal_code_field %>]"
              value="<%= zip %>"
              <%= "required" if zip_required %>
              inputmode="numeric"
@@ -151,7 +153,7 @@
       </label>
       <input type="text"
              id="<%= manual_zip_id %>"
-             name="<%= name_prefix %>[zip]"
+             name="<%= name_prefix %>[<%= postal_code_field %>]"
              value="<%= zip %>"
              disabled
              <%= "required" if zip_required %>

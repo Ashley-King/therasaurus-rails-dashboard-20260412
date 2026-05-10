@@ -1,0 +1,21 @@
+en:
+  activerecord:
+    errors:
+      models:
+        therapist:
+          attributes:
+            country:
+              inactive: "must be active"
+        therapist_targeted_postal_code:
+          attributes:
+            base:
+              targeted_postal_code_limit: "You can save at most %{count} targeted ZIPs"
+            postal_code:
+              invalid_us: "must be 5 digits"
+              taken_for_therapist: "already added for this therapist"
+            state:
+              invalid_code: "must be a 2-letter code"
+        location:
+          attributes:
+            zip:
+              invalid_us: "must be 5 digits"
