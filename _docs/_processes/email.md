@@ -10,9 +10,44 @@ production.
 - Payment-failed emails from Pay.
 - Plan-change emails from `PlanChangeScheduledMailer`.
 - Credential reminder and expiration emails from `CredentialReminderMailer`.
+- Public profile contact emails from `TherapistMessageMailer`.
 
 Supabase Auth sends sign-in and email-change emails. Rails does not send
 those.
+
+## Public Profile Messages
+
+Next.js sends public profile contact form submissions to:
+
+`POST /api/v1/therapists/:unique_id/messages`
+
+The request body is:
+
+```json
+{
+  "message": {
+    "sender_name": "Jane Client",
+    "sender_email": "jane@example.com",
+    "sender_phone": "555-555-5555",
+    "body": "I would like to schedule a consultation.",
+    "page_url": "https://therasaurus.org/therapists/example/1234567",
+    "turnstile_token": "token-from-cloudflare"
+  }
+}
+```
+
+Rails verifies the Turnstile token with Cloudflare before saving the
+message. The therapist's email address is never returned to the browser.
+
+When verification passes, Rails saves a `therapist_messages` row with
+`delivery_status = pending`, then enqueues `TherapistMessageDeliveryJob`.
+The job sends through Resend SMTP and marks the row `delivered` after
+Resend accepts the email. If delivery fails after retries, the row stays
+saved with `delivery_status = failed` and can be retried from Avo.
+Contact form fields are filtered from request logs.
+
+The mail uses the app sender address and sets `reply_to` to the visitor's
+email address.
 
 ## Credentials
 
@@ -20,7 +55,10 @@ Rails reads `RESEND_API_KEY` from encrypted credentials with
 `Rails.application.credentials.fetch(:RESEND_API_KEY)`. Missing
 credentials fail loudly.
 
-`credentials.example` lists the required key.
+Rails reads `TURNSTILE_SECRET_KEY` from encrypted credentials for public
+profile message verification.
+
+`credentials.example` lists the required keys.
 
 ## Environment Behavior
 
@@ -50,3 +88,5 @@ Rails uses Resend SMTP:
 - Confirm production email links use `https://therasaurus.org`.
 - Confirm a missing `RESEND_API_KEY` raises instead of silently skipping
   delivery.
+- Submit a public profile message from Next.js and confirm the
+  `therapist_messages` row moves from `pending` to `delivered`.

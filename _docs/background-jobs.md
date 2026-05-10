@@ -30,6 +30,21 @@ response. `config/initializers/pay_webhook_job_retries.rb` retries
 transient Stripe, database, and network failures. Bad input still fails
 normally so it reaches the configured error reporting path.
 
+## TherapistMessageDeliveryJob
+
+**Queue:** default (Solid Queue)
+**Trigger:** Enqueued after `POST /api/v1/therapists/:unique_id/messages`
+saves a `therapist_messages` row. Also available as an Avo retry action.
+**Input:** `therapist_message_id`
+**Idempotent:** Mostly. It skips rows already marked `delivered`, so admin
+retry cannot accidentally send a delivered message again.
+
+Sends a public profile message to the therapist through
+`TherapistMessageMailer`, then marks the row `delivered`. If delivery
+fails after retries, the row is marked `failed` and the error class is
+sent to the `:email_service` notifier. See
+[`_background-jobs/therapist_message_delivery_job.md`](./_background-jobs/therapist_message_delivery_job.md).
+
 ## R2OrphanCleanupJob
 
 **Queue:** default (Solid Queue)

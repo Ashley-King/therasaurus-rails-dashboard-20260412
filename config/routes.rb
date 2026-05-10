@@ -26,6 +26,12 @@ Rails.application.routes.draw do
   get "zip-search", to: "zip_lookups#search", as: :zip_search
   resources :feature_requests, only: [ :create ], path: "feature-requests"
 
+  namespace :api do
+    namespace :v1 do
+      post "therapists/:unique_id/messages", to: "therapist_messages#create"
+    end
+  end
+
   # About You
   scope "about-you", module: :about_you do
     get "/", to: "professional_identities#show", as: :about_you

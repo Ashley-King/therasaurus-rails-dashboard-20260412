@@ -18,5 +18,8 @@ Rails.application.config.filter_parameters += [
 
   # PII we collect on accounts
   :email, :phone, :dob, :date_of_birth,
-  :address, :street, :zip, :postal
+  :address, :street, :zip, :postal,
+
+  # Public profile messages
+  :sender_name, :sender_email, :sender_phone, :body, :page_url
 ]

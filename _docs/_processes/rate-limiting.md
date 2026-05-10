@@ -31,6 +31,8 @@ Configured in [`config/initializers/rack_attack.rb`](../../config/initializers/r
 | `signin/email`   | 10 / 1 hour       | per email | Outer wall on targeted attacks. |
 | `verify/ip`      | 30 / 5 min        | per IP | Outer wall on OTP verification. |
 | `zip-search/ip`  | 30 / 1 min        | per IP | Caps the autocomplete JSON endpoint used by the ZIP combobox. |
+| `therapist-messages/ip` | 10 / 10 min | per IP | Caps public profile contact form submissions. |
+| `therapist-messages/therapist-ip` | 5 / 1 hour | per therapist + IP | Caps repeated submissions to one therapist. |
 
 Asset requests and `/up` are safelisted. Localhost is safelisted in
 development.
@@ -71,6 +73,7 @@ scoped per `user_id` (falling back to IP when nil):
 |---------------------------------------|-------------|-----------|-----|
 | `PATCH /account-settings/update-email`| 5 / 15 min  | per user  | Caps email-change requests; Supabase enforces its own limit too. |
 | `POST  /account-settings/update-email/confirm` | 10 / 15 min | per user | Caps OTP verify attempts during an email change. |
+| `POST /api/v1/therapists/:unique_id/messages` | 5 / 1 hour | per therapist + IP | Caps public profile contact messages. |
 
 ## What is NOT rate limited, and why
 
@@ -89,7 +92,7 @@ scoped per `user_id` (falling back to IP when nil):
 
 ## TODOs for future features
 
-- Any future contact form or public POST: add a rate limit at both layers.
+- Any future public POST: add a rate limit at both layers.
 
 ## Operational notes
 

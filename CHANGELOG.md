@@ -3,6 +3,12 @@
 ## 2026-05-10
 
 ### Added
+- **Durable public profile message delivery.** Added
+  `POST /api/v1/therapists/:unique_id/messages`, Turnstile verification,
+  `therapist_messages`, `TherapistMessageDeliveryJob`, and
+  `TherapistMessageMailer` so public profile leads are saved before
+  email delivery. Failed messages can be retried from Avo, and message
+  contact fields are filtered from request logs.
 - **Billing lifecycle QA checklist.** Added a manual checklist for
   reviewing trial start, trial plan changes, cancellation, trial end,
   failed payments, webhook events, Rails emails, Stripe emails, and

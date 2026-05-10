@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -680,6 +680,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
     t.index ["therapist_id"], name: "index_therapist_faqs_on_therapist_id"
   end
 
+  create_table "public.therapist_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.integer "delivery_attempts", default: 0, null: false
+    t.string "delivery_status", limit: 20, default: "pending", null: false
+    t.datetime "failed_at"
+    t.text "last_delivery_error"
+    t.string "page_url", limit: 1000
+    t.string "sender_email", limit: 254, null: false
+    t.string "sender_name", limit: 120, null: false
+    t.string "sender_phone", limit: 40
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_therapist_messages_on_created_at"
+    t.index ["delivery_status"], name: "index_therapist_messages_on_delivery_status"
+    t.index ["therapist_id"], name: "index_therapist_messages_on_therapist_id"
+  end
+
   create_table "public.therapist_targeted_zips", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "city", limit: 100, null: false
     t.boolean "city_match_successful", default: false, null: false
@@ -875,6 +894,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_120300) do
   add_foreign_key "public.therapist_education", "public.degree_types"
   add_foreign_key "public.therapist_education", "public.therapists"
   add_foreign_key "public.therapist_faqs", "public.therapists", on_delete: :cascade
+  add_foreign_key "public.therapist_messages", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapist_targeted_zips", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"

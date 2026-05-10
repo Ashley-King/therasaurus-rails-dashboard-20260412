@@ -1,0 +1,33 @@
+<p>Hello <%= @therapist.first_name %>,</p>
+
+<p>You received a new message from your TheraSaurus profile.</p>
+
+<p>
+  <strong>Name:</strong>
+  <%= @message.sender_name %>
+</p>
+
+<p>
+  <strong>Email:</strong>
+  <%= mail_to @message.sender_email %>
+</p>
+
+<% if @message.sender_phone.present? %>
+  <p>
+    <strong>Phone:</strong>
+    <%= @message.sender_phone %>
+  </p>
+<% end %>
+
+<p><strong>Message:</strong></p>
+
+<%= simple_format(@message.body) %>
+
+<% if @message.page_url.present? %>
+  <p>
+    <strong>Profile page:</strong>
+    <%= link_to @message.page_url, @message.page_url %>
+  </p>
+<% end %>
+
+<p>Reply directly to this email to respond.</p>
