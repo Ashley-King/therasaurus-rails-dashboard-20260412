@@ -1,0 +1,19 @@
+<p>Hi,</p>
+
+<p>
+  Your TheraSaurus credential status is now expired.
+  The expiration date we have on file is
+  <strong><%= l @expiration_date, format: :long %></strong>.
+</p>
+
+<p>
+  Please upload your renewed credential so we can review it again.
+  Your profile will not show a verified credential badge while the
+  credential status is expired.
+</p>
+
+<p>
+  <%= link_to "Update your credential", primary_credential_url %>
+</p>
+
+<p>Thanks,<br>The TheraSaurus team</p>

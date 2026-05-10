@@ -31,7 +31,16 @@ Deletes R2 objects older than 24h with no DB reference, across the `profiles/` (
 **Input:** none
 **Idempotent:** Yes.
 
-Flips `user_credentials.credential_status` from `PENDING_REVIEW` / `VERIFIED` to `EXPIRED` once `grace_expires_at` has passed. See [`_background-jobs/credential_grace_expiration_job.md`](./_background-jobs/credential_grace_expiration_job.md).
+Flips `user_credentials.credential_status` from `PENDING_REVIEW` / `VERIFIED` to `EXPIRED` once `grace_expires_at` has passed, then sends the expired credential email. See [`_background-jobs/credential_grace_expiration_job.md`](./_background-jobs/credential_grace_expiration_job.md).
+
+## CredentialReminderJob
+
+**Queue:** default (Solid Queue)
+**Trigger:** Scheduled daily at 09:00 via `config/recurring.yml` (`send_credential_reminders`).
+**Input:** none
+**Idempotent:** Yes.
+
+Sends credential emails for verified credentials on the first day of the expiration month, seven days before expiration, and the first day of the two week grace period. See [`_background-jobs/credential_reminder_job.md`](./_background-jobs/credential_reminder_job.md).
 
 ## GeocodeLocationJob
 

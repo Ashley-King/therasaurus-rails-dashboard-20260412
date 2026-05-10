@@ -1,0 +1,11 @@
+Hi,
+
+Your TheraSaurus credential expired on <%= l @expiration_date, format: :long %>. Your two week renewal grace period has started.
+
+Please upload your renewed credential by <%= l @grace_expires_date, format: :long %>. If we do not have an updated verified credential by then, your credential status will become expired.
+
+Update your credential:
+<%= primary_credential_url %>
+
+Thanks,
+The TheraSaurus team

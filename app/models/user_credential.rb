@@ -2,6 +2,10 @@ class UserCredential < ApplicationRecord
   # How long after a credential's expiration month we give the therapist
   # to renew before the grace job flips them to :expired.
   GRACE_PERIOD = 2.weeks
+  EXPIRATION_MONTH_REMINDER = "expiration_month"
+  EXPIRATION_WEEK_REMINDER = "expiration_week"
+  GRACE_STARTED_REMINDER = "grace_started"
+  EXPIRED_REMINDER = "expired"
 
   belongs_to :therapist
   belongs_to :license_state, class_name: "State", optional: true
@@ -27,6 +31,17 @@ class UserCredential < ApplicationRecord
     when "state_license", "supervised" then license_expiration_date
     when "organization" then organization_expiration_date
     end
+  end
+
+  def self.expiring_on(date)
+    where(
+      "(credential_type IN (?) AND license_expiration_date = ?) OR " \
+      "(credential_type = ? AND organization_expiration_date = ?)",
+      %w[state_license supervised],
+      date,
+      "organization",
+      date
+    )
   end
 
   private

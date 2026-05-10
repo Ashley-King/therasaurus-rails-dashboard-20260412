@@ -7,6 +7,7 @@
 - [Turnstile](./turnstile.md) — currently not wired; rebuild checklist if it comes back
 - [Business Rules](./business-rules.md) — account + membership rules
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
+- [Billing Lifecycle QA](./_processes/billing-lifecycle-qa.md) — end-to-end billing review checklist
 - [Email](./_processes/email.md) — Rails-owned email delivery through Resend SMTP
 - [Locations + Geocoding](./_processes/locations.md) — primary/additional locations, targeted ZIPs, `Geocodable` concern, ZIP combobox UX
 - [Logging](./_processes/logging.md) — log shape, filtering rules, Better Stack shipping

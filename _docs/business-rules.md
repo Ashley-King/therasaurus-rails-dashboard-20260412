@@ -198,16 +198,17 @@ These are not the same rule.
 - A therapist can only enter credential review after they become `pro_member`.
 - When a therapist first becomes `pro_member`, the credential starts in a pending grace window.
 - The current pending grace window is 14 days.
-- If the therapist does not upload a credential before that window ends, the status becomes `unverified`.
+- If the therapist does not upload a credential before that window ends, the status becomes `expired`.
 - If the therapist uploads a credential during that window, the status becomes `pending_review`.
 - You review the credential yourself.
 - If you approve it, the status becomes `verified`.
+- If the therapist changes the credential type or expiration date, the credential becomes `pending_review` again.
 - On the first day of the expiration month, the therapist gets an email reminder.
 - Seven days before the expiration date, the therapist gets another email reminder.
-- If a verified credential expires, it moves into a 7 day grace period the next day.
+- If a verified credential expires, it moves into a 14 day grace period the next day.
 - The therapist gets an email when the grace period starts.
-- If the therapist does not update the credential within that 7 day grace period, the status becomes `unverified`.
-- The therapist gets an email when the app marks the credential `unverified`.
+- If the therapist does not update the credential within that 14 day grace period, the status becomes `expired`.
+- The therapist gets an email when the app marks the credential `expired`.
 - A verified credential shows a trust badge on the profile.
 
 ## Billing rules
@@ -237,6 +238,10 @@ These are not the same rule.
 - If the trial ends without cancellation, Stripe charges the card on
   file and the therapist becomes `pro_member`.
 - Paid active billing makes the therapist `pro_member`.
+- Founding users may receive lifetime-free access through a Stripe
+  coupon that discounts the subscription 100% forever. They still use
+  Stripe billing and still count as normal trialing or paid members while
+  the subscription is active.
 - If the free trial ends and nothing active replaces it, the therapist becomes `member`.
 - If paid access ends and nothing active replaces it, the therapist becomes `member`.
 - A therapist who never completed checkout stays a `member` with no

@@ -9,6 +9,7 @@ production.
 - Trial-ending emails from Pay.
 - Payment-failed emails from Pay.
 - Plan-change emails from `PlanChangeScheduledMailer`.
+- Credential reminder and expiration emails from `CredentialReminderMailer`.
 
 Supabase Auth sends sign-in and email-change emails. Rails does not send
 those.

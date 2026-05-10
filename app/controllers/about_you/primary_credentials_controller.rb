@@ -8,10 +8,11 @@ module AboutYou
     def update
       @credential = therapist.user_credential || therapist.build_user_credential
       previous_type = @credential.credential_type
+      previous_expiration_date = @credential.expiration_date
 
       @credential.assign_attributes(credential_params)
       clear_irrelevant_fields
-      reset_review_state_if_type_changed(previous_type)
+      reset_review_state_if_verification_details_changed(previous_type, previous_expiration_date)
 
       if @credential.save
         redirect_to primary_credential_path, notice: "Credential updated."
@@ -85,15 +86,20 @@ module AboutYou
       end
     end
 
-    # A therapist switching credential types effectively submits a new
-    # credential for verification. Drop the old document + reset review
-    # state so the admin re-verifies against the new type's paperwork.
-    def reset_review_state_if_type_changed(previous_type)
+    # Changing the credential type or expiration date means the admin needs
+    # to verify the credential again.
+    def reset_review_state_if_verification_details_changed(previous_type, previous_expiration_date)
       return if previous_type.blank?
-      return if previous_type == @credential.credential_type
 
-      @credential.credential_document = nil
-      @credential.credential_document_original_name = nil
+      type_changed = previous_type != @credential.credential_type
+      expiration_date_changed = previous_expiration_date != @credential.expiration_date
+      return unless type_changed || expiration_date_changed
+
+      if type_changed
+        @credential.credential_document = nil
+        @credential.credential_document_original_name = nil
+      end
+
       @credential.credential_status = :pending_review
       @credential.verified_at = nil
       @credential.pending_since = Time.current

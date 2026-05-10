@@ -40,6 +40,11 @@ The 14-day free trial applies to either price and is enforced by the
 app (we refuse to issue a trialing Checkout session to any user who
 already has a `Pay::Subscription` row).
 
+Founding users may be comped with a 100% off forever Stripe coupon. The
+current app does not expose a promotion-code field in Checkout, so apply
+that coupon manually in Stripe unless a dedicated promo-code flow is
+built later.
+
 ## Stripe Tax
 
 Always on. Every Checkout session passes `automatic_tax: { enabled: true }`
@@ -140,9 +145,13 @@ one settings:
 - Update payment method: on
 - View invoices: on
 - Automatic tax: on
-- Customer information (address): on (required by automatic tax)
+- Customer information: on. Allowed fields are name, address, and tax id.
+  Email is not editable in Stripe because Supabase Auth owns account
+  email.
 - Subscription update: on. Both monthly and yearly listed as switchable
   destinations.
+- Trial plan changes continue the trial
+  (`trial_update_behavior: continue_trial`).
   - **Proration: "No charges or credits"** (`proration_behavior: none`).
     Plan changes apply at the next billing cycle; no instant charges,
     no refunds for unused time.
@@ -210,3 +219,5 @@ The CLI prints the webhook signing secret on first run; copy it into
   `:admin` Discord channels.
 - [`business-rules.md`](../business-rules.md) — membership states,
   public-visibility rules, trial behavior, dunning rules.
+- [`billing-lifecycle-qa.md`](./billing-lifecycle-qa.md) — manual QA
+  checklist for trial, portal, cancellation, plan changes, and emails.

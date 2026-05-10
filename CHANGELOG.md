@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-05-10
+
+### Added
+- **Billing lifecycle QA checklist.** Added a manual checklist for
+  reviewing trial start, trial plan changes, cancellation, trial end,
+  failed payments, webhook events, Rails emails, Stripe emails, and
+  Customer Portal options before launch. It also covers applying a
+  lifetime-free 100% off Stripe coupon for founding users.
+- **Credential reminder emails.** Added `CredentialReminderMailer` and
+  a daily `CredentialReminderJob` for verified credentials on the first
+  day of the expiration month, seven days before expiration, and the
+  first day of the two week grace period. `CredentialGraceExpirationJob`
+  now sends the expired credential email when it flips a credential to
+  `EXPIRED`.
+
+### Changed
+- **Stripe process docs now match the current Customer Portal config.**
+  Documented that Stripe customer email is not editable in the portal
+  and that trial plan changes continue the trial.
+- **Credential verification reset rules tightened.** Therapist edits now
+  reset a credential to `pending_review` only when the credential type
+  changes, the expiration date changes, or both. Expiration docs now
+  match the app rule: two week grace period and final status `expired`.
+
 ## 2026-05-09
 
 ### Changed

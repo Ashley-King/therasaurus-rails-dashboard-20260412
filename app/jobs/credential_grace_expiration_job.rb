@@ -9,8 +9,17 @@ class CredentialGraceExpirationJob < ApplicationJob
       .where(credential_status: %w[PENDING_REVIEW VERIFIED])
       .where.not(grace_expires_at: nil)
       .where("grace_expires_at < ?", Time.current)
+      .includes(therapist: :user)
       .find_each do |credential|
-        credential.update!(credential_status: :expired)
+        unless credential.last_reminder_type == UserCredential::EXPIRED_REMINDER
+          CredentialReminderMailer.with(credential: credential).expired.deliver_later
+        end
+
+        credential.update!(
+          credential_status: :expired,
+          last_reminder_type: UserCredential::EXPIRED_REMINDER,
+          last_reminder_sent_at: Time.current
+        )
       end
   end
 end
