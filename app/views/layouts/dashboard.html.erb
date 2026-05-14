@@ -40,7 +40,9 @@
         latest_trial_subscription = current_user.pay_subscriptions.where.not(trial_ends_at: nil).order(trial_ends_at: :desc).first
         trial_ends_at = current_subscription&.trial_ends_at || latest_trial_subscription&.trial_ends_at
         trial_ended = trial_ends_at.present? && trial_ends_at <= Time.current
-        banner_state = trial_ended ? "ended" : "active"
+        banner_state = trial_ended ? "ended" : "offline"
+      elsif current_user&.membership_status == "trialing_member"
+        banner_state = "active"
       end
     %>
     <% if banner_state %>
@@ -49,7 +51,7 @@
           <div class="my-5 rounded-xl bg-plum-bg px-6 py-4 w-full">
             <div class="sm:flex sm:items-center sm:gap-6">
               <div class="flex items-start gap-3 flex-1">
-                <% if banner_state == "ended" %>
+                <% if banner_state.in?(%w[ended offline]) %>
                   <svg class="h-6 w-6 text-plum shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                   </svg>
@@ -70,6 +72,9 @@
                   <% if banner_state == "ended" %>
                     <p class="text-sm font-semibold text-plum">Your trial has ended &mdash; Get your profile back online</p>
                     <p class="mt-0.5 text-xs font-medium text-text-muted max-w-2xl">Your profile is offline, and parents who need you can&rsquo;t find you.</p>
+                  <% elsif banner_state == "offline" %>
+                    <p class="text-sm font-semibold text-plum">Your profile is offline &mdash; Start your free trial to go live</p>
+                    <p class="mt-0.5 text-xs font-medium text-text-muted max-w-2xl">Parents who need you can&rsquo;t find you yet.</p>
                   <% else %>
                     <p class="text-sm font-semibold text-plum">Your profile is online</p>
                     <p class="mt-0.5 text-xs font-medium text-text-muted max-w-2xl">Customize it with your information so the right families can find you.</p>
@@ -78,7 +83,7 @@
               </div>
               <%= link_to membership_path,
                     class: "mt-3 sm:mt-0 inline-flex items-center gap-1 text-xs font-semibold text-plum hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum rounded shrink-0 cursor-pointer" do %>
-                <%= banner_state == "ended" ? "Join now and go live" : "Choose a plan" %>
+                <%= banner_state.in?(%w[ended offline]) ? "Join now and go live" : "Choose a plan" %>
                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H7M17 7V17" />
                 </svg>

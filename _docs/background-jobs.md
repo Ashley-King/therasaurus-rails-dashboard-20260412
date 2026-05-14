@@ -86,3 +86,22 @@ See [`_processes/locations.md`](./_processes/locations.md) for the full save-tim
 **Idempotent:** Yes.
 
 Sibling of `GeocodeLocationJob`. Same three-stage `ZipLookup.geocode_with_fallback`, but `TherapistTargetedPostalCode` has no `canonical_city` / `canonical_state` columns, so those writes are skipped. If all stages fail, sets `geocode_status = "failed"`.
+
+## RefreshPublicSearchPointsJob
+
+**Queue:** default (Solid Queue)
+**Trigger:** Enqueued after public-search inputs change on `Therapist`,
+`User`, `Location`, `TherapistTargetedPostalCode`, `UserCredential`,
+`PracticeSpecialty`, `PracticeService`, `PracticeLanguage`, and
+`PracticeInsuranceCompany`.
+**Input:** `therapist_id`
+**Idempotent:** Yes.
+
+Rebuilds one therapist's rows in `public_search_points`, the public
+search read table used by `POST /api/v1/search`.
+
+Each eligible therapist can have one primary location row, one
+additional location row, and up to five targeted ZIP rows. Duplicate
+queued refreshes are serialized with a per-therapist database lock.
+
+See [`_background-jobs/refresh_public_search_points_job.md`](./_background-jobs/refresh_public_search_points_job.md).

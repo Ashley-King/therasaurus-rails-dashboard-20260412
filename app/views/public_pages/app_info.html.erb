@@ -1,0 +1,45 @@
+<% content_for :title, "TheraSaurus App Information" %>
+<% content_for :head do %>
+  <meta name="description" content="TheraSaurus app information for Google sign-in review.">
+<% end %>
+
+<section class="w-full max-w-3xl mx-auto rounded-xl bg-white p-8 shadow-lg">
+  <%= image_tag "logo.svg", alt: "TheraSaurus", class: "h-16 w-auto mb-8" %>
+
+  <h1 class="font-heading text-3xl font-semibold text-plum mb-4">TheraSaurus app information</h1>
+
+  <p class="text-base leading-7 text-text-body">
+    TheraSaurus helps pediatric therapists create and manage public profiles so families can find care more easily.
+  </p>
+
+  <section class="mt-8">
+    <h2 class="font-heading text-xl font-semibold text-text-primary mb-2">Google sign-in</h2>
+    <p class="text-base leading-7 text-text-body">
+      Therapists can use Google sign-in to access their TheraSaurus account.
+      Google sign-in is used only for authentication.
+    </p>
+  </section>
+
+  <section class="mt-8 border-t border-border-default pt-6">
+    <h2 class="font-heading text-xl font-semibold text-text-primary mb-2">Policies</h2>
+    <ul class="list-disc pl-5 text-base leading-7 text-text-body">
+      <li>
+        <%= link_to "Privacy Policy",
+          privacy_policy_path,
+          class: "font-semibold text-plum hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum rounded cursor-pointer" %>
+      </li>
+      <li>
+        <%= link_to "Terms of Use",
+          terms_path,
+          class: "font-semibold text-plum hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum rounded cursor-pointer" %>
+      </li>
+    </ul>
+  </section>
+
+  <p class="mt-8 text-sm text-text-muted">
+    Support:
+    <%= mail_to "auth-support@therasaurus.org",
+      "auth-support@therasaurus.org",
+      class: "font-semibold text-plum hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum rounded cursor-pointer" %>
+  </p>
+</section>

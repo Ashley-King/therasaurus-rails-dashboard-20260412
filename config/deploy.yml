@@ -4,25 +4,23 @@ service: therasaurus_rails
 # Name of the container image (use your-user/app-name on external registries).
 image: therasaurus_rails
 
-# Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - ptd-app
   job:
     hosts:
-      - 192.168.0.1
+      - ptd-app
     cmd: bin/jobs
 
-# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
-# If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
-#
-# Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
-#
-# Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
-#
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  host: app.therasaurus.org
+  app_port: 80
+  healthcheck:
+    path: /up
+  run:
+    http_port: 3001
+    bind_ips:
+      - 127.0.0.1
 
 # Where you keep your container images.
 registry:
@@ -41,6 +39,8 @@ env:
   secret:
     - RAILS_MASTER_KEY
   clear:
+    RAILS_LOG_LEVEL: info
+
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
 
@@ -50,9 +50,6 @@ env:
     # Match this to any external database server to configure Active Record correctly
     # Use therasaurus_rails-db for a db accessory server on same machine via local kamal docker network.
     # DB_HOST: 192.168.0.2
-
-    # Log everything from Rails
-    # RAILS_LOG_LEVEL: debug
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r job" will tail logs from the first server in the job section.

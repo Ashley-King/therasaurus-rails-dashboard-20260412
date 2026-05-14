@@ -114,10 +114,11 @@
   set when the Stripe webhook is processed.
 - From the landing page the therapist continues to `Account Settings`.
   Once the webhook has flipped them to `trialing_member`,
-  `Account Settings` shows the `trialing` notification at the top.
+  the purple membership banner above the top nav shows that the profile
+  is online.
 - If the therapist reaches `Account Settings` before the webhook has
   been processed, they should still see the app render normally; the
-  trialing notification appears once the webhook lands.
+  purple membership banner updates once the webhook lands.
 - Stripe's `cancel_url` sends the therapist back to the
   `Start Your Trial` page so they can try again or skip.
 
@@ -135,10 +136,11 @@
 - Profile image, practice description, and credential are helpful but
   not required for the account to exist.
 - A therapist who arrives here without an active trial or paid
-  subscription sees a notification at the top that invites them to
-  start their 14-day free trial.
-- A trialing therapist sees a `trialing` notification at the top that
-  shows when the trial ends and when the card will be charged.
+  subscription sees the membership banner above the top nav. Account
+  Settings does not repeat that message with a second offline warning.
+- A trialing therapist sees the purple membership banner above the top
+  nav. Account Settings does not repeat that state with a second blue
+  trial notification.
 
 ## Account status
 
@@ -188,8 +190,26 @@ These are not the same rule.
 ### Directory search results
 
 - Directory search only includes profiles that are public.
-- Directory search also requires a location with working map coordinates.
-- Directory search removes profiles that do not have usable map coordinates.
+- Directory search requires the primary location to have working map
+  coordinates.
+- Directory search can match one primary location, one additional
+  location, and up to five targeted ZIPs.
+- Directory search uses a 30-mile radius from the searched ZIP.
+- Directory search removes duplicate therapists when more than one of
+  their locations or targeted ZIPs match.
+- When more than one point matches for the same therapist, the nearest
+  point wins.
+- Directory search reads from the `public_search_points` read table.
+- `public_search_points` contains only public search result fields.
+- `public_search_points` is refreshed after therapist, location,
+  targeted ZIP, credential, specialty, service, language, or insurance
+  company changes.
+- Search listings use a stored display name. If the therapist uses a
+  practice name, that is the display name. Otherwise the display name is
+  first name, last name, and credentials.
+- Search listings show an insurance badge when the therapist has
+  selected at least one insurance company.
+- Search listings can show a verified badge from `credentials_verified`.
 
 ## Credential rules
 
@@ -632,7 +652,9 @@ Therapists cannot directly edit protected system fields like:
 
 ## Search sync rules
 
-- The current app concept uses one search document per therapist location.
-- Duplicate search data across locations is acceptable.
-- When a therapist changes a field that affects public profile content or search content, the app should enqueue one background job after save.
-- That job should rebuild the public read model.
+- Meilisearch used one search document per therapist location.
+- The first Rails search API reads from `public_search_points`.
+- `public_search_points` is the public search read table.
+- The app refreshes `public_search_points` with
+  `RefreshPublicSearchPointsJob`.
+- The refresh job must be safe to run more than once.

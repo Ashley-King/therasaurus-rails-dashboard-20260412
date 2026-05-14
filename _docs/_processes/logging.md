@@ -68,6 +68,14 @@ See [`config/initializers/filter_parameter_logging.rb`](../../config/initializer
 - ActiveRecord SQL logs
 - exception reports
 
+The same initializer also configures Logtail's Rack header filter. These
+headers are always written as `[FILTERED]`:
+
+- `Authorization`
+- `Proxy-Authorization`
+- `Cookie`
+- `Set-Cookie`
+
 Keep the list conservative — prefer over-filtering over leaking PII. If you add a new PII field to a model, add the column name to this list in the same commit.
 
 ## Better Stack shipping
@@ -100,6 +108,7 @@ Get both from **Better Stack → Sources → your Rails source → Connect**.
 - Email addresses
 - Phone numbers, addresses, DOBs
 - Supabase JWTs, OTP codes, Turnstile tokens
+- Raw cookies or auth headers
 - Request bodies (lograge only logs filtered params, not raw bodies — keep it that way)
 - Full IP addresses if we later add them — truncate to `/24` first
 
@@ -141,9 +150,15 @@ Any additional keyword arguments are appended as `key=value` pairs. `nil` values
 | `auth.otp.verify_attempted`            | info  | —                                                   | `AuthController#confirm`                        |
 | `auth.otp.verify_result` (ok)          | info  | `result=ok user_id`                                 | `AuthController#confirm`                        |
 | `auth.otp.verify_result` (error)       | warn  | `result=error error_class`                          | `AuthController#confirm`                        |
+| `auth.oauth.google.start_requested`    | info  | —                                                   | `AuthController#google`                         |
+| `auth.oauth.google.callback_started`   | info  | —                                                   | `AuthController#google_callback`                |
+| `auth.oauth.google.callback_result` (ok) | info | `result=ok user_id`                                 | `AuthController#google_callback`                |
+| `auth.oauth.google.callback_result` (error) | warn | `result=error error_class` or safe OAuth error | `AuthController#google_callback`                |
+| `auth.oauth.google.callback_result` (invalid callback) | warn | `result=invalid_callback`              | `AuthController#google_callback`                |
+| `auth.oauth.google.callback_result` (missing email) | warn | `result=missing_email`                    | `AuthController#google_callback`                |
 | `auth.user.created`                    | info  | `user_id is_admin membership_status`                | `AuthController#find_or_create_user!`           |
-| `auth.session.created`                 | info  | `user_id provider=supabase`                         | `AuthController#confirm`                        |
-| `auth.profile_gate.redirect`           | info  | `user_id to=create_account`                         | `AuthController#confirm`                        |
+| `auth.session.created`                 | info  | `user_id provider=email/google`                     | `AuthController#finish_sign_in!`                |
+| `auth.profile_gate.redirect`           | info  | `user_id to=create_account`                         | `AuthController#redirect_after_sign_in`         |
 | `auth.sign_out`                        | info  | `user_id`                                           | `AuthController#destroy`                        |
 | `auth.session.invalid` (jwt_invalid)   | warn  | `reason=jwt_invalid`                                | `Authentication#decode_jwt`                     |
 | `auth.session.invalid` (no refresh)    | info  | `reason=jwt_expired_no_refresh`                     | `Authentication#handle_expired_token`           |

@@ -35,7 +35,7 @@ of truth.
 | `:email_service` | `EMAIL_SERVICE_WEBHOOK` | Resend delivery / bounce issues |
 | `:geocoding` | `GEOCODING_WEBHOOK` | Geocoding job failures, Supabase geocoding issues |
 | `:insurance_write_in` | `INSURANCE_WRITE_IN_WEBHOOK` | User submitted an insurance provider not in the DB |
-| `:search_index_service` | `SEARCH_INDEX_SERVICE_WEBHOOK` | Meilisearch sync failures, reindex results |
+| `:search_index_service` | `SEARCH_INDEX_SERVICE_WEBHOOK` | Temporary Meilisearch sync failures and search migration notices |
 | `:supabase` | `SUPABASE_WEBHOOK` | Supabase auth/RLS/connection issues |
 | `:payment_methods` | `PAYMENT_METHODS_WEBHOOK` | User submitted a payment method not in the DB |
 | `:services` | `SERVICES_WEBHOOK` | User submitted a service not in the DB |
@@ -70,6 +70,10 @@ so typos are caught at call time.
   Routing map: `specialty` → `:specialties`, `service` → `:services`,
   `insurance_company` → `:insurance_write_in`, `college` →
   `:college_write_in`, `general` → `:feature_requests`.
+
+The `:search_index_service` channel is temporary while Meilisearch still
+exists. Remove or rename it when Supabase-backed search replaces
+Meilisearch.
 
 ## Better Stack error tracking — setup
 

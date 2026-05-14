@@ -52,6 +52,9 @@ class Therapist < ApplicationRecord
   has_many :therapist_faqs, -> { order(:created_at) }, dependent: :destroy
   accepts_nested_attributes_for :therapist_faqs, allow_destroy: true, reject_if: :all_blank
 
+  after_commit :refresh_public_search_points_later, on: [ :create, :update ]
+  after_destroy_commit :delete_public_search_points
+
   PRACTICE_YEAR_RANGE = 1940..Date.current.year
   BIRTH_YEAR_RANGE = 1940..Date.current.year
   PRACTICE_DESCRIPTION_MAX = 1500
@@ -135,5 +138,13 @@ class Therapist < ApplicationRecord
     return if country.blank? || country.active?
 
     errors.add(:country, :inactive)
+  end
+
+  def refresh_public_search_points_later
+    RefreshPublicSearchPointsJob.perform_later(id)
+  end
+
+  def delete_public_search_points
+    PublicSearchPoint.where(therapist_id: id).delete_all
   end
 end

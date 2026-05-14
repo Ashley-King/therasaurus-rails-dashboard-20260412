@@ -15,15 +15,21 @@ The deployment goal is simple:
 - Cloudflare Tunnel is the only public path into Docker services.
 - Cloudflare catches obvious abuse early.
 - Rails still protects auth, email change, and ZIP lookup flows.
+- Meilisearch remains protected while it exists, but new search work moves
+  toward Supabase-backed search.
 - Monitoring shows whether the app is being hammered before users feel it.
 
 ## Assumptions
 
 - The current Next.js app is already deployed in Docker behind
   Cloudflare Tunnel.
-- Meilisearch is already deployed in Docker behind Cloudflare Tunnel.
+- Meilisearch is already deployed in Docker behind Cloudflare Tunnel,
+  but it is temporary and should be removed when Supabase-backed search
+  replaces it.
 - Rails will likely be deployed with Kamal in Docker and should use the
   same tunnel-only approach.
+- The Rails production hostname is `app.therasaurus.org`, routed through
+  Cloudflare Tunnel to the Kamal proxy on `http://localhost:3001`.
 - The VPS may still allow SSH, but web traffic should not reach it
   directly.
 - Stripe webhooks must not be challenged by Cloudflare. Rails and Pay
@@ -47,15 +53,16 @@ The safest first step is to confirm hostnames, routes, and origin paths.
 
 - List current public hostnames:
   - Next.js hostname.
-  - Meilisearch hostname, currently treated as `search.therasaurus.org`.
+  - Temporary Meilisearch hostname, currently treated as
+    `search.therasaurus.org`.
   - Future Rails hostname.
+  - Future public search route after Supabase replaces Meilisearch.
 - List which Docker service each hostname reaches through Cloudflare
   Tunnel.
 - Confirm there are no direct DNS records pointing to the VPS public IP
   for web traffic.
 - Confirm the VPS firewall does not allow public inbound HTTP or HTTPS.
-- Decide whether Rails gets its own hostname, such as
-  `app.therasaurus.org`, or a path behind an existing hostname.
+- Rails gets its own hostname: `app.therasaurus.org`.
 
 ### Risks or edge cases
 
@@ -63,15 +70,17 @@ The safest first step is to confirm hostnames, routes, and origin paths.
   Cloudflare.
 - If Rails shares a hostname with Next.js, rate limit rules must be path
   based.
-- If Meilisearch is public, write and admin endpoints need extra
+- While Meilisearch is public, write and admin endpoints need extra
   protection beyond normal search keys.
+- After Meilisearch is removed, stale Cloudflare rules and tunnel routes
+  can hide the real search path if they are not cleaned up.
 
 ### Validation
 
 - Public DNS for each hostname resolves through Cloudflare.
 - Direct requests to the VPS IP on ports 80 and 443 fail.
-- Existing Next.js and Meilisearch traffic still works through the
-  tunnel.
+- Existing Next.js and temporary Meilisearch traffic still works through
+  the tunnel.
 
 ### Temporary inconsistency
 
@@ -94,7 +103,8 @@ Cloudflare first.
 - Add a Cloudflare Tunnel route for the Rails web service.
 - Run `cloudflared` as a Docker container on the same host as Rails, or
   reuse the existing tunnel container if it already owns the host routing.
-- Route the Rails public hostname to the Kamal web service.
+- Route `app.therasaurus.org` to `http://localhost:3001`, which is the
+  localhost-only Kamal proxy port for Rails.
 - Keep `Rack::Attack` enabled in Rails.
 - Keep `/up` and `/health` reachable through Cloudflare for monitoring.
 - Keep Stripe webhook paths free from Cloudflare challenges.
@@ -144,7 +154,8 @@ Cloudflare plan supports.
 | 2 | Rails auth verify code: `POST /verify` | 10 to 20 per minute per IP | Log |
 | 3 | Rails ZIP lookup: `GET /zip-search` | 30 per minute per IP | Log |
 | 4 | Rails app-wide, excluding assets, health, and webhooks | 240 per 5 minutes per IP | Log |
-| 5 | Meilisearch public search endpoint | Start from real traffic | Log |
+| 5 | Temporary Meilisearch public search endpoint | Start from real traffic | Log |
+| 6 | Future Supabase-backed public search route | Start from real traffic after it exists | Log |
 
 If the Cloudflare plan only allows one rule, start with the app-wide
 rule. If the plan supports only short time windows, use a shorter window
@@ -158,8 +169,10 @@ Suggested exclusions:
 - `/pay/webhooks/stripe`.
 - Verified bots, when the rule builder supports that field.
 
-For Meilisearch, add separate rules from Rails. Do not reuse Rails auth
-limits for search traffic.
+For temporary Meilisearch, add separate rules from Rails. Do not reuse
+Rails auth limits for search traffic. After Supabase-backed search
+replaces Meilisearch, move the search limits to the final public search
+route and remove the Meilisearch-specific rules.
 
 ### Risks or edge cases
 
@@ -211,7 +224,8 @@ Recommended starting actions:
 | `POST /verify` burst | Block |
 | `GET /zip-search` burst | Block |
 | App-wide burst | Managed Challenge |
-| Meilisearch search burst | Managed Challenge or Block, based on current traffic |
+| Temporary Meilisearch search burst | Managed Challenge or Block, based on current traffic |
+| Future Supabase-backed search burst | Managed Challenge or Block, based on route behavior |
 
 ### Risks or edge cases
 
@@ -219,8 +233,11 @@ Recommended starting actions:
 - Block rules can hide a real bug if a frontend loop starts hammering an
   endpoint.
 - Meilisearch write and admin endpoints should not be reachable with a
-  browser key. If they are reachable, use Cloudflare rules to block them
-  publicly and keep the admin key server-side only.
+  browser key while Meilisearch still exists. If they are reachable, use
+  Cloudflare rules to block them publicly and keep the admin key
+  server-side only.
+- When Meilisearch is removed, remove its tunnel route, Cloudflare rules,
+  secrets, and alerts in the same cleanup pass.
 
 ### Validation
 
@@ -319,8 +336,9 @@ term limits.
 - Lower limits that only catch obvious abusive clients.
 - Add a specific contact-form rule if the public Next.js contact flow
   accepts user messages.
-- Add stricter Meilisearch rules if public search traffic starts to
-  crawl the full index.
+- Add stricter temporary Meilisearch rules if public search traffic
+  starts to crawl the full index before the service is removed.
+- Remove Meilisearch rules after Supabase-backed search is live.
 - Document final Cloudflare rules in `_docs/_processes/rate-limiting.md`.
 
 ### Risks or edge cases
@@ -350,16 +368,21 @@ This plan is the temporary source of truth until Phase 6 is complete.
   are not obvious from server logs.
 - Stripe, uptime monitors, and server-to-server calls can break if they
   are challenged.
-- Meilisearch needs separate attention because it is not Rails and does
-  not share Rails auth rules.
+- Meilisearch needs separate attention while it exists because it is not
+  Rails and does not share Rails auth rules.
+- Supabase-backed search will need its own final limits once the public
+  route is known.
 
 ## Open Questions
 
 - Which Cloudflare plan is the zone on?
-- What are the final hostnames for Next.js, Rails, and Meilisearch?
-- Should Rails be on a separate hostname or behind a path on the current
-  app domain?
-- Is Meilisearch called directly from browsers, or only from Next.js?
+- Final hostnames are `therasaurus.org` for Next.js and
+  `app.therasaurus.org` for Rails.
+- What route or hostname will replace `search.therasaurus.org` after
+  Supabase-backed search is live?
+- Rails is on a separate hostname: `app.therasaurus.org`.
+- While Meilisearch still exists, is it called directly from browsers, or
+  only from Next.js?
 - Where should Cloudflare alerts go: email, Discord webhook, or another
   channel?
 - Should Cloudflare rules be managed by hand at first, or moved into
@@ -377,3 +400,7 @@ This plan is the temporary source of truth until Phase 6 is complete.
   https://developers.cloudflare.com/waf/reference/alerts/
 - Cloudflare Logpush:
   https://developers.cloudflare.com/logs/about/
+- Supabase full text search:
+  https://supabase.com/docs/guides/database/full-text-search
+- Supabase row level security:
+  https://supabase.com/docs/guides/database/postgres/row-level-security

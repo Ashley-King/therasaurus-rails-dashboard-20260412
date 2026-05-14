@@ -22,7 +22,12 @@ class AuthController < ApplicationController
              name: "verify_ip",
              with: -> { rate_limited_verify!("verify_ip") }
 
-  before_action :redirect_if_signed_in, only: [ :new, :create, :verify, :confirm ]
+  rate_limit to: 5, within: 15.minutes,
+             only: :google,
+             name: "google_signin_ip",
+             with: -> { rate_limited_google_signin!("google_signin_ip") }
+
+  before_action :redirect_if_signed_in, only: [ :new, :create, :verify, :confirm, :google ]
 
   # GET /signin
   def new
@@ -76,24 +81,81 @@ class AuthController < ApplicationController
 
     begin
       result = SupabaseAuth.new.verify_otp(email: email, token: token)
-      store_auth_session(result)
       session.delete(:pending_email)
 
-      user = find_or_create_user!(id: result.dig("user", "id"), email: email)
+      user = finish_sign_in!(auth_result: result, email: email, provider: "email")
       auth_log(:info, "auth.otp.verify_result", result: "ok", user_id: user.id)
-      auth_log(:info, "auth.session.created", user_id: user.id, provider: "supabase")
 
-      if profile_complete?
-        redirect_to account_settings_path, notice: "Welcome back!"
-      else
-        auth_log(:info, "auth.profile_gate.redirect", user_id: user.id, to: "create_account")
-        redirect_to create_account_path
-      end
+      redirect_after_sign_in(user)
     rescue SupabaseAuth::AuthError => e
       auth_log(:warn, "auth.otp.verify_result", result: "error", error_class: e.class.name)
       flash.now[:alert] = e.message
       @email = email
       render :verify, status: :unprocessable_entity
+    end
+  end
+
+  # POST /signin/google
+  def google
+    code_verifier = SupabaseAuth.generate_code_verifier
+    code_challenge = SupabaseAuth.code_challenge_for(code_verifier)
+
+    session[:google_oauth_code_verifier] = code_verifier
+    session.delete(:pending_email)
+
+    auth_log(:info, "auth.oauth.google.start_requested")
+
+    redirect_to(
+      SupabaseAuth.new.oauth_authorize_url(
+        provider: "google",
+        redirect_to: signin_google_callback_url,
+        code_challenge: code_challenge
+      ),
+      allow_other_host: true,
+      status: :see_other
+    )
+  end
+
+  # GET /signin/google/callback
+  def google_callback
+    if params[:error].present?
+      clear_google_oauth_session
+      auth_log(:warn, "auth.oauth.google.callback_result", result: "error", error: params[:error])
+      return redirect_to signin_path, alert: "Google sign-in was canceled. Please try again."
+    end
+
+    auth_code = params[:code].to_s
+    code_verifier = session[:google_oauth_code_verifier].to_s
+
+    if auth_code.blank? || code_verifier.blank?
+      clear_google_oauth_session
+      auth_log(:warn, "auth.oauth.google.callback_result", result: "invalid_callback")
+      return redirect_to signin_path, alert: "Google sign-in could not be completed. Please try again."
+    end
+
+    auth_log(:info, "auth.oauth.google.callback_started")
+
+    begin
+      result = SupabaseAuth.new.exchange_code_for_session(
+        auth_code: auth_code,
+        code_verifier: code_verifier
+      )
+      clear_google_oauth_session
+
+      email = result.dig("user", "email").to_s.strip.downcase
+      if email.blank?
+        auth_log(:warn, "auth.oauth.google.callback_result", result: "missing_email")
+        return redirect_to signin_path, alert: "Google did not return an email address. Please use email sign-in."
+      end
+
+      user = finish_sign_in!(auth_result: result, email: email, provider: "google")
+      auth_log(:info, "auth.oauth.google.callback_result", result: "ok", user_id: user.id)
+
+      redirect_after_sign_in(user)
+    rescue SupabaseAuth::AuthError => e
+      clear_google_oauth_session
+      auth_log(:warn, "auth.oauth.google.callback_result", result: "error", error_class: e.class.name)
+      redirect_to signin_path, alert: e.message
     end
   end
 
@@ -124,6 +186,11 @@ class AuthController < ApplicationController
     redirect_to verify_path, alert: "Too many verification attempts. Please try again in a few minutes."
   end
 
+  def rate_limited_google_signin!(limit_name)
+    auth_log(:warn, "auth.rate_limit.#{limit_name}")
+    redirect_to signin_path, alert: "Too many Google sign-in attempts. Please try again in a few minutes."
+  end
+
   def signin_rate_limit_message(limit_name)
     if limit_name == "signin_email"
       "Too many sign-in attempts for this email. Please try again in an hour."
@@ -147,6 +214,30 @@ class AuthController < ApplicationController
     return if current_user.is_admin?
 
     redirect_to account_settings_path if profile_complete?
+  end
+
+  def redirect_after_sign_in(user)
+    if profile_complete?
+      redirect_to account_settings_path
+    else
+      auth_log(:info, "auth.profile_gate.redirect", user_id: user.id, to: "create_account")
+      redirect_to create_account_path
+    end
+  end
+
+  def finish_sign_in!(auth_result:, email:, provider:)
+    store_auth_session(auth_result)
+
+    user = find_or_create_user!(id: auth_result.dig("user", "id"), email: email)
+    @current_user = user
+    @current_therapist = nil
+
+    auth_log(:info, "auth.session.created", user_id: user.id, provider: provider)
+    user
+  end
+
+  def clear_google_oauth_session
+    session.delete(:google_oauth_code_verifier)
   end
 
   def find_or_create_user!(id:, email:)

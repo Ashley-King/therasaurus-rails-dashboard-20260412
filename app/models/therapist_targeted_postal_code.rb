@@ -5,6 +5,8 @@ class TherapistTargetedPostalCode < ApplicationRecord
 
   belongs_to :therapist
 
+  after_commit :refresh_public_search_points_later, on: [ :create, :update, :destroy ]
+
   validates :postal_code, presence: true
   validates :city, presence: true, length: { maximum: 100 }
   validates :state,
@@ -36,5 +38,9 @@ class TherapistTargetedPostalCode < ApplicationRecord
 
   def geocode_job_class
     GeocodeTargetedPostalCodeJob
+  end
+
+  def refresh_public_search_points_later
+    RefreshPublicSearchPointsJob.perform_later(therapist_id)
   end
 end

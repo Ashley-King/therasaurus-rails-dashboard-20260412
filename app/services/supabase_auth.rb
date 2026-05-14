@@ -1,6 +1,11 @@
+require "base64"
+require "digest"
+require "securerandom"
+
 class SupabaseAuth
   BASE_URL = Rails.application.credentials.fetch(:SUPABASE_URL)
   API_KEY = Rails.application.credentials.fetch(:SUPABASE_PUBLISHABLE_KEY)
+  OAUTH_CODE_CHALLENGE_METHOD = "s256"
 
   class AuthError < StandardError; end
 
@@ -34,6 +39,35 @@ class SupabaseAuth
 
     unless response.status == 200
       raise AuthError, body["msg"] || body["error_description"] || "Invalid code"
+    end
+
+    body
+  end
+
+  def oauth_authorize_url(provider:, redirect_to:, code_challenge:)
+    params = {
+      provider: provider,
+      redirect_to: redirect_to,
+      code_challenge: code_challenge,
+      code_challenge_method: OAUTH_CODE_CHALLENGE_METHOD
+    }
+
+    "#{BASE_URL}/auth/v1/authorize?#{params.to_query}"
+  end
+
+  def exchange_code_for_session(auth_code:, code_verifier:)
+    response = client.post(
+      "#{BASE_URL}/auth/v1/token?grant_type=pkce",
+      json: { auth_code: auth_code, code_verifier: code_verifier },
+      headers: auth_headers
+    )
+
+    raise_on_error!(response)
+
+    body = parse_body(response)
+
+    unless response.status == 200
+      raise AuthError, body["msg"] || body["error_description"] || "Could not sign in with Google"
     end
 
     body
@@ -109,6 +143,14 @@ class SupabaseAuth
     end
 
     body
+  end
+
+  def self.generate_code_verifier
+    SecureRandom.urlsafe_base64(32, false)
+  end
+
+  def self.code_challenge_for(code_verifier)
+    Base64.urlsafe_encode64(Digest::SHA256.digest(code_verifier), padding: false)
   end
 
   private

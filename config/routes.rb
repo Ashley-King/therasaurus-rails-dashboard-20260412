@@ -4,9 +4,16 @@ Rails.application.routes.draw do
   # Auth
   get "signin", to: "auth#new"
   post "signin", to: "auth#create"
+  post "signin/google", to: "auth#google", as: :signin_google
+  get "signin/google/callback", to: "auth#google_callback", as: :signin_google_callback
   get "verify", to: "auth#verify"
   post "verify", to: "auth#confirm"
   delete "signout", to: "auth#destroy"
+
+  # Public app information for Google OAuth review.
+  get "app-info", to: "public_pages#app_info", as: :app_info
+  get "privacy-policy", to: "public_pages#privacy_policy", as: :privacy_policy
+  get "terms", to: "public_pages#terms", as: :terms
 
   # Create Account
   get "create-account", to: "create_account#new", as: :create_account
@@ -25,6 +32,13 @@ Rails.application.routes.draw do
   # Shared endpoints (used across multiple flows)
   get "zip-search", to: "zip_lookups#search", as: :zip_search
   resources :feature_requests, only: [ :create ], path: "feature-requests"
+
+  # Public API read by the Next.js directory.
+  namespace :api do
+    namespace :v1 do
+      post "search", to: "searches#create"
+    end
+  end
 
   # About You
   scope "about-you", module: :about_you do

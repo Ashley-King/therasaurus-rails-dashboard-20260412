@@ -22,6 +22,7 @@ class UserCredential < ApplicationRecord
   }
 
   before_save :recompute_grace_expires_at
+  after_commit :refresh_public_search_points_later, on: [ :create, :update, :destroy ]
 
   # The expiration date relevant to this credential's type. State-license
   # and supervised credentials use license_expiration_date; organization
@@ -49,5 +50,9 @@ class UserCredential < ApplicationRecord
   def recompute_grace_expires_at
     date = expiration_date
     self.grace_expires_at = date.present? ? date.end_of_day + GRACE_PERIOD : nil
+  end
+
+  def refresh_public_search_points_later
+    RefreshPublicSearchPointsJob.perform_later(therapist_id)
   end
 end

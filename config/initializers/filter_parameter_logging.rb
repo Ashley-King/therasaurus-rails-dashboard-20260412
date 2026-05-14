@@ -7,7 +7,7 @@
 # Keep this list conservative: prefer over-filtering to leaking PII.
 Rails.application.config.filter_parameters += [
   # Auth / secrets
-  :passw, :secret, :token, :_key, :crypt, :salt, :certificate,
+  :passw, :secret, :token, :code, :_key, :crypt, :salt, :certificate,
   :jwt, :authorization, :session, :api_key, :access_token, :refresh_token,
 
   # Supabase / Turnstile
@@ -18,5 +18,18 @@ Rails.application.config.filter_parameters += [
 
   # PII we collect on accounts
   :email, :phone, :dob, :date_of_birth,
-  :address, :street, :zip, :postal
+  :address, :street, :zip, :postal,
+
+  # Public search
+  :order_seed
+]
+
+# Logtail's Rack middleware logs request and response headers separately from
+# Rails params. Filter sensitive headers before they are written locally or
+# shipped to Better Stack.
+Logtail::Integrations::Rack::HTTPEvents.http_header_filters = [
+  :authorization,
+  :proxy_authorization,
+  :cookie,
+  :set_cookie
 ]

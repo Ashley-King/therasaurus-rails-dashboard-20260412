@@ -72,12 +72,12 @@
     <%= form_with model: therapist, url: account_path, method: :patch,
           data: { controller: "form-guard" }, class: "space-y-5" do |f| %>
       <div>
-        <%= f.label :first_name, class: "ts-label block mb-1.5" %>
+        <%= f.label :first_name, "First Name", class: "ts-label block mb-1.5" %>
         <%= f.text_field :first_name, class: "ts-input block w-full sm:w-1/2", autocomplete: "given-name" %>
       </div>
 
       <div>
-        <%= f.label :last_name, class: "ts-label block mb-1.5" %>
+        <%= f.label :last_name, "Last Name", class: "ts-label block mb-1.5" %>
         <%= f.text_field :last_name, class: "ts-input block w-full sm:w-1/2", autocomplete: "family-name" %>
       </div>
 
@@ -88,7 +88,7 @@
       </div>
 
       <div>
-        <%= f.label :credentials, class: "ts-label block mb-1.5" %>
+        <%= f.label :credentials, "Credentials", class: "ts-label block mb-1.5" %>
         <%= f.text_field :credentials, class: "ts-input block w-full sm:w-1/2",
               placeholder: "e.g. MSR, OTR/L", autocomplete: "off" %>
       </div>

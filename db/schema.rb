@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_132500) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -81,16 +81,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
   end
 
   create_table "public.countries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "active", default: false, null: false
+    t.string "administrative_area_label", default: "State", null: false
     t.text "code", null: false
     t.timestamptz "created_at", default: -> { "timezone('utc'::text, now())" }, null: false
-    t.text "name", null: false
-    t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
-    t.boolean "active", default: false, null: false
-    t.string "default_locale", default: "en", null: false
     t.string "currency_code", limit: 3, default: "USD", null: false
+    t.string "default_locale", default: "en", null: false
+    t.text "name", null: false
     t.string "postal_code_label", default: "Postal code", null: false
-    t.string "administrative_area_label", default: "State", null: false
-
+    t.timestamptz "updated_at", default: -> { "timezone('utc'::text, now())" }, null: false
     t.index ["active"], name: "index_countries_on_active"
     t.unique_constraint ["code"], name: "countries_code_key"
     t.unique_constraint ["name"], name: "countries_name_key"
@@ -189,6 +188,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
     t.uuid "therapist_id", null: false
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "zip", null: false
+    t.index "((extensions.st_setsrid(extensions.st_makepoint((longitude)::double precision, (latitude)::double precision), 4326))::extensions.geography)", name: "index_locations_on_public_search_geography", where: "(((geocode_status)::text = 'ok'::text) AND (latitude IS NOT NULL) AND (longitude IS NOT NULL) AND (location_type = ANY (ARRAY['primary'::location_type, 'additional'::location_type])))", using: :gist
+    t.index ["therapist_id", "location_type", "geocode_status"], name: "index_locations_on_public_search_eligibility"
     t.index ["therapist_id"], name: "index_locations_on_therapist_id"
   end
 
@@ -416,6 +417,57 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
 
     t.unique_constraint ["name"], name: "professions_name_key"
     t.unique_constraint ["slug"], name: "professions_slug_unique"
+  end
+
+  create_table "public.public_search_points", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "accepting_new_clients", default: true, null: false
+    t.boolean "accepts_insurance", default: false, null: false
+    t.string "city", null: false
+    t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "credentials"
+    t.boolean "credentials_verified", default: false, null: false
+    t.string "first_name", null: false
+    t.boolean "free_phone_call", default: true, null: false
+    t.boolean "has_waitlist", default: false, null: false
+    t.boolean "in_person", default: true, null: false
+    t.jsonb "languages", default: [], null: false
+    t.string "last_name", null: false
+    t.decimal "latitude", precision: 10, scale: 7, null: false
+    t.string "location_line"
+    t.decimal "longitude", precision: 10, scale: 7, null: false
+    t.string "membership_status", null: false
+    t.string "name", null: false
+    t.string "phone_ext"
+    t.string "phone_number"
+    t.string "postal_code", limit: 10, null: false
+    t.string "practice_description"
+    t.string "practice_image_key"
+    t.string "practice_name"
+    t.string "profession_name", null: false
+    t.string "profession_type"
+    t.string "profile_slug", null: false
+    t.datetime "refreshed_at", null: false
+    t.jsonb "services", default: [], null: false
+    t.boolean "show_phone_number", default: false, null: false
+    t.uuid "source_id", null: false
+    t.integer "source_rank", null: false
+    t.string "source_type", null: false
+    t.jsonb "specialties", default: [], null: false
+    t.string "state", limit: 2, null: false
+    t.uuid "therapist_id", null: false
+    t.string "unique_id", null: false
+    t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.boolean "use_practice_name", default: false, null: false
+    t.boolean "virtual", default: false, null: false
+    t.index "((extensions.st_setsrid(extensions.st_makepoint((longitude)::double precision, (latitude)::double precision), 4326))::extensions.geography)", name: "index_public_search_points_on_geography", using: :gist
+    t.index "lower((profession_name)::text)", name: "index_public_search_points_on_lower_profession_name"
+    t.index ["profession_type"], name: "index_public_search_points_on_profession_type"
+    t.index ["source_type", "source_id"], name: "index_public_search_points_on_source", unique: true
+    t.index ["therapist_id"], name: "index_public_search_points_on_therapist_id"
+    t.check_constraint "NOT (latitude = 0::numeric AND longitude = 0::numeric)", name: "public_search_points_nonzero_coordinates_check"
+    t.check_constraint "latitude >= '-90'::integer::numeric AND latitude <= 90::numeric", name: "public_search_points_latitude_check"
+    t.check_constraint "longitude >= '-180'::integer::numeric AND longitude <= 180::numeric", name: "public_search_points_longitude_check"
+    t.check_constraint "source_type::text = ANY (ARRAY['primary'::character varying, 'additional'::character varying, 'targeted_postal_code'::character varying]::text[])", name: "public_search_points_source_type_check"
   end
 
   create_table "public.race_ethnicities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -686,6 +738,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
     t.index ["therapist_id"], name: "index_therapist_faqs_on_therapist_id"
   end
 
+  create_table "public.therapist_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.integer "delivery_attempts", default: 0, null: false
+    t.string "delivery_status", limit: 20, default: "pending", null: false
+    t.datetime "failed_at"
+    t.text "last_delivery_error"
+    t.string "page_url", limit: 1000
+    t.string "sender_email", limit: 254, null: false
+    t.string "sender_name", limit: 120, null: false
+    t.string "sender_phone", limit: 40
+    t.uuid "therapist_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_therapist_messages_on_created_at"
+    t.index ["delivery_status"], name: "index_therapist_messages_on_delivery_status"
+    t.index ["therapist_id"], name: "index_therapist_messages_on_therapist_id"
+  end
+
   create_table "public.therapist_targeted_postal_codes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "city", limit: 100, null: false
     t.boolean "city_match_successful", default: false, null: false
@@ -694,10 +765,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
     t.datetime "geocoded_at"
     t.decimal "latitude", precision: 10, scale: 7
     t.decimal "longitude", precision: 10, scale: 7
+    t.string "postal_code", limit: 10, null: false
     t.string "state", limit: 2, null: false
     t.uuid "therapist_id", null: false
     t.datetime "updated_at", null: false
-    t.string "postal_code", limit: 10, null: false
+    t.index "((extensions.st_setsrid(extensions.st_makepoint((longitude)::double precision, (latitude)::double precision), 4326))::extensions.geography)", name: "index_targeted_postal_codes_on_public_search_geography", where: "(((geocode_status)::text = 'ok'::text) AND (latitude IS NOT NULL) AND (longitude IS NOT NULL))", using: :gist
     t.index ["therapist_id", "postal_code"], name: "idx_targeted_postal_codes_unique_postal_code", unique: true
     t.index ["therapist_id"], name: "idx_targeted_postal_codes_therapist_id"
   end
@@ -819,6 +891,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
     t.boolean "is_banned", default: false, null: false
     t.string "membership_status", default: "member", null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["membership_status", "is_banned"], name: "index_users_on_public_search_visibility"
   end
 
   create_table "public.zip_lookups", id: :serial, force: :cascade do |t|
@@ -866,6 +939,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
   add_foreign_key "public.practice_telehealth_platforms", "public.telehealth_platforms", name: "practice_telehealth_platforms_telehealth_platform_id_fkey"
   add_foreign_key "public.practice_telehealth_platforms", "public.therapists", name: "practice_telehealth_platforms_therapist_id_fkey", on_delete: :cascade
   add_foreign_key "public.professions", "public.profession_types", name: "professions_profession_type_id_fkey"
+  add_foreign_key "public.public_search_points", "public.therapists", on_delete: :cascade
   add_foreign_key "public.service_to_categories", "public.service_categories"
   add_foreign_key "public.service_to_categories", "public.services"
   add_foreign_key "public.solid_queue_blocked_executions", "public.solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -881,6 +955,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_130100) do
   add_foreign_key "public.therapist_education", "public.degree_types"
   add_foreign_key "public.therapist_education", "public.therapists"
   add_foreign_key "public.therapist_faqs", "public.therapists", on_delete: :cascade
+  add_foreign_key "public.therapist_messages", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapist_targeted_postal_codes", "public.therapists", on_delete: :cascade
   add_foreign_key "public.therapists", "public.countries"
   add_foreign_key "public.therapists", "public.professions"

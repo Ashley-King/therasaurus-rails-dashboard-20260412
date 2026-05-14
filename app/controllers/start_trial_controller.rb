@@ -52,7 +52,7 @@ class StartTrialController < ApplicationController
 
   # POST /start-trial/skip
   def skip
-    redirect_to account_settings_path, notice: "You can start your free trial any time from Account Settings."
+    redirect_to account_settings_path
   end
 
   private

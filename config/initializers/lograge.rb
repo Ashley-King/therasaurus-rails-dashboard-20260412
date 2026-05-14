@@ -26,13 +26,16 @@ Rails.application.configure do
     request = event.payload[:request]
     exception = event.payload[:exception_object]
 
+    params = event.payload[:params]&.except("controller", "action", "format", "id")
+    params = {} if request&.path == "/api/v1/search"
+
     {
       time: Time.current.iso8601(3),
       env: Rails.env,
       host: request&.host,
       request_id: request&.request_id,
       user_id: event.payload[:user_id],
-      params: event.payload[:params]&.except("controller", "action", "format", "id"),
+      params: params,
       exception_class: exception&.class&.name,
       exception_message: exception&.message&.truncate(500)
     }.compact

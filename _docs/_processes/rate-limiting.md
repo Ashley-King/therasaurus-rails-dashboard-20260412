@@ -1,7 +1,8 @@
 # Rate Limiting
 
-Two layers, both backed by `Rails.cache` (Solid Cache in production,
-memory_store in development).
+Rails has two app-side layers, both backed by `Rails.cache` (Solid Cache
+in production, memory_store in development). Cloudflare adds the edge
+layer once Rails is deployed behind Cloudflare Tunnel.
 
 ## Layer 1 — Rails 8 `rate_limit` (controller)
 
@@ -14,6 +15,7 @@ Configured in [`AuthController`](../../app/controllers/auth_controller.rb):
 |---------------|------------------|-----------------|-----|
 | `POST /signin`  | 5 / 15 min       | per IP          | Catches distributed scraping. |
 | `POST /signin`  | 5 / 1 hour       | per email       | Catches targeted inbox-flooding. Matches Supabase's own 4/hour OTP limit so we don't get out of sync. |
+| `POST /signin/google` | 5 / 15 min | per IP | Caps repeated starts of the external OAuth flow. |
 | `POST /verify`  | 10 / 15 min      | per IP          | Catches OTP brute-force. Supabase currently sends 8-digit codes by default, which keeps guessing impractical. |
 
 ## Layer 2 — Rack::Attack (middleware)
@@ -29,8 +31,10 @@ Configured in [`config/initializers/rack_attack.rb`](../../config/initializers/r
 | `req/ip`         | 300 / 5 min       | per IP | Global safety net across the whole app. |
 | `signin/ip`      | 20 / 5 min        | per IP | Outer wall on sign-in. |
 | `signin/email`   | 10 / 1 hour       | per email | Outer wall on targeted attacks. |
+| `signin/google/ip` | 20 / 5 min      | per IP | Outer wall on repeated Google OAuth starts. |
 | `verify/ip`      | 30 / 5 min        | per IP | Outer wall on OTP verification. |
 | `zip-search/ip`  | 30 / 1 min        | per IP | Caps the autocomplete JSON endpoint used by the ZIP combobox. |
+| `api-search/ip`  | 120 / 1 min       | per IP | Caps `POST /api/v1/search`, the public Rails therapist search API used by Next.js. |
 
 Asset requests, `/up`, and `/health` are safelisted. Localhost is
 safelisted in development.
@@ -50,6 +54,7 @@ Stack. Filter by event prefix to investigate.
 |------------------------------------|--------------|--------|
 | `auth.rate_limit.signin_ip`        | Rails controller | `ip`, `ua`, `email_hash` |
 | `auth.rate_limit.signin_email`     | Rails controller | `ip`, `ua`, `email_hash` |
+| `auth.rate_limit.google_signin_ip` | Rails controller | `ip`, `ua` |
 | `auth.rate_limit.verify_ip`        | Rails controller | `ip`, `ua` |
 | `auth.rate_limit.email_change`     | Rails controller | `ip`, `ua`, `user_id` |
 | `rack_attack.throttled`            | Rack middleware  | `name`, `ip`, `path` |
@@ -84,12 +89,25 @@ scoped per `user_id` (falling back to IP when nil):
   if abuse appears.
 - **Stripe webhooks** — not yet built. When added, **do not** rate limit;
   verify the signature and let Stripe retry.
-- **Meilisearch** — this Rails app does not expose a search endpoint.
-  `search.therasaurus.org` has its own perimeter.
+- **Temporary Meilisearch search** — `search.therasaurus.org` currently
+  points to the temporary Meilisearch service and has its own Cloudflare
+  perimeter. The replacement Rails route is `POST /api/v1/search` and
+  is rate limited by `api-search/ip`.
 
 ## TODOs for future features
 
 - Any future contact form or public POST: add a rate limit at both layers.
+
+## Cloudflare edge layer
+
+Production traffic for `app.therasaurus.org` should reach Rails through
+Cloudflare Tunnel only. Cloudflare rules should start in log mode, then
+move to block or managed challenge after normal traffic is understood.
+
+Recommended starting rules are documented in
+[`_docs/_processes/deployment.md`](deployment.md). Stripe webhooks,
+health checks, and static assets must be excluded from Cloudflare
+challenges.
 
 ## Operational notes
 

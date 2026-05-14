@@ -1,0 +1,230 @@
+# Deployment
+
+Rails deploys to the same VPS as the public Next.js app, behind
+Cloudflare Tunnel.
+
+## Current target
+
+- Public Rails URL: `https://app.therasaurus.org`
+- Public Next.js URL: `https://therasaurus.org`
+- Rails origin on the VPS: `http://127.0.0.1:3001`
+- Next.js origin on the VPS: `http://127.0.0.1:3000`
+- Public search during the transition: `https://search.therasaurus.org`
+
+No public web port should point directly at the VPS. Cloudflare Tunnel is
+the only public path into Rails.
+
+## Server shape
+
+The VPS runs:
+
+- The existing Next.js Docker app on local port `3000`.
+- The Rails Kamal proxy on local port `3001`.
+- The Rails web container behind the Kamal proxy.
+- The Rails job container running `bin/jobs`.
+- `cloudflared` as a host service or container.
+
+The Rails app uses Supabase Postgres, Resend SMTP, Stripe through Pay,
+Cloudflare R2, Better Stack, and Discord webhooks through Rails
+credentials. Do not put those secrets in Docker Compose files or shell
+history.
+
+## Rails config before first deploy
+
+`config/deploy.yml` should use the real VPS host and bind the Kamal proxy
+to localhost only:
+
+```yaml
+service: therasaurus_rails
+image: therasaurus_rails
+
+servers:
+  web:
+    - ptd-app
+  job:
+    hosts:
+      - ptd-app
+    cmd: bin/jobs
+
+proxy:
+  host: app.therasaurus.org
+  app_port: 80
+  healthcheck:
+    path: /up
+  run:
+    http_port: 3001
+    bind_ips:
+      - 127.0.0.1
+
+registry:
+  server: localhost:5555
+
+builder:
+  arch: amd64
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+```
+
+Use the real SSH alias or IP instead of `ptd-app` if the server uses a
+different name.
+
+`config/environments/production.rb` should treat the Cloudflare request as
+HTTPS and only allow the production host:
+
+```ruby
+config.assume_ssl = true
+config.force_ssl = true
+config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" || request.path == "/health" } } }
+
+config.action_mailer.default_url_options = { host: "app.therasaurus.org", protocol: "https" }
+
+config.hosts = ["app.therasaurus.org"]
+config.host_authorization = { exclude: ->(request) { request.path == "/up" || request.path == "/health" } }
+```
+
+## Cloudflare Tunnel route
+
+In the existing tunnel, publish this hostname:
+
+```text
+app.therasaurus.org -> http://localhost:3001
+```
+
+Do not create an `A` or `AAAA` record for `app.therasaurus.org` that
+points to the VPS. The tunnel creates the needed Cloudflare-managed DNS
+record.
+
+Keep the existing routes:
+
+```text
+therasaurus.org -> http://localhost:3000
+search.therasaurus.org -> http://localhost:7700
+```
+
+Remove the Meilisearch route when the Supabase-backed search migration is
+complete.
+
+## Cloudflare rules
+
+Start rules in log mode for the first deploy. Do not challenge Stripe,
+health checks, or static assets.
+
+Recommended Rails rules:
+
+| Route | Starting threshold | First action |
+|---|---:|---|
+| `POST /signin` | 5 to 10 per minute per IP | Log |
+| `POST /verify` | 10 to 20 per minute per IP | Log |
+| `GET /zip-search` | 30 per minute per IP | Log |
+| `POST /api/v1/search` | 120 per minute per IP | Log |
+| App-wide, excluding assets, health, and webhooks | 240 per 5 minutes per IP | Log |
+
+Always exclude:
+
+- `/up`
+- `/health`
+- `/assets/*`
+- `/pay/webhooks/stripe`
+
+After a few days of normal testing, move proven rules from log mode to
+block or managed challenge. Prefer block for narrow abuse routes. Prefer
+managed challenge for broader app-wide rules.
+
+## Connected services
+
+Update these before using the production URL:
+
+- Supabase Site URL: `https://app.therasaurus.org`
+- Supabase redirect URLs:
+  - `https://app.therasaurus.org/verify`
+  - `https://app.therasaurus.org/signin/google/callback`
+- Google OAuth callback:
+  - `https://app.therasaurus.org/signin/google/callback`
+- Stripe webhook endpoint:
+  - `https://app.therasaurus.org/pay/webhooks/stripe`
+- Cloudflare Turnstile allowed domain:
+  - `app.therasaurus.org`
+- R2 bucket CORS allowed origin:
+  - `https://app.therasaurus.org`
+- Resend domain and sending identity:
+  - keep using `therasaurus.org`
+
+## First deploy
+
+Run these from the Rails repo:
+
+```bash
+mise exec -- bin/rubocop
+mise exec -- bin/kamal setup
+mise exec -- bin/kamal deploy
+mise exec -- bin/kamal logs
+```
+
+Use `bin/kamal setup` only for the first deploy or when the server needs
+Kamal setup again. Normal deploys use:
+
+```bash
+mise exec -- bin/kamal deploy
+```
+
+## First deploy checks
+
+From your laptop:
+
+```bash
+curl -I https://app.therasaurus.org/up
+curl -I https://app.therasaurus.org/health
+curl -I https://app.therasaurus.org/signin
+```
+
+From the VPS:
+
+```bash
+curl -I http://127.0.0.1:3001/up
+docker ps
+```
+
+Also confirm:
+
+- The VPS public IP does not serve Rails on ports `80` or `443`.
+- Stripe webhook delivery reaches Rails without a Cloudflare challenge.
+- Supabase email code login works at `app.therasaurus.org`.
+- Google login returns to `app.therasaurus.org`.
+- Profile photo upload gets a presigned R2 URL.
+- Credential document upload gets a presigned R2 URL.
+- Better Stack receives production logs and errors.
+- The job role is running.
+
+## Rollback
+
+Use Kamal rollback first:
+
+```bash
+mise exec -- bin/kamal rollback
+```
+
+If Cloudflare routing is the issue, remove or pause only the
+`app.therasaurus.org` tunnel route. Leave `therasaurus.org` untouched.
+
+## Security notes
+
+`.kamal/secrets` must not contain real secret values if it is committed.
+Use shell commands that read secrets locally, or keep real values outside
+git. The Rails master key, registry token, database URL, Stripe keys,
+Supabase keys, R2 keys, Resend key, Better Stack tokens, and Discord
+webhooks are production secrets.
+
+Do not open public inbound HTTP or HTTPS on the VPS for Rails. If a
+direct-origin test reaches Rails through the VPS IP, fix the firewall or
+Kamal proxy binding before sharing the app URL.
+
+## Official docs checked
+
+- Kamal proxy and deploy config: https://kamal-deploy.org/docs/configuration/proxy/
+- Kamal deploy command: https://kamal-deploy.org/docs/commands/deploy/
+- Rails SSL setting: https://guides.rubyonrails.org/security.html
+- Cloudflare Tunnel routing: https://developers.cloudflare.com/tunnel/routing/
+- Cloudflare Tunnel service setup: https://developers.cloudflare.com/tunnel/advanced/local-management/as-a-service/
+- Cloudflare rate limiting rules: https://developers.cloudflare.com/waf/rate-limiting-rules/

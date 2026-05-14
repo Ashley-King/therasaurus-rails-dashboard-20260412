@@ -5,6 +5,8 @@ class Location < ApplicationRecord
 
   enum :location_type, { primary: "primary", additional: "additional" }
 
+  after_commit :refresh_public_search_points_later, on: [ :create, :update, :destroy ]
+
   validates :street_address, :city, :state, :zip, presence: true
   validate :zip_matches_country
 
@@ -24,5 +26,9 @@ class Location < ApplicationRecord
 
   def geocode_job_class
     GeocodeLocationJob
+  end
+
+  def refresh_public_search_points_later
+    RefreshPublicSearchPointsJob.perform_later(therapist_id)
   end
 end

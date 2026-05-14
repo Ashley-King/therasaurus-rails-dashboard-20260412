@@ -61,6 +61,12 @@ class Rack::Attack
     email.presence
   end
 
+  # POST /signin/google — by IP. Catches scripts repeatedly starting the
+  # external OAuth flow.
+  throttle("signin/google/ip", limit: 20, period: 5.minutes) do |req|
+    req.ip if req.path == "/signin/google" && req.post?
+  end
+
   # POST /verify — by IP. Catches OTP brute-force attempts.
   throttle("verify/ip", limit: 30, period: 5.minutes) do |req|
     req.ip if req.path == "/verify" && req.post?
@@ -70,6 +76,12 @@ class Rack::Attack
   # this ceiling; anything higher is a scraper enumerating the ZIP dataset.
   throttle("zip-search/ip", limit: 30, period: 1.minute) do |req|
     req.ip if req.path == "/zip-search" && req.get?
+  end
+
+  # POST /api/v1/search — by IP. This is the public therapist directory
+  # search endpoint used by Next.js.
+  throttle("api-search/ip", limit: 120, period: 1.minute) do |req|
+    req.ip if req.path == "/api/v1/search" && req.post?
   end
 
   ### Throttled response ###

@@ -1,12 +1,102 @@
 # Changelog
 
+## 2026-05-14
+
+### Added
+- **Rails deployment runbook.** Added a deployment process doc for
+  serving Rails at `app.therasaurus.org` through Kamal and Cloudflare
+  Tunnel on the same VPS as the Next.js app, including Cloudflare rules,
+  connected service updates, first deploy checks, rollback, and secret
+  handling notes.
+- **Public app info page.** Added `/app-info` as a public page for
+  Google OAuth branding review, with the app purpose, policy links, and
+  auth support email.
+- **Public legal pages.** Added `/privacy-policy` and `/terms` as
+  public in-app policy pages and linked them from `/app-info`.
+
+### Changed
+- **Production deploy config.** Configured Kamal for the `ptd-app` VPS,
+  the `app.therasaurus.org` proxy host, localhost-only proxy port
+  `3001`, and the Rails job role. Production Rails now assumes
+  Cloudflare HTTPS, forces SSL, allows only the app host, and generates
+  mailer links for `app.therasaurus.org`.
+- **Rate limiting docs now include Cloudflare.** Noted that Rails keeps
+  the two app-side rate limit layers while Cloudflare becomes the edge
+  layer for `app.therasaurus.org`.
+- **Signed-in account messaging.** Removed the returning-user
+  `Welcome back!` flash, kept the purple admin membership preview banner
+  visible by default, and removed the redundant yellow offline warning
+  from Account Settings.
+- **Membership banner cleanup.** Removed the skip-trial notice and the
+  blue trial banner from Account Settings. The purple membership banner
+  now covers free, skipped-trial, ended-trial, and trialing account
+  states.
+
+## 2026-05-13
+
+### Added
+- **Zero search launch plan.** Added a cross-project plan for launching
+  nationally without ads or dependable search traffic, with Rails owning
+  the API, therapist account data, free founding user status, parent
+  email interest, referral kit data, and simple demand tracking.
+
+### Changed
+- **Google sign-in button.** Added the Google mark to the sign-in button
+  so the provider is visually identifiable.
+- **Strict translation label fixes.** Made account and profile form
+  labels explicit so development and test do not raise missing
+  translation errors for inferred Active Record labels.
+
+## 2026-05-12
+
+### Added
+- **Google sign-in.** Added a Supabase Google OAuth sign-in path beside
+  the existing email code flow, including Rails session handling, PKCE
+  code exchange, sign-in UI, rate limits, and auth docs.
+- **Auth-safe header logging.** Added Logtail header filters so cookies
+  and auth headers are written as `[FILTERED]` before local logging or
+  Better Stack shipping.
+
+## 2026-05-11
+
+### Added
+- **Google auth login plan.** Added a phased plan for offering Google
+  sign-in alongside the current Supabase email code flow, while keeping
+  Rails as the owner of app sessions and access checks.
+- **Search listing fields.** Added a stored public search `name` field
+  for listing cards, returned a `verified` flag for the credential
+  badge, and changed the search insurance badge to reflect whether the
+  therapist selected any insurance companies.
+
 ## 2026-05-10
 
 ### Added
+- **Rails public therapist search API.** Added `POST /api/v1/search`,
+  backed by a Supabase Postgres public-search read table and PostGIS.
+  The endpoint searches within 30 miles of a submitted ZIP, checks a
+  therapist's primary location, additional location, and up to five
+  targeted ZIPs, removes duplicate therapists, and supports stable
+  24-hour random ordering through an opaque `order_token`.
+- **Public search read table.** Added `public_search_points`, a
+  purpose-built read table with one row per searchable therapist point.
+  Added `RefreshPublicSearchPointsJob` to rebuild rows after public
+  search inputs change, plus `bin/rails search:refresh_public_points`
+  for the first deploy backfill.
+- **Public search database indexes.** Added PostGIS expression indexes
+  for the public search read table, geocoded locations, and targeted
+  ZIPs, plus supporting visibility indexes for refresh and search work.
+- **Search docs now reflect the Supabase-backed direction.** Added a
+  dedicated search process doc that treats Meilisearch as temporary and
+  documents the target Supabase-backed search shape, security rules,
+  rate limiting, and monitoring handoff.
+- **Supabase search replacement plan.** Added a phased plan for
+  inventorying current Meilisearch usage, choosing the Supabase-backed
+  search path, switching Next.js, updating Cloudflare rules, and removing
+  the Meilisearch service.
 - **Cloudflare rate limiting and tunnel access plan.** Added a phased
   plan for Cloudflare Tunnel-only access, edge rate limits, and abuse
   monitoring across the future Kamal Rails deploy, existing Dockerized
-  Next.js app, and Dockerized Meilisearch service.
+  Next.js app, and temporary Dockerized Meilisearch service.
 - **Localization and country foundation plan.** Added a phased backend
   setup plan for future translation support and hidden Canada/Mexico
   country preparation without changing launch behavior.
@@ -26,6 +116,9 @@
   `EXPIRED`.
 
 ### Changed
+- **Rails rate limiting now covers the public search API.** Added the
+  `api-search/ip` Rack::Attack throttle for `POST /api/v1/search` and
+  stripped search API params from structured request logs.
 - **Create Account now enforces active countries on the server.**
   Country choices load from active countries only, inactive country IDs
   are rejected, and the therapist model blocks inactive countries.
