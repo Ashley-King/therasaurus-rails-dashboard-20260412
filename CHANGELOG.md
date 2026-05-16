@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-16
+
+### Changed
+- **Auth page copy.** Updated the shared sign-in and account-creation
+  page heading and email divider so the page reflects both new and
+  returning therapist flows.
+
 ## 2026-05-14
 
 ### Added

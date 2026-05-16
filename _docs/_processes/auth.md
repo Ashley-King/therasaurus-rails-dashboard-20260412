@@ -31,7 +31,7 @@ Keep this doc up to date as the flow changes.
 | GET    | `/create-account`| `create_account#new`      |
 | POST   | `/create-account`| `create_account#create`   |
 
-`root "auth#new"` — unauthenticated visitors land on the sign-in page.
+`root "auth#new"` — unauthenticated visitors land on the shared sign-in and account-creation page.
 
 ## Session storage
 
