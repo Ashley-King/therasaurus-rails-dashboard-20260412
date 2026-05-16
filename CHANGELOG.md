@@ -4,8 +4,11 @@
 
 ### Changed
 - **Auth page copy.** Updated the shared sign-in and account-creation
-  page heading and email divider so the page reflects both new and
-  returning therapist flows.
+  page heading, email divider, and helper text so the page reflects both
+  new and returning therapist flows.
+- **Mobile auth layout.** Removed the auth card background, rounded
+  corners, and shadow below the small-tablet breakpoint so the sign-in
+  flow reads as a flat mobile page.
 
 ## 2026-05-14
 

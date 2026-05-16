@@ -370,19 +370,28 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
 
   /* -- Auth Card -- */
   .ts-auth-card {
-    background: var(--color-surface);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
     padding: 2rem;
     max-width: 480px;
   }
 
   .ts-auth-card-wide {
-    background: var(--color-surface);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
     padding: 2rem;
     max-width: 48rem;
+  }
+
+  @media (min-width: 40rem) {
+    .ts-auth-card,
+    .ts-auth-card-wide {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
   }
 
   .ts-auth-title {
