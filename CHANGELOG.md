@@ -3,6 +3,9 @@
 ## 2026-05-16
 
 ### Changed
+- **Turnstile sign-in.** Restored Cloudflare Turnstile to the email-code
+  sign-in form and passed the token to Supabase OTP sends, with Rails only
+  checking that the token exists before Supabase verifies it.
 - **Auth page copy.** Updated the shared sign-in and account-creation
   page heading, email divider, and helper text so the page reflects both
   new and returning therapist flows.

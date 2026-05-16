@@ -6,8 +6,8 @@ Keep this doc up to date as the flow changes.
 
 ## Key components
 
-- **Supabase Auth** — issues OTPs, verifies them, handles Google OAuth, returns JWT access + refresh tokens. Also verifies Turnstile on the OTP send step when Turnstile is wired.
-- **`SupabaseAuth` service** (`app/services/supabase_auth.rb`) — thin wrapper for `send_otp`, `verify_otp`, Google OAuth authorize URLs, PKCE code exchange, and `refresh_session`. Raises `SupabaseAuth::AuthError` on failure.
+- **Supabase Auth** — issues OTPs, verifies them, handles Google OAuth, returns JWT access + refresh tokens. Also verifies Turnstile on the OTP send step.
+- **`SupabaseAuth` service** (`app/services/supabase_auth.rb`) — thin wrapper for `send_otp`, `verify_otp`, Google OAuth authorize URLs, PKCE code exchange, and `refresh_session`. `send_otp` passes the Turnstile token to Supabase as `gotrue_meta_security.captcha_token`. Raises `SupabaseAuth::AuthError` on failure.
 - **`AuthController`** (`app/controllers/auth_controller.rb`) — email code sign-in, Google sign-in, verify, sign-out.
 - **`Authentication` concern** (`app/controllers/concerns/authentication.rb`) — `current_user`, `current_therapist`, `signed_in?`, `require_auth`, `require_profile`, JWT decode + refresh.
 - **`CreateAccountController`** — profile creation gate for new users.
@@ -49,8 +49,8 @@ On every request, `current_user` decodes the JWT (unverified — Supabase issued
 
 ## Flow 1: Brand-new user with email code
 
-1. User visits `/signin`, enters email. (Turnstile is not currently wired — see [`turnstile.md`](../turnstile.md).)
-2. `AuthController#create` calls `SupabaseAuth#send_otp(email)`. On success, the email is stashed in `session[:pending_email]` and the user is redirected to `/verify`.
+1. User visits `/signin`, enters email, and completes Turnstile.
+2. `AuthController#create` requires the Turnstile response token, then calls `SupabaseAuth#send_otp(email, captcha_token:)`. Supabase verifies the token during OTP send. On success, the email is stashed in `session[:pending_email]` and the user is redirected to `/verify`.
 3. User enters the 8-digit code. `AuthController#confirm` calls `SupabaseAuth#verify_otp`.
 4. On success:
    - Tokens stored in session via `store_auth_session`.
@@ -78,7 +78,7 @@ Google OAuth branding may use `/app-info` as the application home page when Goog
 
 ## Flow 3: Established email-code user (returning, profile already exists)
 
-1. User visits `/signin`, enters email → OTP sent.
+1. User visits `/signin`, enters email, completes Turnstile → OTP sent.
 2. User enters code → `AuthController#confirm` verifies, stores tokens, `find_or_create_user!` finds the existing `User`.
 3. `profile_complete?` returns true (`current_therapist` present) → redirect to `/account-settings`.
 
@@ -110,9 +110,9 @@ Google OAuth branding may use `/app-info` as the application home page when Goog
 
 ## Turnstile
 
-Turnstile is **not currently wired** into the auth flow. The sign-in form (`app/views/auth/new.html.erb`) does not render the widget and `AuthController#create` does not pass a captcha token to Supabase. See [`turnstile.md`](../turnstile.md) for the rebuild checklist if it needs to come back.
+Turnstile is wired into the email-code send step. The sign-in form (`app/views/auth/new.html.erb`) loads Cloudflare Turnstile and renders the widget. `AuthController#create` requires `params[:"cf-turnstile-response"]`, then passes it to `SupabaseAuth#send_otp`.
 
-If Turnstile is added back later, it belongs on the email-code send step. Google sign-in does not send an OTP.
+Rails does not verify the Turnstile token during OTP send. Supabase verifies it because Cloudflare tokens are single-use. Google sign-in does not send an OTP and does not use Turnstile.
 
 ## Things this doc intentionally leaves out
 

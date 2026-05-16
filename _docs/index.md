@@ -4,7 +4,7 @@
 
 - [Auth](./_processes/auth.md) — sign-in, OTP verification, session/token handling, sign-out, profile gate
 - [Admin Panel](./_processes/admin-panel.md) — Avo at `/avo`, admin-tools endpoints, resource list
-- [Turnstile](./turnstile.md) — currently not wired; rebuild checklist if it comes back
+- [Turnstile](./turnstile.md) — CAPTCHA setup for sign-in and public therapist messages
 - [Business Rules](./business-rules.md) — account + membership rules
 - [Background Jobs](./background-jobs.md) — queue list and job responsibilities
 - [Deployment](./_processes/deployment.md) — Kamal, Cloudflare Tunnel, and first deploy checks for `app.therasaurus.org`

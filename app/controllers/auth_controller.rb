@@ -31,27 +31,37 @@ class AuthController < ApplicationController
 
   # GET /signin
   def new
+    prepare_signin_form
   end
 
   # POST /signin
   def create
     email = params[:email]&.strip&.downcase
+    captcha_token = params[:"cf-turnstile-response"].to_s.strip
 
     if email.blank?
       flash.now[:alert] = "Please enter your email address."
+      prepare_signin_form(email: email)
+      return render :new, status: :unprocessable_entity
+    end
+
+    if captcha_token.blank?
+      flash.now[:alert] = "Please complete the security check."
+      prepare_signin_form(email: email)
       return render :new, status: :unprocessable_entity
     end
 
     auth_log(:info, "auth.otp.send_requested")
 
     begin
-      SupabaseAuth.new.send_otp(email)
+      SupabaseAuth.new.send_otp(email, captcha_token: captcha_token)
       session[:pending_email] = email
       auth_log(:info, "auth.otp.send_result", result: "ok")
       redirect_to verify_path
     rescue SupabaseAuth::AuthError => e
       auth_log(:warn, "auth.otp.send_result", result: "error", error_class: e.class.name)
-      flash.now[:alert] = e.message
+      flash.now[:alert] = signin_error_message(e.message)
+      prepare_signin_form(email: email)
       render :new, status: :unprocessable_entity
     end
   end
@@ -197,6 +207,17 @@ class AuthController < ApplicationController
     else
       "Too many sign-in attempts. Please try again in a few minutes."
     end
+  end
+
+  def signin_error_message(message)
+    return "Please wait a minute before requesting another code." if message.match?(/only .* after \d+ seconds/i)
+
+    message
+  end
+
+  def prepare_signin_form(email: nil)
+    @email = email
+    @turnstile_site_key = Rails.application.credentials.fetch(:TURNSTILE_SITE_KEY)
   end
 
   # SHA256 fingerprint of the submitted email, truncated. Same input always

@@ -1,55 +1,46 @@
 # Turnstile Guide
 
-## Current status: NOT wired
+## Current status
 
-Cloudflare Turnstile is **not currently used** in this app.
+Cloudflare Turnstile is used in two places:
 
-- The sign-in view ([`app/views/auth/new.html.erb`](../app/views/auth/new.html.erb))
-  does not load the Turnstile script, render the widget, or include a
-  `cf-turnstile-response` field.
-- [`AuthController#create`](../app/controllers/auth_controller.rb) does not
-  read a captcha token and does not pass `gotrue_meta_security.captcha_token`
-  to Supabase. The `SupabaseAuth#send_otp` call has no captcha argument.
-- There is no `SessionsController` and no `app/views/sessions/` directory in
-  this app — sign-in lives entirely under `AuthController` / `app/views/auth/`.
+- Email-code sign-in at [`/signin`](../app/views/auth/new.html.erb).
+- Public therapist message sends in
+  [`Api::V1::TherapistMessagesController`](../app/controllers/api/v1/therapist_messages_controller.rb).
 
-The only Turnstile-related code that remains is the defensive parameter
-filter in [`config/initializers/filter_parameter_logging.rb`](../config/initializers/filter_parameter_logging.rb)
-(`:turnstile`, `:"cf-turnstile-response"`) so that if we ever do receive
-those parameters they are scrubbed from logs.
+## Email-code sign-in
 
-## Why this is OK right now
+Turnstile belongs on the OTP send step only.
 
-Auth abuse is currently mitigated by two layers of rate limiting — see
-[`_processes/rate-limiting.md`](./_processes/rate-limiting.md):
+1. `app/views/auth/new.html.erb` loads Cloudflare `api.js`.
+2. The sign-in form renders a plain `<div class="cf-turnstile">` with
+   `data-response-field-name="cf-turnstile-response"`.
+3. `AuthController#create` reads `params[:"cf-turnstile-response"]`.
+4. `SupabaseAuth#send_otp` sends the token to Supabase as
+   `gotrue_meta_security.captcha_token`.
+5. Supabase verifies the token during OTP send.
 
-- Rails 8 `rate_limit` in `AuthController` (per-IP and per-email).
-- `Rack::Attack` middleware as a fallback / outer wall.
+Rails only checks that a token is present before it calls Supabase. Rails
+does not verify the token for OTP send.
 
-Add Turnstile back if rate limiting alone stops being enough (e.g. a real
-bot signs up successfully, distributed scraping evades the IP throttle).
+Google sign-in does not use Turnstile because it does not send an OTP.
 
-## Rebuild checklist (if reintroducing Turnstile)
+The sign-in and verify forms both disable Turbo with `data: { turbo: false }`.
+That keeps Turnstile and OTP form state simple after failed submissions.
 
-If you decide to put Turnstile back in front of the OTP send, do this:
+## Therapist messages
 
-1. Put `TURNSTILE_SITE_KEY` (and only that — no secret needed for the
-   Supabase-verified flow) in Rails credentials.
-2. Load Cloudflare `api.js` on the sign-in page when the site key is
-   present.
-3. Render the widget in `app/views/auth/new.html.erb` with a plain
-   `<div class="cf-turnstile">`. Use `data-response-field-name="cf-turnstile-response"`
-   so the token lands in `params[:"cf-turnstile-response"]`.
-4. Read the token in `AuthController#create`, pass it through to
-   `SupabaseAuth#send_otp` as a captcha token argument, and forward it to
-   Supabase as `gotrue_meta_security.captcha_token`. **Do not** verify the
-   token a second time in Rails — Supabase verifies it during OTP send.
-5. Disable Turbo on the sign-in and verify forms (`data: { turbo: false }`)
-   so a failed submit doesn't leave the captcha widget stale.
-6. After a failed submit that re-renders with an alert, reset the Turnstile
-   widget client-side (Stimulus controller pattern works here).
-7. Enable Turnstile in the Supabase dashboard so the OTP endpoint enforces
-   it server-side.
+The public therapist message API verifies Turnstile in Rails with
+[`TurnstileVerifier`](../app/services/turnstile_verifier.rb). That flow is
+separate from sign-in because it does not call Supabase Auth.
+
+## Required config
+
+- `TURNSTILE_SITE_KEY` in Rails credentials for the sign-in page.
+- `TURNSTILE_SECRET_KEY` in Rails credentials for Rails-verified therapist
+  messages.
+- Supabase dashboard CAPTCHA protection enabled with Cloudflare Turnstile for
+  Auth OTP sends.
 
 ## Why no double verification
 
@@ -61,10 +52,9 @@ infrastructure for it.
 
 ## CSP note
 
-The app currently runs without CSP. We hit CSP problems debugging Turnstile
-the first time. If you add CSP back later, check the current Cloudflare
-Turnstile docs for required directives and re-test the sign-in flow end to
-end.
+The app currently runs without an enforced CSP. If you add CSP back later,
+check the current Cloudflare Turnstile docs for required directives and
+re-test the sign-in flow end to end.
 
 ## Related docs
 

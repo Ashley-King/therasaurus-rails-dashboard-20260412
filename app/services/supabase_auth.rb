@@ -9,10 +9,15 @@ class SupabaseAuth
 
   class AuthError < StandardError; end
 
-  def send_otp(email)
+  def send_otp(email, captcha_token:)
     response = client.post(
       "#{BASE_URL}/auth/v1/otp",
-      json: { email: email },
+      json: {
+        email: email,
+        gotrue_meta_security: {
+          captcha_token: captcha_token.to_s.strip
+        }
+      },
       headers: auth_headers
     )
 
