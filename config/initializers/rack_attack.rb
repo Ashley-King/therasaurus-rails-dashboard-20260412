@@ -84,6 +84,17 @@ class Rack::Attack
     req.ip if req.path == "/api/v1/search" && req.post?
   end
 
+  # POST /api/v1/therapists/:unique_id/messages - public contact form.
+  # Keeps one abusive visitor from flooding every therapist.
+  throttle("therapist-messages/ip", limit: 10, period: 10.minutes) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/therapists/[^/]+/messages\z}) && req.post?
+  end
+
+  # Keeps one abusive visitor from flooding one therapist.
+  throttle("therapist-messages/therapist-ip", limit: 5, period: 1.hour) do |req|
+    "#{req.path}:#{req.ip}" if req.path.match?(%r{\A/api/v1/therapists/[^/]+/messages\z}) && req.post?
+  end
+
   ### Throttled response ###
 
   self.throttled_responder = lambda do |request|

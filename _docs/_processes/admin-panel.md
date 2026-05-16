@@ -20,7 +20,7 @@ The admin panel uses [Avo](https://avohq.io) (free/community edition) mounted at
 ## Resources
 
 ### Core models
-User, Therapist, Location, UserCredential, TherapistEducation, TherapistContinuingEducation, BusinessHour, ZipLookup, FeatureRequest
+User, Therapist, TherapistMessage, Location, UserCredential, TherapistEducation, TherapistContinuingEducation, BusinessHour, ZipLookup, FeatureRequest
 
 ### Reference tables
 Specialty, SpecialtyCategory, Service, ServiceCategory, Language, AgeGroup, Gender, RaceEthnicity, Faith, AccessibilityOption, PaymentMethod, InsuranceCompany, SessionFormat, TelehealthPlatform, Country, State, Profession, ProfessionType, College, DegreeType, CredentialOrganization, AdminEmail

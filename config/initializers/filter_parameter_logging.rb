@@ -21,7 +21,10 @@ Rails.application.config.filter_parameters += [
   :address, :street, :zip, :postal,
 
   # Public search
-  :order_seed
+  :order_seed,
+
+  # Public profile messages
+  :sender_name, :sender_email, :sender_phone, :body, :page_url
 ]
 
 # Logtail's Rack middleware logs request and response headers separately from

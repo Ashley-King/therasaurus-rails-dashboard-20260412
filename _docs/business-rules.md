@@ -211,6 +211,20 @@ These are not the same rule.
   selected at least one insurance company.
 - Search listings can show a verified badge from `credentials_verified`.
 
+## Public profile messages
+
+- Public profiles show an email action, but never show the therapist's
+  email address.
+- Next.js sends profile message submissions to Rails.
+- Rails verifies Turnstile before saving the message.
+- Rails saves the message before sending email.
+- Rails sends the email to the therapist through Resend.
+- The visitor's email address is used as the email `reply_to`.
+- If email delivery fails, the saved message stays available for admin
+  retry.
+- If `allow_messages` is off, Rails does not accept public messages for
+  that therapist.
+
 ## Credential rules
 
 - A therapist can have one credential record.

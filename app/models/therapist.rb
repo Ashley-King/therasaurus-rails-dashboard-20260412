@@ -48,6 +48,7 @@ class Therapist < ApplicationRecord
   has_many :telehealth_platforms, through: :practice_telehealth_platforms
 
   has_many :feature_requests, dependent: :destroy
+  has_many :therapist_messages, dependent: :destroy
 
   has_many :therapist_faqs, -> { order(:created_at) }, dependent: :destroy
   accepts_nested_attributes_for :therapist_faqs, allow_destroy: true, reject_if: :all_blank
@@ -99,6 +100,16 @@ class Therapist < ApplicationRecord
 
   def primary_location
     locations.find_by(location_type: "primary")
+  end
+
+  def public_profile?
+    user.present? &&
+      !user.is_banned? &&
+      %w[trialing_member pro_member].include?(user.membership_status)
+  end
+
+  def can_receive_public_messages?
+    allow_messages? && public_profile?
   end
 
   private

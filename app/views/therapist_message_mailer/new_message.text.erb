@@ -1,0 +1,19 @@
+Hello <%= @therapist.first_name %>,
+
+You received a new message from your TheraSaurus profile.
+
+Name: <%= @message.sender_name %>
+Email: <%= @message.sender_email %>
+<% if @message.sender_phone.present? %>
+Phone: <%= @message.sender_phone %>
+<% end %>
+
+Message:
+
+<%= @message.body %>
+
+<% if @message.page_url.present? %>
+Profile page: <%= @message.page_url %>
+<% end %>
+
+Reply directly to this email to respond.
