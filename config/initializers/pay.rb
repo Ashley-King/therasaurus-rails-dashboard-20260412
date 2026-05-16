@@ -9,11 +9,16 @@ require "mail"
 # credentials live at the top level (`STRIPE_SECRET_KEY`,
 # `STRIPE_WEBHOOK_SECRET`) so we bridge them into the names Pay
 # expects via ENV at boot. We use `fetch` so missing keys raise.
-ENV["STRIPE_PRIVATE_KEY"] ||= Rails.application.credentials.fetch(:STRIPE_SECRET_KEY)
-ENV["STRIPE_SIGNING_SECRET"] ||= Rails.application.credentials.fetch(:STRIPE_WEBHOOK_SECRET)
-if Rails.application.credentials[:STRIPE_PUBLISHABLE_KEY]
-  ENV["STRIPE_PUBLIC_KEY"] ||= Rails.application.credentials[:STRIPE_PUBLISHABLE_KEY]
+required_secret = ->(env_key, credential_key) { ENV.fetch(env_key) { Rails.application.credentials.fetch(credential_key) } }
+optional_secret = lambda do |env_key, credential_key|
+  ENV.key?(env_key) ? ENV.fetch(env_key) : Rails.application.credentials[credential_key]
 end
+
+ENV["STRIPE_PRIVATE_KEY"] ||= required_secret.call("STRIPE_SECRET_KEY", :STRIPE_SECRET_KEY)
+ENV["STRIPE_SIGNING_SECRET"] ||= required_secret.call("STRIPE_WEBHOOK_SECRET", :STRIPE_WEBHOOK_SECRET)
+
+stripe_public_key = optional_secret.call("STRIPE_PUBLISHABLE_KEY", :STRIPE_PUBLISHABLE_KEY)
+ENV["STRIPE_PUBLIC_KEY"] ||= stripe_public_key unless stripe_public_key.to_s.empty?
 
 Pay.setup do |config|
   config.application_name = "TheraSaurus"

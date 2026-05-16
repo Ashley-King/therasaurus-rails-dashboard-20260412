@@ -1,6 +1,8 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  secret = ->(key) { ENV.fetch(key.to_s) { Rails.application.credentials.fetch(key) } }
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -62,7 +64,7 @@ Rails.application.configure do
     port: 465,
     domain: "therasaurus.org",
     user_name: "resend",
-    password: Rails.application.credentials.fetch(:RESEND_API_KEY),
+    password: secret.call(:RESEND_API_KEY),
     authentication: :plain,
     tls: true,
     open_timeout: 5,

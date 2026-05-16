@@ -17,9 +17,22 @@
 ### Changed
 - **Production deploy config.** Configured Kamal for the `ptd-app` VPS,
   the `app.therasaurus.org` proxy host, localhost-only proxy port
-  `3001`, and the Rails job role. Production Rails now assumes
+  `3001`, the Rails job role, the `mb_pro` SSH user, and local checkout
+  builds. Switched image publishing to the private GitHub Container
+  Registry so deploys do not depend on local-registry SSH port
+  forwarding through Cloudflare Access, and made the registry token fail
+  clearly when it is missing. The GHCR registry username now matches the
+  GitHub account that owns the repo. Production Rails now assumes
   Cloudflare HTTPS, forces SSL, allows only the app host, and generates
   mailer links for `app.therasaurus.org`.
+- **Docker build secret handling.** Allowed build-time secret reads to
+  come from the environment before encrypted credentials and passed dummy
+  database, email, Stripe, and Better Stack values during asset
+  precompile, so the image can build without exposing production
+  secrets.
+- **Solid Cache production boot fix.** Kept Solid Cache on the main
+  production database connection so the first Kamal container does not
+  boot looking for an undefined `cache` database.
 - **Rate limiting docs now include Cloudflare.** Noted that Rails keeps
   the two app-side rate limit layers while Cloudflare becomes the edge
   layer for `app.therasaurus.org`.

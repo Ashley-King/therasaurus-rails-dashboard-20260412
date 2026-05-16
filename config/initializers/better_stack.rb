@@ -11,8 +11,12 @@
 
 return if Rails.env.test?
 
-source_token = Rails.application.credentials[:BETTER_STACK_SOURCE_TOKEN].presence
-ingesting_host = Rails.application.credentials[:BETTER_STACK_INGESTING_HOST].presence
+optional_secret = lambda do |env_key, credential_key|
+  ENV.key?(env_key) ? ENV.fetch(env_key).presence : Rails.application.credentials[credential_key].presence
+end
+
+source_token = optional_secret.call("BETTER_STACK_SOURCE_TOKEN", :BETTER_STACK_SOURCE_TOKEN)
+ingesting_host = optional_secret.call("BETTER_STACK_INGESTING_HOST", :BETTER_STACK_INGESTING_HOST)
 
 if source_token.blank? || ingesting_host.blank?
   Rails.logger.info("[better_stack] source token or ingesting host missing — not shipping logs")

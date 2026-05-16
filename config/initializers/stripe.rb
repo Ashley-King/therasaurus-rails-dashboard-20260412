@@ -8,7 +8,7 @@
 Stripe.api_version = "2026-04-22.dahlia"
 
 # Guard against a live secret key landing in development by accident.
-secret_key = Rails.application.credentials[:STRIPE_SECRET_KEY].to_s
+secret_key = ENV.key?("STRIPE_SECRET_KEY") ? ENV.fetch("STRIPE_SECRET_KEY").to_s : Rails.application.credentials[:STRIPE_SECRET_KEY].to_s
 if Rails.env.development? && secret_key.start_with?("sk_live_")
   raise "STRIPE_SECRET_KEY is a live key in development; use a test key (sk_test_...)"
 end
@@ -17,11 +17,13 @@ end
 # missing, so a misconfigured deploy 500s loudly instead of silently
 # 400ing every webhook.
 if Rails.env.production?
+  required_secret = ->(key) { ENV.fetch(key.to_s) { Rails.application.credentials.fetch(key) } }
+
   %i[
     STRIPE_SECRET_KEY
     STRIPE_PUBLISHABLE_KEY
     STRIPE_WEBHOOK_SECRET
     STRIPE_PRICE_MONTHLY_ID
     STRIPE_PRICE_YEARLY_ID
-  ].each { |key| Rails.application.credentials.fetch(key) }
+  ].each { |key| required_secret.call(key) }
 end

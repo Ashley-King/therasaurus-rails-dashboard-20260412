@@ -51,8 +51,20 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile assets without production secrets. Rails boots production
+# config here, so provide dummy values for build-only secret reads.
+RUN SECRET_KEY_BASE_DUMMY=1 \
+    DATABASE_URL=postgresql://localhost/therasaurus_assets \
+    RESEND_API_KEY=dummy \
+    STRIPE_SECRET_KEY=sk_test_dummy \
+    STRIPE_PUBLISHABLE_KEY=pk_test_dummy \
+    STRIPE_WEBHOOK_SECRET=whsec_dummy \
+    STRIPE_PRICE_MONTHLY_ID=price_dummy_monthly \
+    STRIPE_PRICE_YEARLY_ID=price_dummy_yearly \
+    BETTER_STACK_SOURCE_TOKEN= \
+    BETTER_STACK_INGESTING_HOST= \
+    BETTER_STACK_ERRORS_DSN= \
+    ./bin/rails assets:precompile
 
 
 

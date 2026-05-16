@@ -17,7 +17,11 @@
 
 return unless Rails.env.production?
 
-dsn = Rails.application.credentials[:BETTER_STACK_ERRORS_DSN].presence
+dsn = if ENV.key?("BETTER_STACK_ERRORS_DSN")
+  ENV.fetch("BETTER_STACK_ERRORS_DSN").presence
+else
+  Rails.application.credentials[:BETTER_STACK_ERRORS_DSN].presence
+end
 
 if dsn.blank?
   Rails.logger.warn("[sentry] BETTER_STACK_ERRORS_DSN is missing — error tracking is DISABLED in production")

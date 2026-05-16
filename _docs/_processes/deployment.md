@@ -23,20 +23,33 @@ The VPS runs:
 - The Rails web container behind the Kamal proxy.
 - The Rails job container running `bin/jobs`.
 - `cloudflared` as a host service or container.
+- Rails images pulled from the private GitHub Container Registry package
+  `ghcr.io/ashley-king/therasaurus-rails`.
 
 The Rails app uses Supabase Postgres, Resend SMTP, Stripe through Pay,
 Cloudflare R2, Better Stack, and Discord webhooks through Rails
 credentials. Do not put those secrets in Docker Compose files or shell
 history.
 
+Solid Cache, Solid Queue, and Solid Cable use the main Supabase Postgres
+database. Their tables live in the normal Rails migrations. Do not point
+Solid Cache at a separate `cache` database unless `config/database.yml`
+also defines that database.
+
+Runtime config reads supported secret values from the environment first,
+then falls back to encrypted Rails credentials. The Docker build uses
+dummy database, email, Stripe, and Better Stack values only while
+precompiling assets. Those dummy values are not used by the deployed
+container.
+
 ## Rails config before first deploy
 
-`config/deploy.yml` should use the real VPS host and bind the Kamal proxy
-to localhost only:
+`config/deploy.yml` should use the real VPS host, a private remote image
+registry, and bind the Kamal proxy to localhost only:
 
 ```yaml
 service: therasaurus_rails
-image: therasaurus_rails
+image: ashley-king/therasaurus-rails
 
 servers:
   web:
@@ -57,18 +70,37 @@ proxy:
       - 127.0.0.1
 
 registry:
-  server: localhost:5555
+  server: ghcr.io
+  username: Ashley-King
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 builder:
   arch: amd64
+  context: .
 
 env:
   secret:
     - RAILS_MASTER_KEY
+
+ssh:
+  user: mb_pro
 ```
 
 Use the real SSH alias or IP instead of `ptd-app` if the server uses a
-different name.
+different name. Keep `ssh.user` set to the user from the SSH config for
+that host. The current server alias uses `mb_pro`.
+
+`builder.context: .` tells Kamal to build from this checkout. Without it,
+Kamal builds from a clean local Git clone and ignores uncommitted files.
+That is safer for team deploys, but this app is run by one developer and
+first deploy fixes may be tested before commit.
+
+Use GitHub Container Registry instead of Kamal's local registry for this
+deployment. Kamal's local registry depends on SSH port forwarding from
+the VPS back to the laptop. That forwarding can fail when SSH is routed
+through Cloudflare Access. A private remote registry avoids that moving
+part.
 
 `config/environments/production.rb` should treat the Cloudflare request as
 HTTPS and only allow the production host:
@@ -156,11 +188,21 @@ Update these before using the production URL:
 Run these from the Rails repo:
 
 ```bash
+export KAMAL_REGISTRY_PASSWORD=<github personal access token classic with package write/read access>
 mise exec -- bin/rubocop
 mise exec -- bin/kamal setup
 mise exec -- bin/kamal deploy
 mise exec -- bin/kamal logs
 ```
+
+If Docker reports `flag needs an argument: 'p' in -p`, the registry token
+was empty in the shell running Kamal. Re-run the export command in that
+same terminal before running Kamal again.
+
+If Docker reports `denied: denied` while logging in to `ghcr.io`, the
+token is not accepted by GitHub Container Registry. Use a personal access
+token classic with `write:packages` and `read:packages`, created by the
+same GitHub account used as the registry username.
 
 Use `bin/kamal setup` only for the first deploy or when the server needs
 Kamal setup again. Normal deploys use:
