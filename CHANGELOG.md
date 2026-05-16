@@ -3,6 +3,8 @@
 ## 2026-05-16
 
 ### Changed
+- **Rails favicon.** Matched the Rails favicon and Apple touch icon to
+  the Next.js app and added the favicon links to the auth layout.
 - **Turnstile sign-in.** Restored Cloudflare Turnstile to the email-code
   sign-in form and passed the token to Supabase OTP sends, with Rails only
   checking that the token exists before Supabase verifies it.
