@@ -3,6 +3,9 @@
 ## 2026-05-17
 
 ### Changed
+- **Kamal SSH config.** Added a project SSH config for Kamal so production
+  deploys use the local deploy key directly instead of the 1Password SSH
+  agent.
 - **Sign-in email button.** Changed the email sign-in submit button text
   to `Get a sign in code`.
 - **Deploy rollback version.** Updated the production deploy wrapper to

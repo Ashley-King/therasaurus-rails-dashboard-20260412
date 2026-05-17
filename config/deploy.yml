@@ -83,6 +83,7 @@ builder:
 
 ssh:
   user: mb_pro
+  config: config/kamal_ssh_config
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:

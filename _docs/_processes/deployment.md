@@ -88,11 +88,14 @@ env:
 
 ssh:
   user: mb_pro
+  config: config/kamal_ssh_config
 ```
 
 Use the real SSH alias or IP instead of `ptd-app` if the server uses a
 different name. Keep `ssh.user` set to the user from the SSH config for
-that host. The current server alias uses `mb_pro`.
+that host. The current server alias uses `mb_pro`. `config/kamal_ssh_config`
+forces Kamal to use the local deploy key directly instead of the 1Password
+SSH agent.
 
 `builder.context: .` tells Kamal to build from this checkout. Without it,
 Kamal builds from a clean local Git clone and ignores uncommitted files.

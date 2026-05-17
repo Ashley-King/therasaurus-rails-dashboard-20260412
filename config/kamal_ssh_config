@@ -1,0 +1,8 @@
+Host ptd-app
+  HostName ptd-app
+  User mb_pro
+  IdentityFile ~/.ssh/id_ed25519_hetzner_20250517
+  IdentitiesOnly yes
+  IdentityAgent none
+  HostKeyAlias ssh-app.therasaurus.org
+  ProxyCommand /opt/homebrew/bin/cloudflared access ssh --hostname ssh-app.therasaurus.org
