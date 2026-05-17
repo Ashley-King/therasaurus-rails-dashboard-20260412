@@ -5,9 +5,6 @@ class ZipLookup < ApplicationRecord
   # San Buenaventura / Ventura) produce two separate options — city and
   # city_alt — so therapists searching by the familiar name still find it.
   #
-  # `query` must already be validated as digits-only by the caller; we guard
-  # once more here and bail early on anything else. This is load-bearing for
-  # the safe interpolation below.
   def self.prefix_search(query, limit: 10)
     digits = query.to_s
     return [] unless digits.match?(/\A\d{1,5}\z/)
@@ -15,19 +12,19 @@ class ZipLookup < ApplicationRecord
     limit_i = [ limit.to_i, 1 ].max
     pattern = "#{digits}%"
 
-    sql = <<~SQL.squish
+    sql = sanitize_sql_array([ <<~SQL.squish, { pattern:, limit: limit_i } ])
       WITH candidates AS (
         SELECT zip, city AS name, state_id,
                COALESCE(zip_lat, city_lat) AS lat,
                COALESCE(zip_lng, city_lng) AS lng
         FROM zip_lookups
-        WHERE zip LIKE '#{pattern}'
+        WHERE zip LIKE :pattern
         UNION ALL
         SELECT zip, city_alt AS name, state_id,
                COALESCE(zip_lat, city_lat) AS lat,
                COALESCE(zip_lng, city_lng) AS lng
         FROM zip_lookups
-        WHERE zip LIKE '#{pattern}'
+        WHERE zip LIKE :pattern
           AND city_alt IS NOT NULL
           AND city_alt <> ''
       )
@@ -35,7 +32,7 @@ class ZipLookup < ApplicationRecord
              zip, name AS city, state_id, lat, lng
       FROM candidates
       ORDER BY zip, name, state_id
-      LIMIT #{limit_i}
+      LIMIT :limit
     SQL
 
     connection.select_all(sql).to_a

@@ -3,6 +3,8 @@
 ## 2026-05-17
 
 ### Changed
+- **ZIP lookup SQL safety.** Switched ZIP autocomplete lookup SQL to bound
+  parameters so Brakeman passes with no SQL injection warning.
 - **Production deploy safety.** Added `bin/deploy-production` so production
   deploys run `bin/ci`, deploy through Kamal, check the public app URL and
   local assets, and automatically run `bin/kamal rollback` when public
