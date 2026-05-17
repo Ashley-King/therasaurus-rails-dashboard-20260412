@@ -3,12 +3,17 @@
 ## 2026-05-17
 
 ### Changed
+- **Production deploy safety.** Added `bin/deploy-production` so production
+  deploys run `bin/ci`, deploy through Kamal, check the public app URL and
+  local assets, and automatically run `bin/kamal rollback` when public
+  checks fail. Added a Kamal pre-deploy hook that blocks direct production
+  deploys so the rollback checks are not skipped.
 - **Turnstile sign-in layout.** Forced the Cloudflare Turnstile widget to
   use the light theme and flexible width on the sign-in form.
 - **Auth input focus states.** Changed the sign-in and verification input
   focus rings to use the plum brand color.
-- **Favicon color scheme.** Switched Rails to an adaptive SVG favicon so
-  dark-mode browser tabs use the light icon.
+- **Favicon color scheme.** Switched Rails to media-specific SVG favicons
+  without an ICO fallback so dark-mode browser tabs use the light icon.
 - **Database connection source.** Restored Rails database configuration to
   use encrypted credentials instead of shell `DATABASE_URL`.
 

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ "$KAMAL_COMMAND" = "rollback" ]; then
+  exit 0
+fi
+
+if [ "$THERASAURUS_DEPLOY_WRAPPER" = "1" ]; then
+  exit 0
+fi
+
+cat >&2 <<'MESSAGE'
+Use this command for production deploys:
+
+  mise exec -- bin/deploy-production
+
+It runs local checks, deploys with Kamal, checks the public app, and rolls back on failure.
+MESSAGE
+
+exit 1

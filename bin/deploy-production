@@ -1,0 +1,207 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "net/http"
+require "nokogiri"
+require "uri"
+
+APP_URL = ENV.fetch("PRODUCTION_APP_URL", "https://app.therasaurus.org")
+CHECK_PATHS = [
+  "/up",
+  "/health",
+  "/signin",
+  "/create-account",
+  "/privacy-policy",
+  "/terms",
+  "/app-info"
+].freeze
+ERROR_TEXT = [
+  "Internal Server Error",
+  "We're sorry, but something went wrong",
+  "The page you were looking for doesn't exist",
+  "The change you wanted was rejected",
+  "Bad Gateway",
+  "Gateway Timeout",
+  "Service Unavailable"
+].freeze
+ASSET_RELS = %w[apple-touch-icon icon manifest modulepreload preload stylesheet].freeze
+KAMAL_ENV = { "THERASAURUS_DEPLOY_WRAPPER" => "1" }.freeze
+
+class DeployFailure < StandardError; end
+
+class PublicSmokeCheck
+  Response = Data.define(:uri, :status, :body)
+
+  def initialize(base_url)
+    @base_uri = URI(base_url)
+  end
+
+  def run!
+    puts "\nChecking public app at #{@base_uri}"
+
+    signin_response = nil
+
+    CHECK_PATHS.each do |path|
+      response = check_page(path)
+      signin_response = response if path == "/signin"
+    end
+
+    check_assets(signin_response.body)
+  end
+
+  private
+
+  attr_reader :base_uri
+
+  def check_page(path)
+    uri = URI.join(base_uri, path)
+    response = check_uri(uri, label: path)
+
+    broken_text = ERROR_TEXT.find { |text| response.body.include?(text) }
+    raise DeployFailure, "#{path} returned an error page" if broken_text
+
+    response
+  end
+
+  def check_assets(html)
+    asset_uris = asset_uris_from(html)
+    raise DeployFailure, "/signin did not reference any local assets" if asset_uris.empty?
+
+    asset_uris.each do |uri|
+      check_uri(uri, label: uri.path)
+    end
+  end
+
+  def check_uri(uri, label:)
+    final_uri, http_response = fetch(uri)
+    status = http_response.code.to_i
+
+    unless (200..399).cover?(status)
+      raise DeployFailure, "#{label} returned HTTP #{status}"
+    end
+
+    puts "OK #{label} #{status}"
+    Response.new(uri: final_uri, status: status, body: http_response.body.to_s)
+  rescue Timeout::Error, SocketError, SystemCallError, URI::Error, Net::HTTPError => e
+    raise DeployFailure, "#{label} failed: #{e.message}"
+  end
+
+  def fetch(uri, redirects_remaining: 3)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == "https"
+    http.open_timeout = 5
+    http.read_timeout = 10
+
+    request = Net::HTTP::Get.new(uri)
+    request["User-Agent"] = "TherasaurusDeployCheck"
+
+    response = http.request(request)
+
+    if response.is_a?(Net::HTTPRedirection)
+      raise DeployFailure, "#{uri} redirected too many times" if redirects_remaining.zero?
+
+      location = response["location"]
+      raise DeployFailure, "#{uri} redirected without a Location header" if location.nil? || location.empty?
+
+      return fetch(URI.join(uri, location), redirects_remaining: redirects_remaining - 1)
+    end
+
+    [ uri, response ]
+  end
+
+  def asset_uris_from(html)
+    doc = Nokogiri::HTML(html)
+    node_uris = doc.css("link[href], script[src]").filter_map { |node| asset_uri_from_node(node) }
+    inline_uris = html.scan(%r{["'(](\/assets\/[^"')\s]+)}).flatten.filter_map { |path| absolute_uri(path) }
+
+    (node_uris + inline_uris).select { |uri| app_uri?(uri) }.uniq(&:to_s)
+  end
+
+  def asset_uri_from_node(node)
+    return unless asset_node?(node)
+
+    absolute_uri(node["src"] || node["href"])
+  end
+
+  def asset_node?(node)
+    return true if node.name == "script"
+
+    rels = node["rel"].to_s.split
+    (rels & ASSET_RELS).any?
+  end
+
+  def absolute_uri(value)
+    return if value.nil? || value.empty?
+
+    uri = URI.join(base_uri, value)
+    uri if %w[http https].include?(uri.scheme)
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  def app_uri?(uri)
+    uri.host == base_uri.host
+  end
+end
+
+def usage!
+  abort "Usage: mise exec -- bin/deploy-production [--setup]"
+end
+
+def verify_local_requirements!
+  raise DeployFailure, "KAMAL_REGISTRY_PASSWORD is missing" if ENV["KAMAL_REGISTRY_PASSWORD"].to_s.empty?
+  raise DeployFailure, "config/master.key is missing" unless File.exist?("config/master.key")
+end
+
+def run_command(*command, env: {})
+  puts "\n==> #{command.join(' ')}"
+  system(env, *command)
+end
+
+def run_command!(*command, env: {})
+  return if run_command(*command, env: env)
+
+  raise DeployFailure, "#{command.join(' ')} failed"
+end
+
+def rollback_after_failure!(failure)
+  warn "\n#{failure.message}"
+  warn "Rolling back to the previous Kamal version..."
+
+  run_command!("bin/kamal", "rollback", env: KAMAL_ENV)
+
+  PublicSmokeCheck.new(APP_URL).run!
+  abort "\nDeploy failed and was rolled back."
+rescue DeployFailure => rollback_failure
+  abort "\nDeploy failed. Rollback failed or the public app is still unhealthy: #{rollback_failure.message}"
+end
+
+usage! unless [ [], [ "--setup" ] ].include?(ARGV)
+
+kamal_command = ARGV.first == "--setup" ? "setup" : "deploy"
+
+begin
+  verify_local_requirements!
+  run_command!("bin/ci")
+rescue DeployFailure => e
+  abort "\nPre-deploy check failed: #{e.message}"
+end
+
+unless run_command("bin/kamal", kamal_command, env: KAMAL_ENV)
+  warn "\nKamal #{kamal_command} failed. Checking whether the public app is still healthy..."
+
+  begin
+    PublicSmokeCheck.new(APP_URL).run!
+    abort "\nKamal #{kamal_command} failed before the public app broke. Rollback was not needed."
+  rescue DeployFailure => e
+    rollback_after_failure!(e)
+  end
+end
+
+begin
+  PublicSmokeCheck.new(APP_URL).run!
+  puts "\nDeploy passed public checks."
+rescue DeployFailure => e
+  rollback_after_failure!(e)
+end

@@ -189,9 +189,7 @@ Run these from the Rails repo:
 
 ```bash
 export KAMAL_REGISTRY_PASSWORD=<github personal access token classic with package write/read access>
-mise exec -- bin/rubocop
-mise exec -- bin/kamal setup
-mise exec -- bin/kamal deploy
+mise exec -- bin/deploy-production --setup
 mise exec -- bin/kamal logs
 ```
 
@@ -205,47 +203,76 @@ token classic with `write:packages` and `read:packages`, created by the
 same GitHub account used as the registry username.
 
 Use `bin/kamal setup` only for the first deploy or when the server needs
-Kamal setup again. Normal deploys use:
+Kamal setup again. Use the production deploy wrapper for normal deploys:
 
 ```bash
-mise exec -- bin/kamal deploy
+mise exec -- bin/deploy-production
 ```
+
+The wrapper runs `bin/ci`, runs Kamal, checks the public app, and runs
+`bin/kamal rollback` if the public checks fail. Direct `bin/kamal deploy`
+is blocked by `.kamal/hooks/pre-deploy` so the rollback checks are not
+skipped by accident.
+
+The public checks request:
+
+- `https://app.therasaurus.org/up`
+- `https://app.therasaurus.org/health`
+- `https://app.therasaurus.org/signin`
+- `https://app.therasaurus.org/create-account`
+- `https://app.therasaurus.org/privacy-policy`
+- `https://app.therasaurus.org/terms`
+- `https://app.therasaurus.org/app-info`
+- local CSS, JavaScript, favicon, and manifest files referenced by
+  `/signin`
+
+Set `PRODUCTION_APP_URL` only if the public production app URL changes.
 
 ## First deploy checks
 
-From your laptop:
-
-```bash
-curl -I https://app.therasaurus.org/up
-curl -I https://app.therasaurus.org/health
-curl -I https://app.therasaurus.org/signin
-```
-
-From the VPS:
+The production deploy wrapper runs the public HTTP checks above. For the
+first deploy, also confirm these from the VPS:
 
 ```bash
 curl -I http://127.0.0.1:3001/up
 docker ps
 ```
 
-Also confirm:
+After the first successful deploy, also confirm:
 
 - The VPS public IP does not serve Rails on ports `80` or `443`.
+- The job role is running.
+
+Then check the connected services:
+
 - Stripe webhook delivery reaches Rails without a Cloudflare challenge.
 - Supabase email code login works at `app.therasaurus.org`.
 - Google login returns to `app.therasaurus.org`.
 - Profile photo upload gets a presigned R2 URL.
 - Credential document upload gets a presigned R2 URL.
 - Better Stack receives production logs and errors.
-- The job role is running.
 
 ## Rollback
 
-Use Kamal rollback first:
+The production deploy wrapper runs rollback automatically when public
+checks fail after a deploy:
+
+```bash
+mise exec -- bin/deploy-production
+```
+
+For a manual emergency rollback, use Kamal rollback:
 
 ```bash
 mise exec -- bin/kamal rollback
 ```
+
+A first deploy has no previous working Rails version. Automatic rollback
+can only restore a version that already exists on the server.
+
+Keep database changes safe for rollback. Do not deploy a change that
+removes or renames a column while the previous app version still needs
+that column.
 
 If Cloudflare routing is the issue, remove or pause only the
 `app.therasaurus.org` tunnel route. Leave `therasaurus.org` untouched.
@@ -266,6 +293,8 @@ Kamal proxy binding before sharing the app URL.
 
 - Kamal proxy and deploy config: https://kamal-deploy.org/docs/configuration/proxy/
 - Kamal deploy command: https://kamal-deploy.org/docs/commands/deploy/
+- Kamal rollback command: https://kamal-deploy.org/docs/commands/rollback/
+- Kamal hooks: https://kamal-deploy.org/docs/hooks/overview/
 - Rails SSL setting: https://guides.rubyonrails.org/security.html
 - Cloudflare Tunnel routing: https://developers.cloudflare.com/tunnel/routing/
 - Cloudflare Tunnel service setup: https://developers.cloudflare.com/tunnel/advanced/local-management/as-a-service/
