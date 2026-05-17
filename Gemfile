@@ -42,7 +42,7 @@ gem "jwt"    # Decode/verify Supabase JWTs
 gem "httpx"  # HTTP client for Supabase Auth API
 
 # Cloudflare R2 (S3-compatible) for file uploads
-gem "aws-sdk-s3", "~> 1.221"
+gem "aws-sdk-s3", "~> 1.222"
 
 # Stripe billing wrapper — see _docs/_processes/stripe.md.
 # Pay handles the Stripe SDK, webhook idempotency, and subscription
