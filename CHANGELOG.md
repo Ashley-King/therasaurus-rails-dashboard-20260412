@@ -3,6 +3,9 @@
 ## 2026-05-17
 
 ### Changed
+- **Dashboard favicons.** Added the shared light and dark favicon tags to
+  the dashboard layout so authenticated pages use the correct icon for
+  the browser color scheme.
 - **Kamal SSH config.** Added a project SSH config for Kamal so production
   deploys use the local deploy key directly instead of the 1Password SSH
   agent.
