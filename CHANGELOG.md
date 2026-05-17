@@ -3,6 +3,9 @@
 ## 2026-05-17
 
 ### Changed
+- **Deploy rollback version.** Updated the production deploy wrapper to
+  capture the current Kamal app version before deploys and pass that
+  version to rollback when public checks fail.
 - **Docker build credentials.** Passed `RAILS_MASTER_KEY` to the Docker
   asset precompile step as a Kamal build secret while keeping
   `config/database.yml` credentials-only.

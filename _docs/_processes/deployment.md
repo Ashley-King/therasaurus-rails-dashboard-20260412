@@ -212,10 +212,11 @@ Kamal setup again. Use the production deploy wrapper for normal deploys:
 mise exec -- bin/deploy-production
 ```
 
-The wrapper runs `bin/ci`, runs Kamal, checks the public app, and runs
-`bin/kamal rollback` if the public checks fail. Direct `bin/kamal deploy`
-is blocked by `.kamal/hooks/pre-deploy` so the rollback checks are not
-skipped by accident.
+The wrapper runs `bin/ci`, captures the current Kamal app version, runs
+Kamal, checks the public app, and runs `bin/kamal rollback VERSION` if
+the public checks fail. Direct `bin/kamal deploy` is blocked by
+`.kamal/hooks/pre-deploy` so the rollback checks are not skipped by
+accident.
 
 The public checks request:
 
@@ -257,17 +258,21 @@ Then check the connected services:
 
 ## Rollback
 
-The production deploy wrapper runs rollback automatically when public
-checks fail after a deploy:
+The production deploy wrapper captures the running Kamal version before
+deploying and rolls back to that exact version when public checks fail
+after a deploy:
 
 ```bash
 mise exec -- bin/deploy-production
 ```
 
-For a manual emergency rollback, use Kamal rollback:
+For a manual emergency rollback, first read the current running version
+or find the earlier version in the deploy logs. Then pass that version to
+Kamal rollback:
 
 ```bash
-mise exec -- bin/kamal rollback
+mise exec -- bin/kamal app version
+mise exec -- bin/kamal rollback VERSION
 ```
 
 A first deploy has no previous working Rails version. Automatic rollback

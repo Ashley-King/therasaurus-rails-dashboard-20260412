@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
+require "English"
 require "net/http"
 require "nokogiri"
 require "uri"
@@ -165,11 +166,34 @@ def run_command!(*command, env: {})
   raise DeployFailure, "#{command.join(' ')} failed"
 end
 
-def rollback_after_failure!(failure)
-  warn "\n#{failure.message}"
-  warn "Rolling back to the previous Kamal version..."
+def capture_command!(*command, env: {})
+  puts "\n==> #{command.join(' ')}"
+  output = IO.popen(env, command, err: [ :child, :out ], &:read)
+  print output
 
-  run_command!("bin/kamal", "rollback", env: KAMAL_ENV)
+  raise DeployFailure, "#{command.join(' ')} failed" unless $CHILD_STATUS.success?
+
+  output
+end
+
+def current_kamal_version
+  output = capture_command!("bin/kamal", "app", "version", env: KAMAL_ENV)
+  version = output.scan(/[0-9a-f]{40}/).last
+
+  raise DeployFailure, "could not read current Kamal app version" if version.nil?
+
+  version
+end
+
+def rollback_after_failure!(failure, version:)
+  if version.nil?
+    abort "\nDeploy failed and no previous Kamal version was available for rollback: #{failure.message}"
+  end
+
+  warn "\n#{failure.message}"
+  warn "Rolling back to Kamal version #{version}..."
+
+  run_command!("bin/kamal", "rollback", version, env: KAMAL_ENV)
 
   PublicSmokeCheck.new(APP_URL).run!
   abort "\nDeploy failed and was rolled back."
@@ -184,6 +208,7 @@ kamal_command = ARGV.first == "--setup" ? "setup" : "deploy"
 begin
   verify_local_requirements!
   run_command!("bin/ci")
+  rollback_version = current_kamal_version if kamal_command == "deploy"
 rescue DeployFailure => e
   abort "\nPre-deploy check failed: #{e.message}"
 end
@@ -195,7 +220,7 @@ unless run_command("bin/kamal", kamal_command, env: KAMAL_ENV)
     PublicSmokeCheck.new(APP_URL).run!
     abort "\nKamal #{kamal_command} failed before the public app broke. Rollback was not needed."
   rescue DeployFailure => e
-    rollback_after_failure!(e)
+    rollback_after_failure!(e, version: rollback_version)
   end
 end
 
@@ -203,5 +228,5 @@ begin
   PublicSmokeCheck.new(APP_URL).run!
   puts "\nDeploy passed public checks."
 rescue DeployFailure => e
-  rollback_after_failure!(e)
+  rollback_after_failure!(e, version: rollback_version)
 end
