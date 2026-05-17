@@ -3,6 +3,9 @@
 ## 2026-05-17
 
 ### Changed
+- **Dependency security updates.** Updated vulnerable `net-imap`,
+  `nokogiri`, and `view_component` lockfile versions so
+  `bundler-audit` passes.
 - **ZIP lookup SQL safety.** Switched ZIP autocomplete lookup SQL to bound
   parameters so Brakeman passes with no SQL injection warning.
 - **Production deploy safety.** Added `bin/deploy-production` so production
