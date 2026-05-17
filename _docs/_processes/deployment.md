@@ -36,11 +36,12 @@ database. Their tables live in the normal Rails migrations. Do not point
 Solid Cache at a separate `cache` database unless `config/database.yml`
 also defines that database.
 
-Runtime config reads supported secret values from the environment first,
-then falls back to encrypted Rails credentials. The Docker build uses
-dummy database, email, Stripe, and Better Stack values only while
-precompiling assets. Those dummy values are not used by the deployed
-container.
+Runtime secrets live in encrypted Rails credentials. `config/database.yml`
+reads `DATABASE_URL` from credentials only. The Docker build mounts
+`RAILS_MASTER_KEY` only while precompiling assets so Rails can read those
+credentials during the build. Dummy email, Stripe, and Better Stack
+values are used only while precompiling assets. Those dummy values are
+not used by the deployed container.
 
 ## Rails config before first deploy
 
@@ -78,6 +79,8 @@ registry:
 builder:
   arch: amd64
   context: .
+  secrets:
+    - RAILS_MASTER_KEY
 
 env:
   secret:

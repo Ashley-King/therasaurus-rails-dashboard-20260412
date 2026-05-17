@@ -3,6 +3,9 @@
 ## 2026-05-17
 
 ### Changed
+- **Docker build credentials.** Passed `RAILS_MASTER_KEY` to the Docker
+  asset precompile step as a Kamal build secret while keeping
+  `config/database.yml` credentials-only.
 - **Dependency security updates.** Updated vulnerable `net-imap`,
   `nokogiri`, and `view_component` lockfile versions so
   `bundler-audit` passes.
