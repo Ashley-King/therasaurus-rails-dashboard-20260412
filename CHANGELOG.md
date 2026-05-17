@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-17
+
+### Changed
+- **Database connection source.** Restored Rails database configuration to
+  use encrypted credentials instead of shell `DATABASE_URL`.
+
 ## 2026-05-16
 
 ### Changed
