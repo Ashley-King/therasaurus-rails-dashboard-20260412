@@ -7,7 +7,7 @@
   deploys use the local deploy key directly instead of the 1Password SSH
   agent.
 - **Sign-in email button.** Changed the email sign-in submit button text
-  to `Get a sign in code`.
+  to `Get a verification code`.
 - **Deploy rollback version.** Updated the production deploy wrapper to
   capture the current Kamal app version before deploys and pass that
   version to rollback when public checks fail.
