@@ -110,7 +110,7 @@ Google OAuth branding may use `/app-info` as the application home page when Goog
 
 ## Turnstile
 
-Turnstile is wired into the email-code send step. The sign-in form (`app/views/auth/new.html.erb`) loads Cloudflare Turnstile and renders the widget. `AuthController#create` requires `params[:"cf-turnstile-response"]`, then passes it to `SupabaseAuth#send_otp`.
+Turnstile is wired into the email-code send step. The sign-in form (`app/views/auth/new.html.erb`) loads Cloudflare Turnstile and renders the widget with the light theme and flexible width. `AuthController#create` requires `params[:"cf-turnstile-response"]`, then passes it to `SupabaseAuth#send_otp`.
 
 Rails does not verify the Turnstile token during OTP send. Supabase verifies it because Cloudflare tokens are single-use. Google sign-in does not send an OTP and does not use Turnstile.
 

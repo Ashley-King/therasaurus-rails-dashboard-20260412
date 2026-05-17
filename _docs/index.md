@@ -42,6 +42,9 @@
   - `therasaurus-design-tokens-v2.css` — CSS custom properties and component classes (ts- prefix)
   - `therasaurus-design-tokens-v2.json` — Structured token data for tooling
   - `index.html` — Visual reference of all components
+- **Rails favicon:** [`public/icons/favicon.svg`](../public/icons/favicon.svg) —
+  adaptive SVG favicon. It uses the plum mark in light mode and the white
+  mark in dark mode.
 - **Therapist profile designer field inventory:** [`therapist-profile-design-brief.md`](./therapist-profile-design-brief.md)
 - **Background jobs:** [`background-jobs.md`](./background-jobs.md)
 - **Dashboard inspiration screenshots:** [`_frontend/_images/`](./../_frontend/_images/)

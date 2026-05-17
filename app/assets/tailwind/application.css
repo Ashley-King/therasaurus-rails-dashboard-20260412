@@ -385,6 +385,20 @@ input[type="submit"]:focus-visible, input[type="button"]:focus-visible {
     max-width: 48rem;
   }
 
+  .ts-auth-card-signin {
+    padding-inline: clamp(0.625rem, calc((100vw - 300px) / 2), 2rem);
+  }
+
+  .ts-turnstile-field {
+    width: 100%;
+    min-width: 0;
+    contain: inline-size;
+  }
+
+  .ts-turnstile-field .cf-turnstile {
+    width: 100%;
+  }
+
   @media (min-width: 40rem) {
     .ts-auth-card,
     .ts-auth-card-wide {

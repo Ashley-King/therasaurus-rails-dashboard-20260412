@@ -14,7 +14,9 @@ Turnstile belongs on the OTP send step only.
 
 1. `app/views/auth/new.html.erb` loads Cloudflare `api.js`.
 2. The sign-in form renders a plain `<div class="cf-turnstile">` with
-   `data-response-field-name="cf-turnstile-response"`.
+   `data-response-field-name="cf-turnstile-response"` and
+   `data-theme="light"`. It also uses `data-size="flexible"` so the
+   widget width matches the form controls.
 3. `AuthController#create` reads `params[:"cf-turnstile-response"]`.
 4. `SupabaseAuth#send_otp` sends the token to Supabase as
    `gotrue_meta_security.captcha_token`.
