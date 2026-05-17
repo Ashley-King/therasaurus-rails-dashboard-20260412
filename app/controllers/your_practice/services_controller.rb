@@ -7,9 +7,15 @@ module YourPractice
     end
 
     def update
-      ids = Array(params.dig(:therapist, :service_ids)).reject(&:blank?).uniq.first(MAX_SERVICES)
+      ids = Array(params.dig(:therapist, :service_ids)).reject(&:blank?).uniq
+
+      if ids.size > MAX_SERVICES
+        redirect_to services_path, alert: "Choose 20 or fewer services.", status: :see_other
+        return
+      end
+
       therapist.service_ids = ids
-      redirect_to services_path, notice: "Services updated."
+      redirect_to services_path, notice: "Services saved.", status: :see_other
     end
 
     private

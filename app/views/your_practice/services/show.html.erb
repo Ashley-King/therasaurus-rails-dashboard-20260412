@@ -8,7 +8,7 @@
     </div>
 
     <%= form_with model: therapist, url: services_path, method: :patch,
-          data: { controller: "form-guard" }, class: "space-y-6" do |f| %>
+          data: { controller: "form-guard", turbo: false }, class: "space-y-6" do |f| %>
 
       <%# ── Selected chips ── %>
       <div class="mb-5 border border-border-default rounded-lg p-4">
@@ -17,6 +17,14 @@
             Selected (<span data-services-picker-target="selectedCount">0</span>/<%= @max_services %>)
           </h3>
         </div>
+        <p id="services_limit_message"
+           data-services-picker-target="limitMessage"
+           hidden
+           role="status"
+           aria-live="polite"
+           class="mb-3 text-sm font-semibold text-status-attention">
+          You can choose up to <%= @max_services %> services. Remove one before adding another.
+        </p>
         <div data-services-picker-target="selectedChips" class="flex flex-wrap items-start content-start gap-2 h-48 overflow-y-auto pr-1"></div>
       </div>
 
@@ -86,6 +94,7 @@
                        name="therapist[service_ids][]"
                        value="<%= service[:id] %>"
                        <%= "checked" if @selected_service_ids.include?(service[:id].to_s) %>
+                       aria-describedby="services_limit_message"
                        data-action="change->services-picker#onServiceChange"
                        class="mt-1 h-4 w-4 shrink-0 rounded border-border-input accent-plum focus:ring-2 focus:ring-plum focus:ring-offset-1 cursor-pointer">
                 <span><%= service[:name] %></span>

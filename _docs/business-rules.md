@@ -626,9 +626,10 @@ Therapists cannot directly edit protected system fields like:
   - If all selected specialties are marked as focus, the profile does
     not show an `Other areas of expertise` section.
   - A specialty never appears in both sections.
+- Therapists can choose up to 20 services and up to 20 areas of
+  expertise. The picker shows a limit message at 20, and the server
+  rejects over-limit submissions with a clear alert.
 - Phase one does not need drag and drop ordering.
-- Phase one does not enforce a hard cap on the number of services or
-  specialties.
 - Search ranking can weight focus specialties more heavily than the rest.
 - Specialties show as badges on the public profile. Services may also
   show as badges.

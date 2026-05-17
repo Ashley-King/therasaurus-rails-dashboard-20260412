@@ -3,6 +3,11 @@
 ## 2026-05-17
 
 ### Changed
+- **Services and specialties save feedback.** Fixed the service and
+  specialty pickers so the 20th selected item is allowed, both pickers
+  show a clear limit message at 20 selections, and successful saves use
+  visible saved flash messages. Over-limit submissions now fail with a
+  clear alert instead of silently dropping extra choices.
 - **Dashboard favicons.** Added the shared light and dark favicon tags to
   the dashboard layout so authenticated pages use the correct icon for
   the browser color scheme.

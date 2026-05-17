@@ -11,7 +11,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "search", "categorySelect", "specialty", "selectedChips",
-    "selectedCount", "focusCount", "visibleCount", "empty"
+    "selectedCount", "focusCount", "visibleCount", "empty", "limitMessage"
   ]
   static values = { max: Number, maxFocus: Number, initialFocus: Array }
 
@@ -42,9 +42,10 @@ export default class extends Controller {
 
   onSpecialtyChange(event) {
     const cb = event.currentTarget
-    // If checking this would exceed the total cap, undo it.
-    if (cb.checked && this.atCap()) {
+    if (cb.checked && this.exceedsCap()) {
       cb.checked = false
+      this.showLimitMessage()
+      this.renderChips()
       return
     }
     // Unchecking a focus specialty removes its focus too.
@@ -52,11 +53,19 @@ export default class extends Controller {
     this.renderChips()
   }
 
+  selectedCount() {
+    return this.specialtyTargets
+      .filter(r => r.querySelector("input[type='checkbox']").checked).length
+  }
+
   atCap() {
     if (!this.hasMaxValue || this.maxValue <= 0) return false
-    const count = this.specialtyTargets
-      .filter(r => r.querySelector("input[type='checkbox']").checked).length
-    return count >= this.maxValue
+    return this.selectedCount() >= this.maxValue
+  }
+
+  exceedsCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return false
+    return this.selectedCount() > this.maxValue
   }
 
   applyCap() {
@@ -138,6 +147,7 @@ export default class extends Controller {
     if (this.hasSelectedCountTarget) this.selectedCountTarget.textContent = selected.length
     if (this.hasFocusCountTarget) this.focusCountTarget.textContent = focus.length
     this.applyCap()
+    this.updateLimitMessage(selected.length)
     if (!this.hasSelectedChipsTarget) return
 
     if (ordered.length === 0) {
@@ -188,6 +198,15 @@ export default class extends Controller {
         </span>
       `
     }).join("")
+  }
+
+  showLimitMessage() {
+    if (this.hasLimitMessageTarget) this.limitMessageTarget.hidden = false
+  }
+
+  updateLimitMessage(count) {
+    if (!this.hasLimitMessageTarget || !this.hasMaxValue || this.maxValue <= 0) return
+    this.limitMessageTarget.hidden = count < this.maxValue
   }
 
   escape(str) {

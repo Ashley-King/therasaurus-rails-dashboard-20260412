@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "search", "categorySelect", "service", "selectedChips",
-    "selectedCount", "totalCount", "visibleCount", "empty"
+    "selectedCount", "totalCount", "visibleCount", "empty", "limitMessage"
   ]
   static values = { max: Number }
 
@@ -37,20 +37,29 @@ export default class extends Controller {
   }
 
   onServiceChange(event) {
-    // If checking this would exceed the cap, undo it.
     const cb = event.currentTarget
-    if (cb.checked && this.atCap()) {
+    if (cb.checked && this.exceedsCap()) {
       cb.checked = false
+      this.showLimitMessage()
+      this.renderChips()
       return
     }
     this.renderChips()
   }
 
+  selectedCount() {
+    return this.serviceTargets
+      .filter(r => r.querySelector("input[type='checkbox']").checked).length
+  }
+
   atCap() {
     if (!this.hasMaxValue || this.maxValue <= 0) return false
-    const count = this.serviceTargets
-      .filter(r => r.querySelector("input[type='checkbox']").checked).length
-    return count >= this.maxValue
+    return this.selectedCount() >= this.maxValue
+  }
+
+  exceedsCap() {
+    if (!this.hasMaxValue || this.maxValue <= 0) return false
+    return this.selectedCount() > this.maxValue
   }
 
   applyCap() {
@@ -106,6 +115,7 @@ export default class extends Controller {
 
     if (this.hasSelectedCountTarget) this.selectedCountTarget.textContent = selected.length
     this.applyCap()
+    this.updateLimitMessage(selected.length)
 
     if (!this.hasSelectedChipsTarget) return
 
@@ -129,6 +139,15 @@ export default class extends Controller {
         </button>
       </span>
     `).join("")
+  }
+
+  showLimitMessage() {
+    if (this.hasLimitMessageTarget) this.limitMessageTarget.hidden = false
+  }
+
+  updateLimitMessage(count) {
+    if (!this.hasLimitMessageTarget || !this.hasMaxValue || this.maxValue <= 0) return
+    this.limitMessageTarget.hidden = count < this.maxValue
   }
 
   escape(str) {

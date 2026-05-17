@@ -8,10 +8,19 @@ module YourPractice
     end
 
     def update
-      selected_ids = Array(params.dig(:therapist, :specialty_ids)).reject(&:blank?).uniq.first(MAX_SPECIALTIES)
+      selected_ids = Array(params.dig(:therapist, :specialty_ids)).reject(&:blank?).uniq
       focus_ids = Array(params.dig(:therapist, :focus_specialty_ids)).reject(&:blank?).uniq
       focus_ids &= selected_ids
-      focus_ids = focus_ids.first(MAX_FOCUS)
+
+      if selected_ids.size > MAX_SPECIALTIES
+        redirect_to specialties_path, alert: "Choose 20 or fewer areas of expertise.", status: :see_other
+        return
+      end
+
+      if focus_ids.size > MAX_FOCUS
+        redirect_to specialties_path, alert: "Choose 5 or fewer starred specialties.", status: :see_other
+        return
+      end
 
       ActiveRecord::Base.transaction do
         therapist.practice_specialties.where.not(specialty_id: selected_ids).destroy_all
@@ -26,7 +35,7 @@ module YourPractice
         end
       end
 
-      redirect_to specialties_path, notice: "Specialties updated."
+      redirect_to specialties_path, notice: "Specialties saved.", status: :see_other
     end
 
     private
